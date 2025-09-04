@@ -1,0 +1,285 @@
+// sales-tab.js v1.3.6 — 6-grid Sales Boards with auto-save/restore + last-tab persistence
+
+(function () {
+  const NAV_SCOPE = 'nav[data-v-598e593b]';
+  const ACTIVE_CLASS = 'router-link-exact-active';
+  const PANEL_ID = 'panel-sales';
+
+  const OUT_W = 390, OUT_H = 260;
+  const MARGIN = 6, GUTTER = 6;
+  const COLS = 3, ROWS = 2;
+  const CELL_W = Math.floor((OUT_W - (MARGIN*2) - (GUTTER*(COLS-1))) / COLS);
+  const CELL_H = Math.floor((OUT_H - (MARGIN*2) - (GUTTER*(ROWS-1))) / ROWS);
+  const IMAGE_H = 85; // image area height
+  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  let rafId = 0; // kept for compatibility
+
+  // ---- persistence: board content ----
+  const STORAGE_KEY = 'sales_v13_state';
+  function saveStateObj(obj){
+    try { chrome?.storage?.local?.set?.({[STORAGE_KEY]: obj}); } catch (_) {}
+  }
+  function loadStateObj(){
+    return new Promise((resolve)=>{
+      try { chrome?.storage?.local?.get?.([STORAGE_KEY], (res)=>resolve(res[STORAGE_KEY]||null)); }
+      catch(_){ resolve(null); }
+    });
+  }
+
+  // ---- persistence: last tab ----
+  const TAB_KEY = 'sales_last_tab'; // 'sales' | 'default'
+  function saveLastTab(val){ try{ chrome?.storage?.local?.set?.({[TAB_KEY]: val}); }catch(_){ } }
+  function loadLastTab(){
+    return new Promise((resolve)=>{
+      try{ chrome?.storage?.local?.get?.([TAB_KEY], (res)=>resolve(res[TAB_KEY]||'default')); }
+      catch(_){ resolve('default'); }
+    });
+  }
+
+  function ensureTabAndPanel() {
+    const nav = document.querySelector(NAV_SCOPE);
+    if (!nav) return false;
+
+    // Create/insert our Sales tab button if needed
+    let tab = nav.querySelector('.link.__sales');
+    if (!tab) {
+      const firstLink = nav.querySelector('.link');
+      const wrapper = document.createElement('span');
+      wrapper.className = 'link __sales';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Sales Boards';
+      wrapper.appendChild(btn);
+
+      if (firstLink && firstLink.nextSibling) nav.insertBefore(wrapper, firstLink.nextSibling);
+      else nav.appendChild(wrapper);
+      tab = wrapper;
+
+      // Click: show our panel and mark active; remember tab
+      btn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        showPanel(); saveLastTab('sales');
+      });
+
+      // When user clicks any other built-in tab, hide our panel & remember default
+      nav.addEventListener('click', (e) => {
+        const link = e.target.closest('.link');
+        if (!link || link.classList.contains('__sales')) return;
+        hidePanel(); saveLastTab('default');
+      });
+    }
+
+    // Create our panel container after the nav, if missing
+    let panel = document.getElementById(PANEL_ID);
+    if (!panel) {
+      const host = nav.parentElement || document.body;
+      panel = document.createElement('div');
+      panel.id = PANEL_ID;
+      panel.setAttribute('role', 'region');
+      panel.setAttribute('aria-label', 'Sales Boards');
+      panel.style.display = 'none';
+      host.insertBefore(panel, nav.nextSibling);
+      buildUI(panel);
+    }
+
+    // Restore last tab choice
+    loadLastTab().then((which)=>{
+      if (which === 'sales') showPanel();
+    });
+
+    return true;
+  }
+
+  function showPanel() {
+    const nav = document.querySelector(NAV_SCOPE);
+    if (!nav) return;
+    const panel = document.getElementById(PANEL_ID);
+    if (!panel) return;
+
+    panel.style.display = 'block';
+    // Hide router-view content (the first block after nav/panel)
+    const host = nav.parentElement || document.body;
+    const siblings = Array.from(host.children);
+    const i = siblings.indexOf(panel);
+    for (let j = i + 1; j < siblings.length; j++) {
+      const el = siblings[j];
+      if (el && el.style) { el.style.display = 'none'; break; }
+    }
+    nav.querySelectorAll('.link').forEach(node => node.classList.remove(ACTIVE_CLASS));
+    const sales = nav.querySelector('.link.__sales'); if (sales) sales.classList.add(ACTIVE_CLASS);
+  }
+
+  function hidePanel() {
+    const nav = document.querySelector(NAV_SCOPE);
+    if (!nav) return;
+    const panel = document.getElementById(PANEL_ID);
+    if (!panel) return;
+
+    panel.style.display = 'none';
+    const host = nav.parentElement || document.body;
+    const siblings = Array.from(host.children);
+    const i = siblings.indexOf(panel);
+    for (let j = i + 1; j < siblings.length; j++) {
+      const el = siblings[j];
+      if (el && el.style && el.style.display === 'none') { el.style.display = ''; break; }
+    }
+    const sales = nav.querySelector('.link.__sales'); if (sales) sales.classList.remove(ACTIVE_CLASS);
+  }
+
+  function buildUI(panel) {
+    panel.innerHTML = '';
+    const wrap = document.createElement('div'); wrap.className = 'sales-wrap';
+    const form = document.createElement('div'); form.className = 'sales-form';
+
+    // 6 rows: URL + Caption
+    for (let i = 1; i <= 6; i++) {
+      const row = document.createElement('div'); row.className = 'sales-row';
+      const url = document.createElement('input'); url.type = 'url'; url.placeholder = `Image ${i} URL`; url.className = 'sales-url';
+      const cap = document.createElement('input'); cap.type = 'text'; cap.placeholder = `Caption ${i}`; cap.maxLength = 80; cap.className = 'sales-cap';
+      row.appendChild(url); row.appendChild(cap); form.appendChild(row);
+    }
+
+    const actions = document.createElement('div'); actions.className = 'sales-actions';
+    const exportBtn = document.createElement('button'); exportBtn.type = 'button'; exportBtn.textContent = 'Export PNG'; exportBtn.className = 'sales-export';
+    const clearBtn = document.createElement('button'); clearBtn.type = 'button'; clearBtn.textContent = 'Clear'; clearBtn.className = 'sales-clear';
+    actions.appendChild(exportBtn); actions.appendChild(clearBtn); form.appendChild(actions);
+
+    const prev = document.createElement('div'); prev.className = 'sales-preview';
+    const canvas = document.createElement('canvas');
+    canvas.width = OUT_W * DPR; canvas.height = OUT_H * DPR;
+    canvas.style.width = OUT_W + 'px'; canvas.style.height = OUT_H + 'px';
+    prev.appendChild(canvas);
+
+    wrap.appendChild(form); wrap.appendChild(prev); panel.appendChild(wrap);
+
+    const getState = () => ({
+      urls: Array.from(panel.querySelectorAll('.sales-url')).map(i => i.value.trim()),
+      caps: Array.from(panel.querySelectorAll('.sales-cap')).map(i => i.value.trim())
+    });
+    const setState = (s) => {
+      const urls = s?.urls || []; const caps = s?.caps || [];
+      const urlEls = Array.from(panel.querySelectorAll('.sales-url'));
+      const capEls = Array.from(panel.querySelectorAll('.sales-cap'));
+      for (let i = 0; i < urlEls.length; i++) urlEls[i].value = urls[i] || '';
+      for (let i = 0; i < capEls.length; i++) capEls[i].value = caps[i] || '';
+    };
+
+    // Instant update + auto-save on input
+    panel.addEventListener('input', (e) => {
+      if (e.target.classList.contains('sales-url') || e.target.classList.contains('sales-cap')) {
+        const st = getState();
+        saveStateObj(st);
+        render(canvas, st).catch(console.warn);
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      panel.querySelectorAll('.sales-url').forEach(i => i.value = '');
+      panel.querySelectorAll('.sales-cap').forEach(i => i.value = '');
+      saveStateObj(getState());
+      render(canvas, getState()).catch(console.warn);
+    });
+
+    exportBtn.addEventListener('click', async () => {
+      saveStateObj(getState());
+      try {
+        await render(canvas, getState(), { strict: true });
+        const data = canvas.toDataURL('image/png');
+        const a = document.createElement('a'); a.href = data; a.download = 'salesboard_390x260.png';
+        document.body.appendChild(a); a.click(); a.remove();
+      } catch (err) {
+        alert('Could not export PNG. Please use direct imgur links if needed.');
+        console.warn(err);
+      }
+    });
+
+    // First render, then restore saved state and re-render
+    render(canvas, getState()).catch(console.warn);
+    loadStateObj().then((saved) => {
+      if (saved) { setState(saved); render(canvas, getState()).catch(console.warn); }
+    });
+  }
+
+  async function loadImage(url){
+    if(!url) return null;
+    try{
+      const res = await fetch(url,{mode:'cors',cache:'no-cache'});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const blob = await res.blob();
+      if('createImageBitmap' in window) return await createImageBitmap(blob);
+      return await new Promise((resolve,reject)=>{
+        const img=new Image(); img.onload=()=>resolve(img); img.onerror=reject; img.src=URL.createObjectURL(blob);
+      });
+    }catch(e){
+      return await new Promise((resolve)=>{
+        const img=new Image(); img.crossOrigin='anonymous';
+        img.onload=()=>resolve(img); img.onerror=()=>resolve(null); img.src=url;
+      });
+    }
+  }
+
+  function drawContain(ctx,img,dx,dy,dw,dh){
+    if(!img) return;
+    const iw=img.width, ih=img.height;
+    const scale=Math.min(dw/iw,dh/ih);
+    const w=iw*scale, h=ih*scale;
+    const x=dx+(dw-w)/2, y=dy+(dh-h)/2;
+    try{ ctx.drawImage(img,0,0,iw,ih,x,y,w,h);}catch(_){}
+  }
+
+  // Wrap to up to 3 centered lines; ellipsis only if still too long
+  function wrapText(ctx,text,cx,y,maxWidth,lineHeight,maxLines){
+    if(!text) return;
+    const words=text.split(' ');
+    let line='', lines=0;
+    const pushLine=(s)=>{ ctx.fillText(s.trim(), cx, y); y+=lineHeight; lines++; };
+    for(let n=0;n<words.length;n++){
+      const test=line+words[n]+' ';
+      if(ctx.measureText(test).width>maxWidth && n>0){
+        pushLine(line);
+        line=words[n]+' ';
+        if(lines>=maxLines-1){
+          while(ctx.measureText(line+'…').width>maxWidth && line.includes(' ')){
+            line=line.slice(0, line.lastIndexOf(' '));
+          }
+          pushLine((line+'…').trim());
+          return;
+        }
+      } else {
+        line=test;
+      }
+    }
+    pushLine(line);
+  }
+
+  async function render(canvas,state,opts={}){
+    const ctx=canvas.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.save(); ctx.scale(DPR,DPR);
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,OUT_W,OUT_H);
+
+    const imgs=await Promise.all(state.urls.slice(0,6).map(u=>loadImage(u)));
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const idx=r*COLS+c;
+        const x=MARGIN+c*(CELL_W+GUTTER), y=MARGIN+r*(CELL_H+GUTTER);
+        // cell border
+        ctx.strokeStyle='#e6e6e6'; ctx.strokeRect(x+0.5,y+0.5,CELL_W-1,CELL_H-1);
+        // image (contain)
+        drawContain(ctx, imgs[idx], x, y, CELL_W, IMAGE_H);
+        // caption (centered)
+        ctx.fillStyle='#222'; ctx.font='12px Georgia, serif';
+        ctx.textAlign='center'; ctx.textBaseline='top';
+        wrapText(ctx, state.caps[idx]||'', x+CELL_W/2, y+IMAGE_H+2, CELL_W-8, 14, 3);
+      }
+    }
+    ctx.restore();
+    if(opts.strict){ try{ ctx.getImageData(0,0,1,1);}catch(e){ throw e; } }
+  }
+
+  if(ensureTabAndPanel()) return;
+  const obs=new MutationObserver(()=>{ if(ensureTabAndPanel()) obs.disconnect(); });
+  obs.observe(document.documentElement,{childList:true,subtree:true});
+})();
