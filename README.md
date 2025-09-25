@@ -65,9 +65,3 @@ The extension will appear in your toolbar.
 
 - Support the project:  
   [Buy Me a Coffee](https://buymeacoffee.com/ywpaint)
-
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
