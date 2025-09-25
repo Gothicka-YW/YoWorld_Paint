@@ -1,5 +1,16 @@
 # 📜 YoWorld Paint – Changelog
 
+## v2.3 - In Testing
+**Date** 2025-09-24
+- Updated tabs (4): Home, Sales Boards, FAQ, Resources
+- Additional fonts & sizes added to Sales Boards
+- Updated intro Home tab png
+- Tried direct 'Send to Home' button from Sales Board for fast application. Unreliable.
+
+ToDo:
+- Update Sales Boards grid with import of item image/full item name ability.
+- 
+
 ## v2.2 Release - Tested
 **Release Date:** 2025-09-03
 - Added optional donation button under FAQ tab.

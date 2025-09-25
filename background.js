@@ -47,7 +47,7 @@ function loadSettings() {
         if (e.img && e.img.length) {
             updateRedirectRules(e.img[0], e.img[1]);
         } else {
-            updateRedirectRules("https://i.imgur.com/kcVh1HW.png", false);
+            updateRedirectRules("https://i.imgur.com/j146uKh.png", false);
         }
     });
 }

@@ -11,7 +11,7 @@ Use the menu: ⋮ > More tools > Extensions
 
 4. Select "Load unpacked" option
 
-5. Find unpacked extension's folder "YoWorld_Paint v2.2"
+5. Find unpacked extension's folder "YoWorld Paint v2.3"
 
 6. Open the folder
 

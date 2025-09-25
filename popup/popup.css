@@ -1,308 +1,480 @@
-body{font-family:Verdana, Geneva, Tahoma, sans-serif;}
-/* ===== Transitions & Layout (unchanged) ===== */
-.slide-fade-enter-active[data-v-598e593b], .slide-fade-leave-active[data-v-598e593b] {
-  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-.slide-fade-enter[data-v-598e593b], .slide-fade-leave-to[data-v-598e593b] {
-  transform: translateX(25px);
-  opacity: 0;
-}
-.root[data-v-598e593b] {
-  width: 450px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+
+:root{
+  --bg: #4b0c0c;
+  --panel-bg: #fff;
+  --text: #222;
+  --pill-border: #a23b3b;
+  --pill-active: #7a1414;
+  --pill-text: #fff;
+  --accent: #7a1414;
+  --muted: #6b6b6b;
 }
 
-/* ===== Header ===== */
-header[data-v-598e593b] {
-  font-size: 18px;
-  background: #520404;
-  color: white;
-  padding: 10px;
-  text-align: center;
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; }
+body { width: 450px; min-height: 560px; background: var(--panel-bg); color: var(--text); }
+
+.app-header{
+  background: var(--bg);
+  color:#fff; font-weight:700; text-align:center;
+  padding:10px 8px; font-size:18px;
 }
 
-/* ===== Tabs row (with divider, now 3 columns) ===== */
-nav[data-v-598e593b] {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  border-bottom: 1px solid #eee;
+/* Pill tabs */
+nav.tabs{ position:relative; display:flex; align-items:flex-end; gap:10px; padding:8px; background: var(--bg); }
+nav.tabs::after{ content:''; position:absolute; left:8px; right:8px; bottom:6px; height:2px; background: var(--pill-border); opacity:.85; }
+nav.tabs .tab{
+  appearance:none; border:2px solid var(--pill-border);
+  border-radius:12px; padding:7px 14px; min-height:34px;
+  background:transparent; color:#fff; font-weight:600; cursor:pointer;
+  line-height:1.2; transition:background .15s ease, color .15s ease, box-shadow .15s;
+}
+nav.tabs .tab:hover{ box-shadow: inset 0 0 0 9999px rgba(255,255,255,.06); }
+nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text); }
+
+/* Panels */
+#panels{ padding:8px; }
+.panel{ display:none; }
+.panel.is-active{ display:block; }
+
+/* Home */
+.row.switch{ display:flex; align-items:center; gap:12px; margin:8px 0 12px; }
+
+.info-link{ margin-left:auto; color:#6a87c9; text-decoration:none; }
+.info-link:hover{ text-decoration:underline; }
+
+.preview-card{ margin:8px 0; display:flex; justify-content:center; }
+.preview{
+  width:390px; height:260px; border-radius:8px;
+  background: radial-gradient(ellipse at center, #8a0f0f 0%, #2b0000 100%);
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,.25);
+}
+.input-row{ margin:10px 0; display:grid; grid-template-columns: 1fr auto; gap:8px; }
+.input{ width:100%; border:1px solid #cfcfcf; border-radius:6px; padding:8px; outline:none; }
+.input:focus{ border-color:#9bb2f5; box-shadow: 0 0 0 3px rgba(142,169,255,.25); }
+
+.btn{ border:1px solid #cfcfcf; background:#f4f4f4; border-radius:8px; padding:8px 14px; cursor:pointer; }
+.btn:hover{ filter:brightness(.98); }
+.btn-ghost{ background:transparent; }
+.btn-primary{ background: var(--accent); border-color: var(--accent); color:#fff; }
+.btn-primary:hover{ filter:brightness(.95); }
+
+.note{ color:#777; font-size:12px; margin:4px 2px; }
+
+/* Sales Boards */
+.grid{ display:grid; grid-template-columns: 1fr; gap:8px; }
+.grid .cell{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+.controls-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:10px 0; }
+.controls-row .spacer{ flex:1; }
+.sales-preview{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+.sales-preview .tile{
+  display:flex;
+  flex-direction:column;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  overflow:hidden;
+  position:relative;
 }
 
-/* Tab buttons (accent, hover shadow, focus shadow) */
-nav .link button[data-v-598e593b] {
-  border-radius: 0;
-  outline: none;
-  border: none;
-  background: #520404;
-  color: #fff;
-  transition: box-shadow .15s ease, background .15s ease;
-}
-nav .link button[data-v-598e593b]:hover,
-nav .link button[data-v-598e593b]:focus {
-  background: #300202;
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,.15);
-}
-nav .link.router-link-exact-active button[data-v-598e593b] {
-  background: #520404;
-  color: #fff;
-  box-shadow: inset 0 -2px 0 rgba(255,255,255,.2);
+/* Resources */
+.content-pad{ padding:6px 2px; }
+.links{ margin:4px 0 12px 20px; }
+.links li{ margin:6px 0; }
+.uploader-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.rule{ border:none; border-top:1px solid rgba(0,0,0,.15); margin:12px 0; }
+.meta{ color:#555; font-size:12px; }
+.donate{ text-align:center; margin-top:10px; }
+.bmc{ display:inline-block; padding:8px 14px; background:#FFDD00; color:#000; font-weight:700; border-radius:8px; text-decoration:none; box-shadow:0 1px 0 rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12); }
+.bmc:hover{ filter:brightness(.95); }
+.status{ margin-left:6px; opacity:.8; }
+
+
+/* === Red/White YoAI-style theme with pill tabs === */
+:root{
+  --red-700: #6f0f0f;
+  --red-800: #520808;
+  --red-900: #3a0505;
+  --red-accent: #8a1414;
+  --red-border: #b33a3a;
+  --panel-bg: #ffffff;
+  --text: #1f1f1f;
+  --muted: #666;
+  --pill-border: var(--red-border);
+  --pill-active-bg: #ffffff;
+  --pill-inactive-bg: transparent;
+  --pill-text: #ffffff;
+  --pill-active-text: var(--red-accent);
 }
 
-/* Footer */
-footer[data-v-598e593b] {
-  margin-top: auto;
-  padding: 20px;
-  background: #1b1c1d;
-  color: white;
+/* Frame */
+body{ background:#ececec; }
+.app-shell{
+  width: 450px; min-height: 560px;
+  margin: 0 auto;
+  background: var(--panel-bg);
+  border: 2px solid var(--red-border);
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  overflow: hidden;
 }
 
-/* ===== Content & Spacing ===== */
-.content[data-v-4efbad1f] { padding: 20px; }
-.switch-container[data-v-4efbad1f] { display: flex; align-items: center; gap: 10px; }
-.switch-container #enabled[data-v-4efbad1f] { margin-right: 10px; }
-.image[data-v-4efbad1f] {
-  margin: 20px 0;
+/* Header */
+.app-header{
+  background: linear-gradient(180deg,var(--red-700),var(--red-900));
+  color:#fff;
+  font-family: "Cinzel Decorative", serif;
+  font-weight:700;
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
+  letter-spacing:.3px;
+  text-align:center;
+  padding:12px 10px;
+  font-size:20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+/* Pill tabs (two-line capable, Spectral SC) */
+nav.tabs{ background: linear-gradient(180deg,var(--red-800),var(--red-900)); padding:10px 10px 12px; display:flex; gap:10px; align-items:flex-end; position:relative; }
+nav.tabs::after{ content:''; position:absolute; left:10px; right:10px; bottom:8px; height:2px; background: var(--red-border); opacity:.8; }
+nav.tabs .tab{
+  font-family: "Spectral SC", serif;
+  font-weight:600;
+  letter-spacing:.15px;
+  color:#fff;
+  background: var(--pill-inactive-bg);
+  border: 2px solid var(--pill-border);
+  border-radius: 12px;
+  min-height: 40px;
+  padding: 8px 14px;
+  line-height:1.15;
+  white-space: normal;
+  max-width: 150px;
+  text-align:center;
+  cursor:pointer;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+nav.tabs .tab:hover{ box-shadow: inset 0 0 0 9999px rgba(255,255,255,.06); }
+nav.tabs .tab.is-active{
+  background: var(--pill-active-bg);
+  color: var(--pill-active-text);
+  box-shadow: 0 1px 0 rgba(0,0,0,.12);
+}
+
+/* Panels */
+#panels{ padding:12px 12px 16px; }
+.panel{ display:none; color: var(--text); }
+.panel.is-active{ display:block; }
+
+/* Home */
+.row.switch{ display:flex; align-items:center; gap:12px; margin:8px 0 12px; }
+
+.info-link{ margin-left:auto; color:#6a87c9; text-decoration:none; }
+.info-link:hover{ text-decoration:underline; }
+
+.preview-card{ margin:8px 0; display:flex; justify-content:center; }
+.preview{
+  width:390px; height:260px; border-radius:8px;
+  background: radial-gradient(ellipse at center, #8a0f0f 0%, #2b0000 100%);
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,.25);
+}
+.input-row{ margin:12px 0; display:grid; grid-template-columns: 1fr auto; gap:10px; }
+.input{ width:100%; border:1px solid #cfcfcf; border-radius:8px; padding:10px 12px; outline:none; font: inherit; }
+.input:focus{ border-color:#9bb2f5; box-shadow: 0 0 0 3px rgba(142,169,255,.25); }
+
+.btn{ border:1px solid #cfcfcf; background:#f6f6f6; border-radius:10px; padding:10px 14px; cursor:pointer; font:inherit; }
+.btn:hover{ filter:brightness(.98); }
+.btn-ghost{ background:transparent; }
+.btn-primary{ background: var(--red-accent); border-color: var(--red-accent); color:#fff; }
+.btn-primary:hover{ filter:brightness(.95); }
+
+.note{ color:var(--muted); font-size:12px; margin:4px 2px; }
+
+/* Sales */
+.grid{ display:grid; grid-template-columns: 1fr; gap:10px; }
+.grid .cell{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+.controls-row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:12px 0; }
+.controls-row .spacer{ flex:1; }
+.sales-preview{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+.sales-preview .tile{
+  display:flex;
+  flex-direction:column;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  overflow:hidden;
+  position:relative;
+}
+
+/* Resources */
+.content-pad{ padding:6px 2px; }
+.links{ margin:4px 0 12px 20px; }
+.links li{ margin:6px 0; }
+.uploader-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.rule{ border:none; border-top:1px solid rgba(0,0,0,.15); margin:12px 0; }
+.meta{ color:#555; font-size:12px; }
+.donate{ text-align:center; margin-top:10px; }
+.bmc{ display:inline-block; padding:8px 14px; background:#FFDD00; color:#000; font-weight:700; border-radius:8px; text-decoration:none; box-shadow:0 1px 0 rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.12); }
+.bmc:hover{ filter:brightness(.95); }
+.status{ margin-left:6px; opacity:.8; }
+
+
+/* FAQ formatting */
+.faq h3{ font-family:"Spectral SC", serif; font-weight:600; margin:10px 0 6px; color: var(--red-accent); }
+.faq ol{ padding-left: 22px; margin: 6px 0 10px; }
+.faq ul{ padding-left: 20px; margin: 6px 0 10px; }
+.faq li{ margin: 6px 0; }
+.faq code{ background:#f7f7f7; border:1px solid #ececec; border-radius:5px; padding:1px 4px; }
+.faq .tip{ display:flex; gap:10px; align-items:flex-start; background:#fff6d6; border:1px solid #f1e2a9; border-radius:10px; padding:10px 12px; margin-top:12px; }
+.faq .tip .star{ font-size:18px; line-height:18px; }
+
+/* --- Anti-shift: keep layout stable across tabs --- */
+.tabs-content, .tab-panel, .tab-panel .panel-body {
+  overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
+}
+/* Ensure all tab panels share the same min height to avoid vertical jumps */
+.tab-panel {
+  min-height: 520px; /* adjust if your popup is taller/shorter */
+}
+
+/* --- Anti-shift v2: make scroll space consistent & prevent width jump --- */
+#panels { overflow-y: auto; scrollbar-gutter: stable both-edges; }
+.panel  { overflow-y: auto; scrollbar-gutter: stable both-edges; min-height: 480px; }
+
+.sales-preview .tile{
+  display:flex;
+  flex-direction:column;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  overflow:hidden;
+  position:relative;
+}
+.sales-cap{ position:absolute; left:6px; right:6px; bottom:6px; color:#fff; text-align:center; text-shadow:0 1px 2px rgba(0,0,0,.8); pointer-events:none; }
+
+
+/* Sales Boards layout tuning */
+.sales-preview{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 6px;
   width: 100%;
   height: 260px;
-  border: 1px solid #520404;
-  border-radius: 6px;
+  box-sizing: border-box;
 }
-.input-group[data-v-4efbad1f] { display: grid; grid-gap: 15px; padding-bottom: 10px; }
-.info[data-v-e57e3f6c] { padding: 20px; }
-
-/* ===== Accent Variables ===== */
-:root { --accent: #520404; --accent-hover: #300202; }
-
-/* Primary buttons (Set New Image, etc.) */
-button[data-v-4efbad1f] {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family:Verdana, Geneva, Tahoma, sans-serif;
-  transition: box-shadow .15s ease, background .15s ease, transform .02s ease;
+.sales-preview .tile{
+  display:flex;
+  flex-direction:column;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  overflow:hidden;
+  position:relative;
 }
-button[data-v-4efbad1f]:hover,
-button[data-v-4efbad1f]:focus {
-  background: var(--accent-hover);
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,.18);
-}
-button[data-v-4efbad1f]:active { transform: translateY(1px); }
-
-/* ===== Ant Design Switch (Enable Direct) ===== */
-button.ant-switch[data-v-4efbad1f] {
-  background: #888 !important;
-  border-color: #888 !important;
-  color: #fff;
-  transition: background .15s ease, box-shadow .15s ease;
-}
-button.ant-switch[data-v-4efbad1f]:hover {
-  background: #777 !important;
-  border-color: #777 !important;
-}
-button.ant-switch.ant-switch-checked[data-v-4efbad1f] {
-  background: var(--accent) !important;
-  border-color: var(--accent) !important;
-  color: #fff;
-}
-button.ant-switch.ant-switch-checked[data-v-4efbad1f]:hover {
-  background: var(--accent-hover) !important;
-  border-color: var(--accent-hover) !important;
-}
-button.ant-switch[data-v-4efbad1f] .ant-switch-inner { color: #fff; }
-
-/* ===== Sales Boards Tab – tab button styling (kept) ===== */
-nav[data-v-598e593b] .link.__sales { align-self: stretch; }
-nav[data-v-598e593b] .link.__sales > button {
-  display: block;
-  width: 100%;
-  height: 100%;
-  text-align: left;
-  padding: 6px 12px 6px 30px;  /* space for pseudo-icon */
+.sales-preview .tile .img-wrap{
+  flex: 1 1 auto;
   position: relative;
-  background: var(--accent);
+  background: #fff;
+}
+.sales-preview .tile .img-wrap img{
+  position:absolute;
+  top:50%; left:50%;
+  transform: translate(-50%, -50%);
+  max-width: 100%;
+  max-height: 100%;
+}
+.sales-preview .tile .cap-wrap{
+  flex: 0 0 auto;
+  padding: 6px 8px 8px;
+  text-align:center;
+  color: #111;
+  background: rgba(255,255,255,.85);
+  min-height: 28px;
+}
+#panel-sales .btn.btn--primary{
+  background: #6e0d0d;
   color: #fff;
-  border: none;
-  border-radius: 0;
+  border-color: #550909;
+}
+#panel-sales .btn.btn--primary:hover{
+  background:#7f0f0f;
+}
+
+.btn-red{background:#6e0d0d;color:#fff;border:1px solid #540a0a}.btn-red:hover{filter:brightness(1.05)}
+
+/* === Slider Toggle (Enable Redirect) === */
+.row.switch { display:flex; align-items:center; gap:12px; }  /* safe duplicate */
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
-  transition: box-shadow .15s ease, background .15s ease;
-} */
-nav[data-v-598e593b] .link.__sales > button:hover,
-nav[data-v-598e593b] .link.__sales > button:focus {
-  background: var(--accent-hover);
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,.15);
-} */
-nav[data-v-598e593b] .link.__sales > button::before {
+  user-select: none;
+}
+
+/* hide native checkbox (accessible) */
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* track */
+.toggle .slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #cfd3d8;               /* off color */
+  border-radius: 999px;
+  transition: background .2s ease;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+}
+
+/* knob */
+.toggle .slider::before {
   content: "";
   position: absolute;
-  left: 10px; top: 50%;
-  transform: translateY(-50%);
-  width: 16px; height: 16px;
-  border: 2px solid #fff;
-  border-radius: 3px;
-  opacity: 0.95;
-} */
-
-/* ===== Blank Sales panel look (not used by grid, safe to keep) ===== */
-#panel-sales .panel-sales {
-  padding: 20px;
-  margin: 0 20px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
+  width: 20px;
+  height: 20px;
+  left: 2px;
+  top: 2px;
   background: #fff;
-} */
-#panel-sales .panel-sales h2 { margin: 0 0 8px; font-size: 16px; color: #333; }
-#panel-sales .panel-sales .muted { color: #666; font-size: 13px; }
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,.25);
+  transition: transform .2s ease;
+}
 
-/* === Sales Boards Centering === */
-/* #panel-sales .sales-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;      /* center horizontally */
-  justify-content: center;  /* center vertically */
-  gap: 12px;
-} */
-/* #panel-sales .sales-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;      /* center form inputs */
-  gap: 6px;
-} */
-/* #panel-sales .sales-row {
-  display: flex;
-  gap: 6px;
-  justify-content: center;  /* center url+caption pairs */
-} */
-/* #panel-sales .sales-actions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
+/* on state */
+.toggle input:checked + .slider {
+  background: var(--red-accent);      /* theme color */
+}
+.toggle input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+/* keyboard focus */
+.toggle input:focus-visible + .slider {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+/* disabled (optional) */
+.toggle input:disabled + .slider,
+.toggle input:disabled ~ .label {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* label text */
+.toggle .label {
+  font-weight: 500;
+}
+
+/* === FAQ: subheader sizing & typography (v2.3) === */
+#panel-faq h2 {
+  font-size: 1.35rem;
+  line-height: 1.25;
+  margin: 0.6rem 0 0.35rem;
+  letter-spacing: 0.2px;
+}
+#panel-faq h3 {
+  font-size: 1.2rem;
+  line-height: 1.25;
+  margin: 0.5rem 0 0.3rem;
+  letter-spacing: 0.15px;
+}
+#panel-faq p, #panel-faq li {
+  line-height: 1.4;
+  margin: 0.35rem 0;
+}
+#panel-faq .links {
+  padding-left: 1.1rem;
+  margin: 0.4rem 0 0.6rem;
+}
+#panel-faq .links li {
+  margin: 0.25rem 0;
+}
+
+
+/* === Resources: mirror FAQ typography === */
+#panel-resources h2 {
+  font-size: 1.35rem;
+  line-height: 1.25;
+  margin: 0.6rem 0 0.35rem;
+  letter-spacing: 0.2px;
+}
+#panel-resources h3 {
+  font-size: 1.2rem;
+  line-height: 1.25;
+  margin: 0.5rem 0 0.3rem;
+  letter-spacing: 0.15px;
+}
+#panel-resources p, #panel-resources li {
+  line-height: 1.4;
+  margin: 0.35rem 0;
+}
+#panel-resources .links {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.4rem 0 0.6rem;
+}
+#panel-resources .links li {
+  margin: 0.25rem 0;
+  position: relative;
+  padding-left: 1.25rem;
+}
+#panel-resources .links li::before {
+  content: "♥";
+  position: absolute;
+  left: 0;
+  top: 0.05rem;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--red-accent, #e11d48);
+}
+
+/* Footer at bottom of popup */
+.app-footer {
   margin-top: 10px;
-} */
-/* #panel-sales .sales-preview {
+  padding: 8px 10px 12px;
+  border-top: 1px dashed rgba(0,0,0,.12);
+  text-align: center;
+}
+.app-footer .footer-inner {
   display: flex;
-  justify-content: center;
-  margin-top: 12px;
-} */
-
-/* --- Sales Boards: ensure inputs are visible and sized --- */
-/* #panel-sales .sales-row input {
-  background: #fff;
-  color: #111;               /* make typed text visible */
-  box-sizing: border-box;
-} */
-/* Placeholder color (Chrome/Opera/WebKit) */
-/* #panel-sales .sales-row input::placeholder {
-  color: #888;
-  opacity: 1;
-} */
-/* Give both fields a consistent width while centered */
-/* #panel-sales .sales-row .sales-url,
-/* #panel-sales .sales-row .sales-cap {
-  width: 340px;              /* adjust as you like (300–360 fits the 450px popup) */
-  max-width: 100%;
-  flex: 0 0 auto;            /* prevent flex from shrinking */
-} */
-
-/* === Equal-width tabs & stable nav layout (ChatGPT patch) === */
-nav[data-v-598e593b] { display: flex; }
-nav[data-v-598e593b] .link { flex: 1 1 0; min-width: 0; }
-nav[data-v-598e593b] .link > button { width: 100%; }
-
-
-/* === Robust tab width normalization === */
-.root[data-v-598e593b] nav,
-nav[data-v-598e593b],
-.root nav {
-  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
-.root[data-v-598e593b] nav .link,
-nav[data-v-598e593b] .link,
-.root nav .link {
-  flex: 1 1 0 !important;
-  min-width: 0 !important;
-}
-.root[data-v-598e593b] nav .link > button,
-nav[data-v-598e593b] .link > button,
-.root nav .link > button {
-  width: 100% !important;
-  display: block !important;
-}
-
-/* === Ensure How To content uses full width === */
-.howto-wrap {
-  width: 100% !important;
-  max-width: none !important;
-  grid-column: 1 / -1 !important;
-  box-sizing: border-box;
-}
-/* === Lock nav to 3 equal tabs === */
-nav[data-v-598e593b]{
-  display: grid !important;
-  grid-template-columns: repeat(3, 1fr) !important; /* Home | Sales Boards | How To Use */
-  align-items: stretch;
-  gap: 0;
-}
-nav[data-v-598e593b] .link{
-  min-width: 0 !important;
-}
-nav[data-v-598e593b] .link > button{
-  width: 100% !important;
-  display: block !important;
-  white-space: nowrap;              /* labels don’t wrap to a second line */
-}
-
-/* === Make the How To content use full width === */
-.howto-wrap{                         /* my injected container */
-  width: 100% !important;
-  max-width: none !important;
-  box-sizing: border-box;
-}
-.howto-wrap ol{                      /* keep list neat without squeezing */
-  margin: 0 0 10px 18px;
-  padding: 0;
-}
-
-/* Scroll area for the Sales Boards note inside How To */
-.howto-wrap .sales-scroll{
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 6px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #fafafa;
-}
-
-/* === YWP: Sales Boards hover fix (robust) === */
-nav[data-v-598e593b] .link.__sales > button {
-  background: var(--accent);
+.app-footer .bmc-wrap .bmc {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--red-accent, #e11d48);
   color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
 }
-nav[data-v-598e593b] .link.__sales > button:hover,
-nav[data-v-598e593b] .link.__sales > button:focus {
-  background: var(--accent-hover) !important;
-  color: #fff !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+.app-footer p {
+  margin: 0;
+  font-size: 12px;
+  opacity: .85;
 }
 
-
-
-/* === YWP: Tab borders (square, subtle) === */
-nav[data-v-598e593b] .link > button {
-  border: 1px solid rgba(0,0,0,0.22);
-  border-radius: 0;            /* square corners */
-  box-sizing: border-box;
+/* Match Resources "Useful Links" heading to FAQ subheaders */
+#panel-resources h3 {
+  color: var(--text-strong, #111);
+  font-family: inherit;
 }
-nav[data-v-598e593b] .link { margin-right: 8px; }
-nav[data-v-598e593b] .link:last-child { margin-right: 0; }
-nav[data-v-598e593b] .link > button:hover,
-nav[data-v-598e593b] .link > button:focus {
-  border-color: rgba(0,0,0,0.35);
+
+/* === Ensure Resources "Useful Links" heading matches FAQ subheaders === */
+section#panel-faq.panel h3,
+section#panel-resources.panel h3 {
+  color: var(--red-accent, #e11d48);
+  font-weight: 700;
+  font-family: inherit;
 }

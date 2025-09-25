@@ -1,0 +1,25 @@
+/* Local packaged fonts for Sales Boards (MV3-safe) */
+@font-face {
+  font-family: "Pacifico";
+  src: url("./fonts/Pacifico.woff2") format("woff2"),
+       url("./fonts/Pacifico.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Staatliches";
+  src: url("./fonts/Staatliches.woff2") format("woff2"),
+       url("./fonts/Staatliches.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Passion One";
+  src: url("./fonts/PassionOne.woff2") format("woff2"),
+       url("./fonts/PassionOne.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

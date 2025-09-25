@@ -1,20 +1,157 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>YoWorld Paint</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="popup.css" />
-</head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>YoWorld Paint v2.3</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&amp;family=Spectral+SC:wght@600&amp;display=swap" rel="stylesheet"/>
+<link href="popup.css" rel="stylesheet"/>
+<style>
+/* YWP resources tab tweaks */
+#panel-resources #btn-save-uploader{
+  background:#7e1212;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  height:36px;
+  padding:0 16px;
+  min-width:200px;
+  font-weight:600;
+  box-shadow:0 1px 0 rgba(0,0,0,.25);
+  transition:transform .04s ease, filter .12s ease;
+}
+#panel-resources #btn-save-uploader:hover{ filter:brightness(1.06); }
+#panel-resources #btn-save-uploader:active{ transform:translateY(1px); }
+#panel-resources .bmc-wrap{ text-align:center; margin-top:8px; }
+#panel-resources .bmc-wrap a,
+#panel-resources .bmc-wrap button{ display:inline-flex; align-items:center; justify-content:center; margin:0 auto; border-radius:12px; }
+/* Make all uploader rows label-above-input for consistency */
+#panel-resources .form-row{ display:flex; flex-direction:column; gap:4px; }
+#panel-resources .form-row > label{ font-weight:600; }
+</style>
+<link href="fonts.css" rel="stylesheet"/></head>
 <body>
-  <!-- Vue app mounts here (from your compiled popup.js) -->
-  <div id="app"></div>
-
-  <!-- Main popup logic (your original compiled Vue bundle) -->
-  <script src="popup.js"></script>
-  <script src="./ywp-links-override.js"></script>
-  <script src="sales-tab.js"></script>
-  <script src="resizer.js"></script>
-  <script src="../ywp-bypass-bootstrap.js"></script>
+<div class="app-shell">
+<header class="app-header">YoWorld Paint v2.3</header>
+<nav aria-label="Main" class="tabs" role="tablist">
+<button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
+<button aria-selected="false" class="tab" data-tab="sales" role="tab">Sales Boards</button>
+<button aria-selected="false" class="tab" data-tab="faq" role="tab">FAQ</button>
+<button aria-selected="false" class="tab" data-tab="resources" role="tab">Resources</button>
+</nav>
+<main id="panels">
+<section aria-label="Home" class="panel is-active" id="panel-home" role="region">
+<div class="row switch">
+<label class="toggle">
+<input id="enable-redirect" type="checkbox"/>
+<span aria-hidden="true" class="slider"></span>
+<span>Enable Redirect</span>
+</label>
+<a class="info-link" href="https://yoworld.info" rel="noopener" target="_blank">YoWorld Info</a>
+</div>
+<div class="preview-card">
+<div aria-label="Image preview 390×260" class="preview"></div>
+</div>
+<div class="input-row">
+<input class="input" id="img-url" placeholder="https://i.imgur.com/c91XaTP.png" type="text"/>
+<button class="btn btn-primary" id="btn-set">Set New Image</button>
+</div>
+</section>
+<section aria-label="Sales Boards" class="panel" id="panel-sales" role="region">
+<div class="grid">
+<div class="cell"><input class="input" data-role="img-url" data-slot="1" placeholder="Image 1 URL"/><input class="input" data-role="caption" placeholder="Caption 1 (optional)"/></div>
+<div class="cell"><input class="input" data-role="img-url" data-slot="2" placeholder="Image 2 URL"/><input class="input" data-role="caption" placeholder="Caption 2 (optional)"/></div>
+<div class="cell"><input class="input" data-role="img-url" data-slot="3" placeholder="Image 3 URL"/><input class="input" data-role="caption" placeholder="Caption 3 (optional)"/></div>
+<div class="cell"><input class="input" data-role="img-url" data-slot="4" placeholder="Image 4 URL"/><input class="input" data-role="caption" placeholder="Caption 4 (optional)"/></div>
+<div class="cell"><input class="input" data-role="img-url" data-slot="5" placeholder="Image 5 URL"/><input class="input" data-role="caption" placeholder="Caption 5 (optional)"/></div>
+<div class="cell"><input class="input" data-role="img-url" data-slot="6" placeholder="Image 6 URL"/><input class="input" data-role="caption" placeholder="Caption 6 (optional)"/></div>
+</div>
+<div class="controls-row">
+<label>Caption font:
+          <select class="input" id="sales-font">
+<option>Segoe UI (tight)</option>
+<option>Tahoma</option>
+<option>Verdana</option>
+<option>Pacifico</option>
+<option>Staatliches</option>
+<option>Passion One</option>
+</select>
+</label>
+<label>Size:
+          <select class="input" id="sales-size">
+<option value="10">10 px</option>
+<option value="11">11 px</option>
+<option value="12">12 px</option>
+<option value="13">13 px</option>
+<option value="14">14 px</option>
+<option value="15">15 px</option>
+<option value="16">16 px</option>
+</select>
+</label>
+<div class="spacer"></div>
+<button class="btn btn--primary" id="btn-export">Export PNG</button>
+<button class="btn btn--primary" id="btn-clear">Clear</button>
+</div>
+<div class="sales-preview">
+<div class="tile"></div>
+<div class="tile"></div>
+<div class="tile"></div>
+<div class="tile"></div>
+<div class="tile"></div>
+<div class="tile"></div>
+</div>
+</section>
+<section aria-label="FAQ" class="panel" id="panel-faq" role="region">
+<div class="content-pad faq">
+<h3>Making Art in YW</h3>
+<ol>
+<li>Resize your image to <strong>390×260</strong> (width × height) and save as a <code>.png</code>.</li>
+<li>Upload image to your site of preference (i.e. <em>imgur</em>).</li>
+<li>Copy the <strong>direct image link</strong>.</li>
+<li>In the <strong>Home</strong> tab, paste your link into the text box.</li>
+<li>Click the <strong>“Set New Image”</strong> button.</li>
+<li>Enable the redirect option at the top.</li>
+<li>Save your paint board on YoWorld.</li>
+<li>Turn off the enable redirect option at the top.</li>
+<li>Open and re‑save the paint board on YoWorld.</li>
+</ol>
+<h3>Creating Sales Boards</h3>
+<ul>
+<li>Paste up to <strong>6 image URLs</strong> into the image fields (direct links recommended).</li>
+<li>Type a caption for each image — max <strong>80 characters</strong>. (Optional)</li>
+<li>Pick a Caption <strong>Font</strong> and <strong>Size</strong> from the dropdowns for consistent styling. (Optional)</li>
+<li>Watch the live preview update as you paste/type.</li>
+<li>Click <strong>Export PNG</strong> to save your completed board as an image.</li>
+<li>Upload your image to the site of preference.</li>
+<li>Copy the direct link into the Home tab, following "Making Art in YW" instructions.</li>
+</ul>
+<div class="tip">
+<span aria-hidden="true" class="star">⭐</span>
+<div class="tip-body">
+<strong>Tip:</strong> In a new window, go to <em>yoworld.info</em>’s template → click <em>“preview template”</em> → now you can drag the image to the URL box.
+            You can also Copy+Paste the text if you like!
+          </div>
+</div>
+</div>
+</section>
+<section aria-label="Resources" class="panel" id="panel-resources" role="region">
+<h3>Useful Links</h3><ul class="links"><li><a href="https://www.photoroom.com/tools/background-remover" rel="noopener" target="_blank">Background Remover</a></li><li><a href="https://chatgpt.com/" rel="noopener" target="_blank">ChatGPT - Free</a></li><li><a href="https://sora.chatgpt.com/library" rel="noopener" target="_blank">ChatGPT - Paid Image Generator</a></li><li><a href="https://www.photopea.com/" rel="noopener" target="_blank">Chromebook Users Resizing Option</a></li><li><a href="https://www.iloveimg.com/" rel="noopener" target="_blank">Image Editing Tools - Free</a></li><li><a href="https://pinetools.com/resize-image" rel="noopener" target="_blank">Image Resizer</a></li><li><a href="https://pinetools.com/split-image" rel="noopener" target="_blank">Image Splitter For Larger Images</a></li><li><a href="https://imgur.com/upload" rel="noopener" target="_blank">Imgur Upload</a></li><li><a href="https://designer.microsoft.com/image-creator" rel="noopener" target="_blank">Microsoft Designer - Backgrounds</a></li><li><a href="https://nightcafe.art/ru/cajungypsy?refsrc=share" rel="noopener" target="_blank">NightCafe</a></li><li><a href="https://www.textstudio.com/" rel="noopener" target="_blank">TextStudio Font Generator</a></li></ul>
+</section>
+</main><footer class="app-footer"><div class="footer-inner"><div class="bmc-wrap" style="margin-bottom:6px;">
+<a class="bmc" href="https://buymeacoffee.com/ywpaint" rel="noopener" target="_blank">Buy Me a Coffee</a>
+</div><div class="donate" style="text-align:center; margin-top:12px;">
+<p style="margin-top:8px; font-size:12px; opacity:.8; text-align:center;">
+                  Fan tool. Not affiliated with YoWorld or Big Viking Games.<br/>
+                  Report Bugs: <a href="mailto:ywa.paint@gmail.com">ywa.paint@gmail.com</a>
+</p>
+</div></div></footer>
+<script src="popup.js"></script>
+<script src="tabs/home.js"></script>
+<script src="tabs/sales.js"></script>
+<script src="tabs/faq.js"></script>
+</div>
 </body>
 </html>
