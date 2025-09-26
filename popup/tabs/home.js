@@ -20,8 +20,10 @@
 
   function load() {
     chrome.storage.local.get({ img: ["", false] }, (o)=>{
-      const url = Array.isArray(o.img) ? (o.img[0] || "") : "";
+      let url = Array.isArray(o.img) ? (o.img[0] || "") : "";
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
+      // If no image is set, use the sticky default
+      if (!url) url = "https://i.imgur.com/c91XaTP.png";
       if (input)  input.value = url;
       if (toggle) toggle.checked = enabled;
       setPreview(url);

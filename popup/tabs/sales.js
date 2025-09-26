@@ -17,7 +17,8 @@ async function ensureFontLoaded(name, px = 14) {
 
   // Inputs
   const urlInputs = qa('input[data-role="img-url"]').sort((a,b)=> (+(a.dataset.slot||0)) - (+(b.dataset.slot||0)));
-  const capInputs = qa('input[data-role="caption"]');
+  // No caption fields
+  const priceInputs = qa('input[data-role="price"]');
 
   const fontSel  = q('#sales-font');
   const sizeSel  = q('#sales-size');
@@ -26,15 +27,21 @@ async function ensureFontLoaded(name, px = 14) {
 
   const STORE_KEY = 'salesBoard';
   const DEF = {
-    slots: Array.from({ length: 6 }, () => ({ url: '', caption: '' })),
+    slots: Array.from({ length: 6 }, () => ({ url: '', price: '' })),
     font: 'Segoe UI (tight)',
-    size: 12,
+    size: 15
   };
 
   function getState(cb) {
     chrome.storage?.local?.get?.({ [STORE_KEY]: DEF }, (o) => {
       const st = o?.[STORE_KEY] || DEF;
       if (!st.slots || st.slots.length !== 6) st.slots = DEF.slots.slice();
+      // Patch in missing price fields for backward compatibility
+      st.slots.forEach((slot, i) => {
+        if (typeof slot.price === 'undefined') slot.price = '';
+        // Remove caption if present
+        if ('caption' in slot) delete slot.caption;
+      });
       if (!st.font) st.font = DEF.font;
       if (!st.size) st.size = DEF.size;
       cb(st);
@@ -50,11 +57,11 @@ async function ensureFontLoaded(name, px = 14) {
 
   function loadUI() {
     getState((st) => {
-      urlInputs.forEach((inp, i) => { if (inp) inp.value = st.slots[i]?.url || ''; });
-      capInputs.forEach((inp, i) => { if (inp) inp.value = st.slots[i]?.caption || ''; });
-      if (fontSel) fontSel.value = st.font;
-      if (sizeSel) sizeSel.value = String(st.size);
-      render(st);
+  urlInputs.forEach((inp, i) => { if (inp) inp.value = st.slots[i]?.url || ''; });
+  priceInputs.forEach((inp, i) => { if (inp) inp.value = st.slots[i]?.price || ''; });
+  if (fontSel) fontSel.value = st.font;
+  if (sizeSel) sizeSel.value = String(st.size);
+  render(st);
     });
   }
 
@@ -62,33 +69,56 @@ async function ensureFontLoaded(name, px = 14) {
     urlInputs.forEach((inp, i) => {
       const save = () => setState((st) => {
         const copy = st.slots.slice();
-        copy[i] = { url: inp.value.trim(), caption: copy[i]?.caption || '' };
+        copy[i] = { ...copy[i], url: inp.value.trim() };
         return { slots: copy };
       });
       inp.addEventListener('change', save);
-      inp.addEventListener('paste', () => setTimeout(save, 0));
       inp.addEventListener('blur', save);
+
+      // Paste image from clipboard support
+      inp.addEventListener('paste', async (e) => {
+        if (e.clipboardData && e.clipboardData.items) {
+          const item = Array.from(e.clipboardData.items).find(it => it.type.startsWith('image/'));
+          if (item) {
+            const file = item.getAsFile();
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = function(ev) {
+                inp.value = ev.target.result;
+                save();
+              };
+              reader.readAsDataURL(file);
+              e.preventDefault();
+              return;
+            }
+          }
+        }
+        // fallback: paste as text
+        setTimeout(save, 0);
+      });
     });
 
-    capInputs.forEach((inp, i) => {
+
+
+    priceInputs.forEach((inp, i) => {
       const save = () => setState((st) => {
         const copy = st.slots.slice();
-        copy[i] = { url: copy[i]?.url || '', caption: inp.value.trim() };
+        copy[i] = { ...copy[i], price: inp.value.trim() };
         return { slots: copy };
       });
       inp.addEventListener('input', save);
       inp.addEventListener('blur', save);
     });
 
-    if (fontSel) fontSel.addEventListener('change', () => setState({ font: fontSel.value }));
-    if (sizeSel) sizeSel.addEventListener('change', () => setState({ size: Math.max(8, Math.min(16, parseInt(sizeSel.value,10) || 12)) }));
+  if (fontSel) fontSel.addEventListener('change', () => setState({ font: fontSel.value }));
+  if (sizeSel) sizeSel.addEventListener('change', () => setState({ size: Math.max(10, Math.min(16, parseInt(sizeSel.value,10) || 15)) }));
 
     if (btnClear) btnClear.addEventListener('click', () => {
       // reset storage/state
-      setState({ slots: Array.from({ length: 6 }, () => ({ url: '', caption: '' })) });
+      setState({ slots: Array.from({ length: 6 }, () => ({ url: '', caption: '', price: '' })) });
       // immediately clear visible inputs and preview
-      urlInputs.forEach(inp => inp && (inp.value = ''));
-      capInputs.forEach(inp => inp && (inp.value = ''));
+  urlInputs.forEach(inp => inp && (inp.value = ''));
+  priceInputs.forEach(inp => inp && (inp.value = ''));
       const wrap = q('.sales-preview') || PANEL;
       if (wrap) wrap.innerHTML = '';
     });
@@ -112,16 +142,23 @@ async function ensureFontLoaded(name, px = 14) {
       imgWrap.appendChild(img);
       const capWrap = document.createElement('div');
       capWrap.className = 'cap-wrap';
-      const cap = (st.slots[i].caption || '').trim();
-      if (cap) {
-        capWrap.style.fontFamily = `\"${st.font}\", Tahoma, Verdana, sans-serif`;
-        capWrap.style.fontSize = (st.size || 12) + 'px';
-        capWrap.textContent = cap;
-      } else {
-        capWrap.innerHTML = '&nbsp;';
-      }
+      // No caption: maximize image area
       tile.appendChild(imgWrap);
-      tile.appendChild(capWrap);
+      // Price/label display with font selection and size
+      const price = (st.slots[i].price || '').trim();
+      const priceWrap = document.createElement('div');
+      priceWrap.className = 'price-wrap';
+      if (price) {
+        priceWrap.style.fontFamily = `"${st.font}", Tahoma, Verdana, sans-serif`;
+        priceWrap.style.fontSize = (st.size || 15) + 'px';
+        priceWrap.style.color = '#7e1212';
+        priceWrap.style.fontWeight = 'normal';
+        priceWrap.style.marginTop = '2px';
+        priceWrap.textContent = price;
+      } else {
+        priceWrap.innerHTML = '&nbsp;';
+      }
+      tile.appendChild(priceWrap);
       wrap.appendChild(tile);
     }
   }
@@ -191,7 +228,8 @@ async function ensureFontLoaded(name, px = 14) {
       const cellH = (CANVAS_H - GUTTER * (ROWS + 1)) / ROWS;
       const imgH  = cellH - CAP_H;
 
-      await ensureFontLoaded(st.font, st.size || 12);
+
+  await ensureFontLoaded(st.font, st.size || 15);
       const imgs = await Promise.all(st.slots.map(s => loadImageSafe(s.url)));
       imgs.forEach((img, idx) => {
         const col = idx % COLS;
@@ -220,33 +258,21 @@ async function ensureFontLoaded(name, px = 14) {
           ctx.drawImage(img, dx, dy, w, h);
         }
 
-        ctx.fillStyle = CAP_BG;
-        ctx.fillRect(x, y + imgH, cellW, CAP_H);
+        ctx.restore();
 
-        const cap = (st.slots[idx].caption || '').trim();
-        if (cap) {
-          let size = st.size || 12;
-          size = Math.max(8, Math.min(16, size));
+        // Price/label field (below image)
+        const price = (st.slots[idx].price || '').trim();
+        if (price) {
+          ctx.save();
+          const size = st.size || 15;
           ctx.font = `${size}px "${st.font}", Tahoma, Verdana, sans-serif`;
-          const maxWidth = cellW - 10;
-          let lines = wrapText(ctx, cap, maxWidth, 2);
-          while (lines.length === 1 && ctx.measureText(lines[0]).width > maxWidth && size > 10) {
-            size -= 1;
-            ctx.font = `${size}px "${st.font}", Tahoma, Verdana, sans-serif`;
-            lines = wrapText(ctx, cap, maxWidth, 2);
-          }
-          ctx.fillStyle = CAP_COLOR;
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          if (lines.length === 1) {
-            ctx.fillText(lines[0], x + cellW / 2, y + imgH + CAP_H / 2 + 0.5);
-          } else {
-            const mid = y + imgH + CAP_H / 2;
-            ctx.fillText(lines[0], x + cellW / 2, mid - size * 0.6);
-            ctx.fillText(lines[1], x + cellW / 2, mid + size * 0.6);
-          }
+          ctx.fillStyle = '#7e1212';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(price, x + cellW / 2, y + imgH + CAP_H / 2);
+          ctx.restore();
         }
 
-        ctx.restore();
         ctx.save();
         roundRect(ctx, x, y, cellW, cellH, RADIUS);
         ctx.strokeStyle = '#d9d9d9'; ctx.lineWidth = 1; ctx.stroke();

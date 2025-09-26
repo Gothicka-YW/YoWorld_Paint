@@ -62,34 +62,53 @@
 </section>
 <section aria-label="Sales Boards" class="panel" id="panel-sales" role="region">
 <div class="grid">
-<div class="cell"><input class="input" data-role="img-url" data-slot="1" placeholder="Image 1 URL"/><input class="input" data-role="caption" placeholder="Caption 1 (optional)"/></div>
-<div class="cell"><input class="input" data-role="img-url" data-slot="2" placeholder="Image 2 URL"/><input class="input" data-role="caption" placeholder="Caption 2 (optional)"/></div>
-<div class="cell"><input class="input" data-role="img-url" data-slot="3" placeholder="Image 3 URL"/><input class="input" data-role="caption" placeholder="Caption 3 (optional)"/></div>
-<div class="cell"><input class="input" data-role="img-url" data-slot="4" placeholder="Image 4 URL"/><input class="input" data-role="caption" placeholder="Caption 4 (optional)"/></div>
-<div class="cell"><input class="input" data-role="img-url" data-slot="5" placeholder="Image 5 URL"/><input class="input" data-role="caption" placeholder="Caption 5 (optional)"/></div>
-<div class="cell"><input class="input" data-role="img-url" data-slot="6" placeholder="Image 6 URL"/><input class="input" data-role="caption" placeholder="Caption 6 (optional)"/></div>
+<div class="cell">
+  <input class="input" data-role="img-url" data-slot="1" placeholder="Image 1 URL or Paste Image"/>
+  <input class="input" data-role="price" placeholder="Price or Label"/>
+</div>
+<div class="cell">
+  <input class="input" data-role="img-url" data-slot="2" placeholder="Image 2 URL or Paste Image"/>
+  <input class="input" data-role="price" placeholder="Price or Label"/>
+</div>
+<div class="cell">
+  <input class="input" data-role="img-url" data-slot="3" placeholder="Image 3 URL or Paste Image"/>
+  <input class="input" data-role="price" placeholder="Price or Label"/>
+</div>
+<div class="cell">
+  <input class="input" data-role="img-url" data-slot="4" placeholder="Image 4 URL or Paste Image"/>
+  <input class="input" data-role="price" placeholder="Price or Label"/>
+</div>
+<div class="cell">
+  <input class="input" data-role="img-url" data-slot="5" placeholder="Image 5 URL or Paste Image"/>
+  <input class="input" data-role="price" placeholder="Price or Label"/>
+</div>
+<div class="cell">
+  <input class="input" data-role="img-url" data-slot="6" placeholder="Image 6 URL or Paste Image"/>
+  <input class="input" data-role="price" placeholder="Price or Label"/>
+</div>
 </div>
 <div class="controls-row">
-<label>Caption font:
-          <select class="input" id="sales-font">
-<option>Segoe UI (tight)</option>
-<option>Tahoma</option>
-<option>Verdana</option>
-<option>Pacifico</option>
-<option>Staatliches</option>
-<option>Passion One</option>
-</select>
+<label>Price/Label Font:
+  <select class="input" id="sales-font">
+    <option>Segoe UI (tight)</option>
+    <option>Tahoma</option>
+    <option>Verdana</option>
+    <option>Pacifico</option>
+    <option>Staatliches</option>
+    <option>Passion One</option>
+    <option>Dancing Script</option>
+  </select>
 </label>
 <label>Size:
-          <select class="input" id="sales-size">
-<option value="10">10 px</option>
-<option value="11">11 px</option>
-<option value="12">12 px</option>
-<option value="13">13 px</option>
-<option value="14">14 px</option>
-<option value="15">15 px</option>
-<option value="16">16 px</option>
-</select>
+  <select class="input" id="sales-size">
+    <option value="10">10 px</option>
+    <option value="11">11 px</option>
+    <option value="12">12 px</option>
+    <option value="13">13 px</option>
+    <option value="14">14 px</option>
+    <option value="15">15 px</option>
+    <option value="16">16 px</option>
+  </select>
 </label>
 <div class="spacer"></div>
 <button class="btn btn--primary" id="btn-export">Export PNG</button>
@@ -134,6 +153,12 @@
 <strong>Tip:</strong> In a new window, go to <em>yoworld.info</em>’s template → click <em>“preview template”</em> → now you can drag the image to the URL box.
             You can also Copy+Paste the text if you like!
           </div>
+</div>
+<div class="tip">
+  <span aria-hidden="true" class="star">⭐</span>
+  <div class="tip-body">
+    <strong>Tip:</strong> On <em>yoworld.info</em>'s template, use <kbd>Win+Shift+S</kbd> to screenshot the item card (including picture and name), then simply paste (<kbd>Ctrl+V</kbd>) it into a Sales Board image field in this extension.
+  </div>
 </div>
 </div>
 </section>
