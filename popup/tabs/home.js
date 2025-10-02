@@ -160,15 +160,10 @@ async function resizeExactPngFromFile(file, w, h){
 
   // Drag & drop
   if (dropZone){
-    // Open file picker once; guard blocks a rapid second trigger some browsers fire via label bubbling
-    dropZone.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      if (!fileEl) return;
-      if (dropZone.__opening) return; // guard
-      dropZone.__opening = true;
-      try { fileEl.click(); } catch(_){}
-      setTimeout(()=>{ dropZone.__opening = false; }, 600);
-    });
+    // Simplified: element is no longer inside a label, so a direct click triggers once
+    function openPicker(){ if (fileEl) { try { fileEl.click(); } catch(_){} } }
+    dropZone.addEventListener('click', (ev) => { ev.stopPropagation(); openPicker(); });
+    dropZone.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openPicker(); } });
     ['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect='copy'; dropZone.classList.add('drag'); }));
     ['dragleave','dragend'].forEach(ev => dropZone.addEventListener(ev, e => { dropZone.classList.remove('drag'); }));
     dropZone.addEventListener('drop', e => {

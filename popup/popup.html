@@ -78,13 +78,13 @@
         <option value="imgbb">ImgBB</option>
       </select>
     </label>
-    <label style="font-size:12px; font-weight:600; display:flex; flex-direction:column; gap:4px; flex:1;">
-        Image
-        <div id="qu-drop" class="qu-drop">
-          <input id="qu-file" type="file" accept="image/*" style="display:none;" />
-          <span class="qu-drop-hint">Click or Drop / Paste Image</span>
-        </div>
-      </label>
+    <div style="font-size:12px; font-weight:600; display:flex; flex-direction:column; gap:4px; flex:1;">
+      <span>Image</span>
+      <div id="qu-drop" class="qu-drop" role="button" tabindex="0" aria-label="Select image (click, drop or paste)">
+        <input id="qu-file" type="file" accept="image/*" style="display:none;" />
+        <span class="qu-drop-hint">Click or Drop / Paste Image</span>
+      </div>
+    </div>
   </div>
   <div style="display:flex; gap:8px;">
     <button id="qu-upload" class="btn btn-primary" style="flex:1;">Upload</button>
@@ -242,7 +242,7 @@
 </div>
 </section>
 <section aria-label="Resources" class="panel" id="panel-resources" role="region">
-<h3>Useful Links</h3><ul class="links"><li><a href="https://www.photoroom.com/tools/background-remover" rel="noopener" target="_blank">Background Remover</a></li><li><a href="https://chatgpt.com/" rel="noopener" target="_blank">ChatGPT - Free</a></li><li><a href="https://sora.chatgpt.com/library" rel="noopener" target="_blank">ChatGPT - Paid Image Generator</a></li><li><a href="https://www.photopea.com/" rel="noopener" target="_blank">Chromebook Users Resizing Option</a></li><li><a href="https://www.iloveimg.com/" rel="noopener" target="_blank">Image Editing Tools - Free</a></li><li><a href="https://pinetools.com/resize-image" rel="noopener" target="_blank">Image Resizer</a></li><li><a href="https://pinetools.com/split-image" rel="noopener" target="_blank">Image Splitter For Larger Images</a></li><li><a href="https://imgur.com/upload" rel="noopener" target="_blank">Imgur Upload</a></li><li><a href="https://designer.microsoft.com/image-creator" rel="noopener" target="_blank">Microsoft Designer - Backgrounds</a></li><li><a href="https://nightcafe.art/ru/cajungypsy?refsrc=share" rel="noopener" target="_blank">NightCafe</a></li><li><a href="https://www.textstudio.com/" rel="noopener" target="_blank">TextStudio Font Generator</a></li></ul>
+<h3>Useful Links</h3><ul class="links"><li><a href="https://www.photoroom.com/tools/background-remover" rel="noopener" target="_blank">Background Remover</a></li><li><a href="https://chatgpt.com/" rel="noopener" target="_blank">ChatGPT - Free</a></li><li><a href="https://sora.chatgpt.com/library" rel="noopener" target="_blank">ChatGPT - Paid Image Generator</a></li><li><a href="https://www.photopea.com/" rel="noopener" target="_blank">Chromebook Users Resizing Option</a></li><li><a href="https://www.iloveimg.com/" rel="noopener" target="_blank">Image Editing Tools - Free</a></li><li><a href="https://pinetools.com/resize-image" rel="noopener" target="_blank">Image Resizer</a></li><li><a href="https://pinetools.com/split-image" rel="noopener" target="_blank">Image Splitter For Larger Images</a></li><li><a href="https://imgbb.com/" rel="noopener" target="_blank">ImgBB - Image Host</a></li><li><a href="https://imgur.com/upload" rel="noopener" target="_blank">Imgur Upload</a></li><li><a href="https://designer.microsoft.com/image-creator" rel="noopener" target="_blank">Microsoft Designer - Backgrounds</a></li><li><a href="https://nightcafe.art/ru/cajungypsy?refsrc=share" rel="noopener" target="_blank">NightCafe</a></li><li><a href="https://www.textstudio.com/" rel="noopener" target="_blank">TextStudio Font Generator</a></li></ul>
 <div class="uploader-settings" style="margin-top:18px; border-top:1px solid #e5e7eb; padding-top:14px;">
   <h3 style="margin:0 0 8px; font-size:15px;">Uploader Settings</h3>
   <p style="font-size:12px; opacity:.75; margin:0 0 10px;">Store your <strong>ImgBB API key</strong> (used when Host = ImgBB in Quick Upload). Key is saved in Chrome sync storage.</p>
@@ -250,8 +250,9 @@
     <label for="res-imgbb-key">ImgBB API Key</label>
     <input id="res-imgbb-key" type="text" class="input" placeholder="Paste key..." />
   </div>
-  <div style="display:flex; gap:10px; align-items:center;">
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
     <button id="btn-save-imgbb" class="btn btn-primary" style="background:#7e1212; color:#fff; padding:6px 14px; border-radius:10px; border:1px solid #7e1212; font-weight:600;">Save Key</button>
+  <a href="https://api.imgbb.com/" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Get your API key here</a>
     <span id="res-imgbb-status" style="font-size:12px; min-height:16px;"></span>
   </div>
 </div>

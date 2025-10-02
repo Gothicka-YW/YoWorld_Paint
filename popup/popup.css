@@ -115,6 +115,11 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
 .btn-primary{ background: var(--accent); border-color: var(--accent); color:#fff; }
 .btn-primary:hover{ filter:brightness(.95); }
 
+/* Subtle secondary button */
+.btn-secondary{ background:#fafafa; border-color:#e6e6e6; color: var(--red-accent); text-decoration:none; }
+.btn-secondary:hover{ background:#f2f2f2; filter:brightness(.99); }
+.btn-sm{ padding:6px 10px; font-size:12px; border-radius:8px; }
+
 .note{ color:#777; font-size:12px; margin:4px 2px; }
 
 /* Sales Boards */
