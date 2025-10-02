@@ -128,6 +128,7 @@ async function resizeExactPngFromFile(file, w, h){
 
   let lastUrl = '';
   let clipboardBlob = null;
+  let pickedFile = null; // single source for chosen/dropped file
 
   function setStatus(msg, isErr){ if (statusEl){ statusEl.textContent = msg || ''; statusEl.style.color = isErr ? '#b00020' : '#6b7280'; } }
   function setResult(url){ if (resultEl){ if (url){ resultEl.style.display='block'; resultEl.textContent = url; } else { resultEl.style.display='none'; resultEl.textContent=''; } } }
@@ -159,23 +160,38 @@ async function resizeExactPngFromFile(file, w, h){
 
   // Drag & drop
   if (dropZone){
-    dropZone.addEventListener('click', (ev) => { ev.stopPropagation(); if (fileEl) fileEl.click(); });
+    // Open file picker once; guard blocks a rapid second trigger some browsers fire via label bubbling
+    dropZone.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if (!fileEl) return;
+      if (dropZone.__opening) return; // guard
+      dropZone.__opening = true;
+      try { fileEl.click(); } catch(_){}
+      setTimeout(()=>{ dropZone.__opening = false; }, 600);
+    });
     ['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect='copy'; dropZone.classList.add('drag'); }));
     ['dragleave','dragend'].forEach(ev => dropZone.addEventListener(ev, e => { dropZone.classList.remove('drag'); }));
     dropZone.addEventListener('drop', e => {
       e.preventDefault(); dropZone.classList.remove('drag');
-      const f = e.dataTransfer?.files?.[0]; if (f){ fileEl.files = e.dataTransfer.files; setStatus('File ready.'); showToast('Image added'); }
+      const f = e.dataTransfer?.files?.[0];
+      if (f){
+        pickedFile = f; // cannot assign to fileEl.files (read-only)
+        setStatus('File ready.');
+        showToast('Image added');
+      }
     });
   }
 
   // Reflect file selection changes (first click reliability)
   fileEl.addEventListener('change', () => {
-    if (fileEl.files && fileEl.files[0]){ setStatus('File selected.'); showToast('Image selected'); }
+    pickedFile = (fileEl.files && fileEl.files[0]) || null;
+    if (pickedFile){ setStatus('File selected.'); showToast('Image selected'); }
   });
 
   btnUpload.addEventListener('click', async () => {
-    const host = hostSel.value;
-    const file = fileEl.files[0] || clipboardBlob;
+  const host = hostSel.value;
+  // Prefer fresh file input; fall back to dropped/pasted
+  const file = (fileEl.files && fileEl.files[0]) || pickedFile || clipboardBlob;
     if (!file){ setStatus('Select or paste an image.', true); return; }
     if (host === 'imgbb'){
       const { imgbbKey } = await chrome.storage.sync.get(['imgbbKey']);
@@ -198,6 +214,8 @@ async function resizeExactPngFromFile(file, w, h){
         const btn = document.getElementById('btn-set'); if (btn) btn.click();
       }
       showToast('Upload complete');
+      // reset transient sources after success
+      pickedFile = null; clipboardBlob = null; if (fileEl) fileEl.value = '';
     } catch(e){ setStatus('Upload failed: ' + e.message, true); }
     finally { btnUpload.disabled = false; }
   });
