@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>YoWorld Paint v2.3</title>
+<title>YoWorld Paint v3.0</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&amp;family=Spectral+SC:wght@600&amp;display=swap" rel="stylesheet"/>
@@ -41,11 +41,15 @@
 .toast{ background:#111; color:#fff; font-size:12px; padding:6px 10px; border-radius:6px; box-shadow:0 4px 14px rgba(0,0,0,.3); opacity:0; animation:toast-in .25s ease forwards, toast-out .35s ease forwards 3.2s; letter-spacing:.25px; }
 @keyframes toast-in{ from{ transform:translate(-50%,6px); opacity:0;} to{ transform:translate(-50%,0); opacity:1;} }
 @keyframes toast-out{ to{ opacity:0; transform:translate(-50%,4px);} }
+/* Quick Upload header */
+.qu-head{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid #f0eaea; border-radius:10px; background:#fff9f9; }
+.qu-head .qu-title{ font-family:'Pacifico', system-ui, sans-serif; font-weight:400; font-size:15px; color:#7e1212; letter-spacing:.2px; }
+.qu-head .qu-sub{ font-size:12px; color:#6b7280; }
 </style>
 <link href="fonts.css" rel="stylesheet"/></head>
 <body>
 <div class="app-shell">
-<header class="app-header">YoWorld Paint v2.3</header>
+<header class="app-header">YoWorld Paint v3.0</header>
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
 <button aria-selected="false" class="tab" data-tab="sales" role="tab">Sales Boards</button>
@@ -71,6 +75,10 @@
 </div>
 <hr style="margin:12px 0; opacity:.25;"/>
 <div id="quick-upload" style="display:flex; flex-direction:column; gap:10px;">
+  <div class="qu-head">
+    <div class="qu-title">Quick Image Uploader</div>
+    <div class="qu-sub">Paste, drag & drop, or click to select. We’ll auto‑resize to 390×260 and upload to your chosen host.</div>
+  </div>
   <div style="display:flex; gap:8px; align-items:center;">
     <label style="font-size:12px; font-weight:600; display:flex; flex-direction:column; gap:4px; flex:1;">
       Host

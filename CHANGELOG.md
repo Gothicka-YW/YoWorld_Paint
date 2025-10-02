@@ -1,5 +1,33 @@
 # 📜 YoWorld Paint – Changelog
 
+## v3.0 — Release
+**Release Date:** 2025-10-01
+
+Highlights
+- New Quick Image Uploader on Home
+  - Click, drag & drop, or paste images directly
+  - Auto‑resizes to 390×260 PNG before upload
+  - ImgBB‑only upload with API key stored in Chrome sync
+  - Auto‑copy link on success + optional “Auto‑set as Current Image”
+  - Subtle status toasts for paste/drop/select/upload events
+  - Keyboard accessible (Enter/Space) and improved drop zone behavior
+  - Polished header with Pacifico font for the title
+- Resources updates
+  - Added “ImgBB – Image Host” (imgbb.com) to Useful Links (alphabetical)
+  - Added subtle secondary button: “Get your API key here” → api.imgbb.com
+- Provider/permissions cleanup
+  - Removed Catbox support and related host permissions
+  - Simplified uploader to ImgBB only
+- UX fixes
+  - File picker opens once (no double dialog)
+  - First attempt upload reliability (no need to retry)
+- Version bump
+  - Manifest version set to 3.0; UI title/header updated to v3.0
+
+Notes
+- Manual testing completed in the popup and Resources tabs.
+
+
 ## v2.3 - In Testing
 **Date** 2025-09-24
 - Updated tabs (4): Home, Sales Boards, FAQ, Resources
