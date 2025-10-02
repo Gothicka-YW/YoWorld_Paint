@@ -4,7 +4,9 @@ export async function getSettings() {
       uploadcarePublicKey: "",
       uploadTimeoutMs: 25000,
       prefer: "uploadcare",
-      storeUploads: "auto"
+      storeUploads: "auto",
+  quickUploadHost: "imgbb",
+      imgbbKey: ""
     });
     return data;
   } catch (err) {
@@ -13,7 +15,9 @@ export async function getSettings() {
       uploadcarePublicKey: "",
       uploadTimeoutMs: 25000,
       prefer: "uploadcare",
-      storeUploads: "auto"
+      storeUploads: "auto",
+  quickUploadHost: "imgbb",
+      imgbbKey: ""
     };
   }
 }

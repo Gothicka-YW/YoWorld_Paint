@@ -31,7 +31,8 @@
     "https://*.yoworld.com/*",
     "https://api.yoworld.info/*",
     "https://yoworld.com/*",
-    "https://yoworld.info/*"
+    "https://yoworld.info/*",
+    "https://api.imgbb.com/*"
   ],
   "version_name": "v2.3",
   "content_scripts": [

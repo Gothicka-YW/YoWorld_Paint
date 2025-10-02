@@ -1,0 +1,2 @@
+// Catbox support removed.
+export {};

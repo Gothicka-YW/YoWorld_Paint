@@ -85,3 +85,139 @@ async function tryDirectYoWorld(dataURL){
     });
   }catch(e){ return null; }
 }
+
+// --- Added: exact resize helper (referenced previously but missing) ---
+async function resizeExactPngFromFile(file, w, h){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const fr = new FileReader();
+    fr.onload = e => { img.src = e.target.result; };
+    fr.onerror = reject;
+    img.onload = () => {
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      const ctx = cv.getContext('2d');
+      ctx.clearRect(0,0,w,h);
+      // Fit contain inside target, then center (avoid distortion)
+      const scale = Math.min(w / img.width, h / img.height);
+      const dw = img.width * scale; const dh = img.height * scale;
+      const dx = (w - dw)/2; const dy = (h - dh)/2;
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, dx, dy, dw, dh);
+      cv.toBlob(b => {
+        if (!b) return reject(new Error('Canvas toBlob failed'));
+        resolve(b);
+      }, 'image/png');
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+// --- Quick Upload Integration ---
+(function(){
+  const hostSel = document.getElementById('qu-host');
+  const fileEl = document.getElementById('qu-file');
+  const dropZone = document.getElementById('qu-drop');
+  const btnUpload = document.getElementById('qu-upload');
+  const btnCopy = document.getElementById('qu-copy');
+  const statusEl = document.getElementById('qu-status');
+  const resultEl = document.getElementById('qu-result');
+  const warnEl = document.getElementById('qu-warning');
+  const autoChk = document.getElementById('qu-autoset');
+  if (!hostSel || !fileEl || !btnUpload) return;
+
+  let lastUrl = '';
+  let clipboardBlob = null;
+
+  function setStatus(msg, isErr){ if (statusEl){ statusEl.textContent = msg || ''; statusEl.style.color = isErr ? '#b00020' : '#6b7280'; } }
+  function setResult(url){ if (resultEl){ if (url){ resultEl.style.display='block'; resultEl.textContent = url; } else { resultEl.style.display='none'; resultEl.textContent=''; } } }
+
+  // Load preferred host & key presence
+  chrome.storage.sync.get(['quickUploadHost','imgbbKey'], data => {
+    if (data.quickUploadHost && hostSel) hostSel.value = data.quickUploadHost;
+    toggleKeyWarning();
+  });
+
+  hostSel.addEventListener('change', () => {
+    chrome.storage.sync.set({ quickUploadHost: hostSel.value });
+    toggleKeyWarning();
+  });
+
+  document.addEventListener('paste', e => {
+    const item = [...(e.clipboardData?.items||[])].find(i => i.type && i.type.startsWith('image/'));
+    if (item){
+      clipboardBlob = item.getAsFile();
+      setStatus('Image pasted. Ready to upload.');
+      showToast('Pasted image captured');
+    }
+  });
+
+  btnCopy.addEventListener('click', async () => {
+    if (!lastUrl) return;
+    try { await navigator.clipboard.writeText(lastUrl); setStatus('Link copied.'); } catch { setStatus('Copy failed—select manually.', true); }
+  });
+
+  // Drag & drop
+  if (dropZone){
+    dropZone.addEventListener('click', (ev) => { ev.stopPropagation(); if (fileEl) fileEl.click(); });
+    ['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); e.dataTransfer.dropEffect='copy'; dropZone.classList.add('drag'); }));
+    ['dragleave','dragend'].forEach(ev => dropZone.addEventListener(ev, e => { dropZone.classList.remove('drag'); }));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('drag');
+      const f = e.dataTransfer?.files?.[0]; if (f){ fileEl.files = e.dataTransfer.files; setStatus('File ready.'); showToast('Image added'); }
+    });
+  }
+
+  // Reflect file selection changes (first click reliability)
+  fileEl.addEventListener('change', () => {
+    if (fileEl.files && fileEl.files[0]){ setStatus('File selected.'); showToast('Image selected'); }
+  });
+
+  btnUpload.addEventListener('click', async () => {
+    const host = hostSel.value;
+    const file = fileEl.files[0] || clipboardBlob;
+    if (!file){ setStatus('Select or paste an image.', true); return; }
+    if (host === 'imgbb'){
+      const { imgbbKey } = await chrome.storage.sync.get(['imgbbKey']);
+      if (!imgbbKey){ setStatus('ImgBB key missing.', true); toggleKeyWarning(true); return; }
+    }
+    btnUpload.disabled = true; btnCopy.disabled = true; setStatus('Resizing…'); setResult(''); lastUrl='';
+    try {
+      const resized = await resizeExactPngFromFile(file, 390, 260);
+      setStatus('Uploading…');
+      const blobFile = new File([resized], file.name || 'image.png', { type:'image/png' });
+      const { uploadImage } = await import('../../src/lib/uploader.js');
+      const url = await uploadImage(blobFile, { host });
+      lastUrl = url; setResult(url);
+      try { await navigator.clipboard.writeText(url); setStatus('Uploaded & copied.'); btnCopy.disabled=false; }
+      catch { setStatus('Uploaded. Use Copy button.', true); btnCopy.disabled=false; }
+      // Auto-set as current image
+      if (autoChk && autoChk.checked){
+        const mainInput = document.getElementById('img-url');
+        if (mainInput){ mainInput.value = url; mainInput.dispatchEvent(new Event('input', {bubbles:true})); }
+        const btn = document.getElementById('btn-set'); if (btn) btn.click();
+      }
+      showToast('Upload complete');
+    } catch(e){ setStatus('Upload failed: ' + e.message, true); }
+    finally { btnUpload.disabled = false; }
+  });
+
+  function toggleKeyWarning(force){
+    chrome.storage.sync.get(['imgbbKey'], d => {
+      const missing = !d.imgbbKey && hostSel.value === 'imgbb';
+      if (warnEl) warnEl.style.display = (missing || force) ? 'block' : 'none';
+    });
+  }
+})();
+
+// Toast helper
+function showToast(msg){
+  const wrap = document.getElementById('toast-container');
+  if (!wrap) return;
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  // Remove after animation completes (~3.6s)
+  setTimeout(() => { el.remove(); }, 3900);
+}
