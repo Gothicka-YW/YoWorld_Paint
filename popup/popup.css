@@ -24,6 +24,10 @@
   font-weight: bold;
   margin-bottom: 0;
 }
+.price-stack{ position:relative; display:flex; flex-direction:column; }
+.price-stack .char-count{ position:absolute; right:6px; bottom:4px; font-size:10px; color:#9b4a4a; opacity:.75; pointer-events:none; }
+.price-stack input{ padding-right:46px !important; }
+.price-stack .char-count.warn{ color:#b32626; font-weight:600; }
 .grid .cell input[data-role] {
   margin: 0;
   box-shadow: none;
@@ -128,6 +132,24 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
   overflow:hidden;
   position:relative;
 }
+.sales-preview.dynamic{ width:390px; height:260px; position:relative; margin:8px auto; box-shadow:0 0 0 1px #cfc3c3; background:#fff; }
+.sales-preview.dynamic{ will-change:transform; }
+.sales-preview-spacer{ pointer-events:none; }
+#panel-sales { overflow-x:hidden; }
+.sales-preview.dynamic .tile{ box-shadow:0 0 0 1px rgba(0,0,0,.05); }
+.sales-preview.dynamic .tile .img-wrap{ overflow:hidden; }
+.sales-preview.dynamic .tile .img-wrap img{ width:100%; height:100%; object-fit:cover; }
+.sales-preview .tile.drag-over{ outline:2px dashed #7e1212; outline-offset:-2px; }
+.sales-preview .tile .img-wrap{ cursor:pointer; }
+.sales-preview .tile .img-wrap::after{ content:'Click or Drop'; position:absolute; left:0; right:0; top:0; bottom:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#7e1212; opacity:0; transition:opacity .15s; background:linear-gradient(to bottom,rgba(255,255,255,.0),rgba(255,255,255,.55)); pointer-events:none; }
+.sales-preview .tile .img-wrap:hover::after{ opacity:1; }
+
+/* Layout selector + footer lines */
+.layout-row{ display:flex; flex-wrap:wrap; gap:12px; margin:4px 0 6px; align-items:flex-start; }
+#panel-sales .layout-row label select{ font-size:12px; }
+#footer-inputs input{ font-size:12px; padding:6px 8px; }
+.price-wrap.dual{ line-height:1.1; min-height:2.3em; display:flex; flex-direction:column; justify-content:center; }
+.price-wrap.dual span{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 /* Resources */
 .content-pad{ padding:6px 2px; }

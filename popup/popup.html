@@ -61,58 +61,99 @@
 </div>
 </section>
 <section aria-label="Sales Boards" class="panel" id="panel-sales" role="region">
+<div class="layout-row">
+  <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; flex:1;">
+    <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
+      Layout:
+      <select id="sales-layout" class="input" style="max-width:220px;">
+        <!-- options injected dynamically by sales.js based on layout registry -->
+      </select>
+    </label>
+    <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
+      Price/Label Font:
+      <select class="input" id="sales-font" style="max-width:160px;">
+        <option>Segoe UI (tight)</option>
+        <option>Tahoma</option>
+        <option>Verdana</option>
+        <option>Pacifico</option>
+        <option>Staatliches</option>
+        <option>Passion One</option>
+        <option>Dancing Script</option>
+      </select>
+    </label>
+    <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
+      Size:
+      <select class="input" id="sales-size" style="max-width:90px;">
+        <option value="8">8 px</option>
+        <option value="9">9 px</option>
+        <option value="10">10 px</option>
+        <option value="11">11 px</option>
+        <option value="12">12 px</option>
+        <option value="13">13 px</option>
+        <option value="14">14 px</option>
+        <option value="15">15 px</option>
+        <option value="16">16 px</option>
+      </select>
+    </label>
+    <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
+      Image Fit:
+      <select class="input" id="sales-fit" style="max-width:110px;">
+        <option value="contain">Contain</option>
+        <option value="cover">Cover</option>
+      </select>
+    </label>
+  </div>
+  <!-- footer inputs removed; layout 'footer2' now means per-item two-line labels -->
+</div>
+<input type="file" id="sales-file-input" accept="image/*" style="display:none" />
 <div class="grid">
 <div class="cell">
   <input class="input" data-role="img-url" data-slot="1" placeholder="Image 1 URL or Paste Image"/>
-  <input class="input" data-role="price" placeholder="Price or Label"/>
+  <div class="price-stack">
+    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
+    <div class="char-count" data-role="price-count"></div>
+  </div>
 </div>
 <div class="cell">
   <input class="input" data-role="img-url" data-slot="2" placeholder="Image 2 URL or Paste Image"/>
-  <input class="input" data-role="price" placeholder="Price or Label"/>
+  <div class="price-stack">
+    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
+    <div class="char-count" data-role="price-count"></div>
+  </div>
 </div>
 <div class="cell">
   <input class="input" data-role="img-url" data-slot="3" placeholder="Image 3 URL or Paste Image"/>
-  <input class="input" data-role="price" placeholder="Price or Label"/>
+  <div class="price-stack">
+    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
+    <div class="char-count" data-role="price-count"></div>
+  </div>
 </div>
 <div class="cell">
   <input class="input" data-role="img-url" data-slot="4" placeholder="Image 4 URL or Paste Image"/>
-  <input class="input" data-role="price" placeholder="Price or Label"/>
+  <div class="price-stack">
+    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
+    <div class="char-count" data-role="price-count"></div>
+  </div>
 </div>
 <div class="cell">
   <input class="input" data-role="img-url" data-slot="5" placeholder="Image 5 URL or Paste Image"/>
-  <input class="input" data-role="price" placeholder="Price or Label"/>
+  <div class="price-stack">
+    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
+    <div class="char-count" data-role="price-count"></div>
+  </div>
 </div>
 <div class="cell">
   <input class="input" data-role="img-url" data-slot="6" placeholder="Image 6 URL or Paste Image"/>
-  <input class="input" data-role="price" placeholder="Price or Label"/>
+  <div class="price-stack">
+    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
+    <div class="char-count" data-role="price-count"></div>
+  </div>
 </div>
 </div>
 <div class="controls-row">
-<label>Price/Label Font:
-  <select class="input" id="sales-font">
-    <option>Segoe UI (tight)</option>
-    <option>Tahoma</option>
-    <option>Verdana</option>
-    <option>Pacifico</option>
-    <option>Staatliches</option>
-    <option>Passion One</option>
-    <option>Dancing Script</option>
-  </select>
-</label>
-<label>Size:
-  <select class="input" id="sales-size">
-    <option value="10">10 px</option>
-    <option value="11">11 px</option>
-    <option value="12">12 px</option>
-    <option value="13">13 px</option>
-    <option value="14">14 px</option>
-    <option value="15">15 px</option>
-    <option value="16">16 px</option>
-  </select>
-</label>
-<div class="spacer"></div>
-<button class="btn btn--primary" id="btn-export">Export PNG</button>
-<button class="btn btn--primary" id="btn-clear">Clear</button>
+  <div class="spacer"></div>
+  <button class="btn btn--primary" id="btn-export">Export PNG</button>
+  <button class="btn btn--primary" id="btn-clear">Clear</button>
 </div>
 <div class="sales-preview">
 <div class="tile"></div>
