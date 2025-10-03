@@ -23,7 +23,8 @@
       let url = Array.isArray(o.img) ? (o.img[0] || "") : "";
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
       // If no image is set, use the sticky default
-      if (!url) url = "https://i.imgur.com/c91XaTP.png";
+  // Default fallback image
+  if (!url) url = "https://i.postimg.cc/VLh6mKGY/20250924-1934-Celestial-Cartoon-Background-remix-01k5z13k9cf4jrwgtmak9dqwjr.png";
       if (input)  input.value = url;
       if (toggle) toggle.checked = enabled;
       setPreview(url);
