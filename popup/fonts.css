@@ -8,8 +8,8 @@
 /* Local packaged fonts for Sales Boards (MV3-safe) */
 @font-face {
   font-family: "Pacifico";
-  src: url("./fonts/Pacifico.woff2") format("woff2"),
-       url("./fonts/Pacifico.ttf") format("truetype");
+  /* Use TTF only to avoid decode issues with corrupt woff2 */
+  src: url("./fonts/Pacifico.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
