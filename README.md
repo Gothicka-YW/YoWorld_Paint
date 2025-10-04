@@ -1,10 +1,17 @@
-# YoWorld Paint v3.0 🎨
+# YoWorld Paint v3.1 🎨
 
 YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, and share custom Paint Boards and Sales Boards—faster and cleaner than doing it by hand.
 
 > ⚠️ Community fan tool. Not affiliated with YoWorld or Big Viking Games (BVG).
 
 ---
+
+## 🚀 What’s new in 3.1
+
+- FAQ updates
+  - Refreshed “Making Art in YW” with Quick Image Uploader and Manual host paths
+  - Added final step to open the paint board and press OK
+- Minor copy cleanup in the popup (FAQ)
 
 ## 🚀 What’s new in 3.0
 
