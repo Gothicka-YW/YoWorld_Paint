@@ -125,6 +125,7 @@ async function resizeExactPngFromFile(file, w, h){
   const resultEl = document.getElementById('qu-result');
   const warnEl = document.getElementById('qu-warning');
   const autoChk = document.getElementById('qu-autoset');
+  const resizeChk = document.getElementById('qu-autoresize');
   if (!hostSel || !fileEl || !btnUpload) return;
 
   let lastUrl = '';
@@ -134,9 +135,10 @@ async function resizeExactPngFromFile(file, w, h){
   function setStatus(msg, isErr){ if (statusEl){ statusEl.textContent = msg || ''; statusEl.style.color = isErr ? '#b00020' : '#6b7280'; } }
   function setResult(url){ if (resultEl){ if (url){ resultEl.style.display='block'; resultEl.textContent = url; } else { resultEl.style.display='none'; resultEl.textContent=''; } } }
 
-  // Load preferred host & key presence
-  chrome.storage.sync.get(['quickUploadHost','imgbbKey'], data => {
+  // Load preferred host, key, and auto-resize
+  chrome.storage.sync.get(['quickUploadHost','imgbbKey','quickUploadAutoResize'], data => {
     if (data.quickUploadHost && hostSel) hostSel.value = data.quickUploadHost;
+    if (resizeChk) resizeChk.checked = (data.quickUploadAutoResize !== false); // default true
     toggleKeyWarning();
   });
 
@@ -144,6 +146,12 @@ async function resizeExactPngFromFile(file, w, h){
     chrome.storage.sync.set({ quickUploadHost: hostSel.value });
     toggleKeyWarning();
   });
+
+  if (resizeChk){
+    resizeChk.addEventListener('change', () => {
+      chrome.storage.sync.set({ quickUploadAutoResize: !!resizeChk.checked });
+    });
+  }
 
   document.addEventListener('paste', e => {
     const item = [...(e.clipboardData?.items||[])].find(i => i.type && i.type.startsWith('image/'));
@@ -193,13 +201,17 @@ async function resizeExactPngFromFile(file, w, h){
       const { imgbbKey } = await chrome.storage.sync.get(['imgbbKey']);
       if (!imgbbKey){ setStatus('ImgBB key missing.', true); toggleKeyWarning(true); return; }
     }
-    btnUpload.disabled = true; btnCopy.disabled = true; setStatus('Resizing…'); setResult(''); lastUrl='';
+    const doResize = !resizeChk || resizeChk.checked;
+    btnUpload.disabled = true; btnCopy.disabled = true; setStatus(doResize ? 'Resizing…' : 'Uploading…'); setResult(''); lastUrl='';
     try {
-      const resized = await resizeExactPngFromFile(file, 390, 260);
-      setStatus('Uploading…');
-      const blobFile = new File([resized], file.name || 'image.png', { type:'image/png' });
+      let uploadFile = file;
+      if (doResize){
+        const resized = await resizeExactPngFromFile(file, 390, 260);
+        setStatus('Uploading…');
+        uploadFile = new File([resized], file.name || 'image.png', { type:'image/png' });
+      }
       const { uploadImage } = await import('../../src/lib/uploader.js');
-      const url = await uploadImage(blobFile, { host });
+      const url = await uploadImage(uploadFile, { host });
       lastUrl = url; setResult(url);
       try { await navigator.clipboard.writeText(url); setStatus('Uploaded & copied.'); btnCopy.disabled=false; }
       catch { setStatus('Uploaded. Use Copy button.', true); btnCopy.disabled=false; }
@@ -208,6 +220,7 @@ async function resizeExactPngFromFile(file, w, h){
         const mainInput = document.getElementById('img-url');
         if (mainInput){ mainInput.value = url; mainInput.dispatchEvent(new Event('input', {bubbles:true})); }
         const btn = document.getElementById('btn-set'); if (btn) btn.click();
+        if (!doResize) showToast('Warning: Original size may stretch in YoWorld');
       }
       showToast('Upload complete');
       // reset transient sources after success
