@@ -126,6 +126,8 @@ async function resizeExactPngFromFile(file, w, h){
   const warnEl = document.getElementById('qu-warning');
   const autoChk = document.getElementById('qu-autoset');
   const resizeChk = document.getElementById('qu-autoresize');
+  const clearBtn = document.getElementById('qu-clear');
+  const bridgeBtn = document.getElementById('btn-upload-last');
   if (!hostSel || !fileEl || !btnUpload) return;
 
   let lastUrl = '';
@@ -192,6 +194,16 @@ async function resizeExactPngFromFile(file, w, h){
     if (pickedFile){ setStatus('File selected.'); showToast('Image selected'); }
   });
 
+  if (clearBtn){
+    clearBtn.addEventListener('click', () => {
+      pickedFile = null; clipboardBlob = null; lastUrl='';
+      if (fileEl) fileEl.value='';
+      setStatus(''); setResult('');
+      btnCopy.disabled = true;
+      showToast('Cleared');
+    });
+  }
+
   btnUpload.addEventListener('click', async () => {
   const host = hostSel.value;
   // Prefer fresh file input; fall back to dropped/pasted
@@ -233,6 +245,30 @@ async function resizeExactPngFromFile(file, w, h){
     chrome.storage.sync.get(['imgbbKey'], d => {
       const missing = !d.imgbbKey && hostSel.value === 'imgbb';
       if (warnEl) warnEl.style.display = (missing || force) ? 'block' : 'none';
+    });
+  }
+
+  // Bridge: Upload last exported PNG from Sales
+  if (bridgeBtn){
+    try {
+      const last = localStorage.getItem('ywp:lastExportPng');
+      bridgeBtn.disabled = !last;
+    } catch(_){}
+    bridgeBtn.addEventListener('click', async () => {
+      try {
+        const dataUrl = localStorage.getItem('ywp:lastExportPng');
+        if (!dataUrl){ showToast('No recent export found'); return; }
+        // Convert dataURL to Blob
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], 'ywp-sales-board.png', { type: 'image/png' });
+        pickedFile = file;
+        setStatus('File ready from last export.');
+        // Auto trigger Upload with auto-set if desired
+        if (autoChk) autoChk.checked = true;
+        btnUpload.click();
+        showToast('Uploading last export…');
+      } catch(e){ setStatus('Could not load last export', true); }
     });
   }
 })();

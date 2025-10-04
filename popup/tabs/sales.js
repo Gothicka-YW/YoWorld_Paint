@@ -902,9 +902,18 @@
         ctx.restore();
       });
 
+      const dataUrl = cv.toDataURL('image/png');
+      // Expose last export in local storage for Home tab bridge
+      try { localStorage.setItem('ywp:lastExportPng', dataUrl); } catch(_) {}
+      // Enable bridge button if present
+      try {
+        const bridgeBtn = document.getElementById('btn-upload-last');
+        if (bridgeBtn) bridgeBtn.disabled = false;
+      } catch(_) {}
+
       const a = document.createElement('a');
       a.download = 'ywp-sales-board.png';
-      a.href = cv.toDataURL('image/png');
+      a.href = dataUrl;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => a.remove(), 0);

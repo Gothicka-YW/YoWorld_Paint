@@ -1,4 +1,6 @@
-# YoWorld Paint v2.2 — Upload Pipeline Fixes (Session Summary)
+# [ARCHIVED] YoWorld Paint v2.2 — Upload Pipeline Fixes (Session Summary)
+
+> Note: This document is historical and reflects a v2.2-era provider setup (Uploadcare/Cloudinary/Catbox). As of v3.x, the extension uses an ImgBB-only uploader and this summary no longer applies to the current build.
 
 **Date:** 2025-09-22  
 
