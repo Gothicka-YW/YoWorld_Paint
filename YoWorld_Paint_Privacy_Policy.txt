@@ -1,0 +1,49 @@
+Privacy Policy — YoWorld Paint (Chrome Extension)
+Effective date: October 7, 2025
+Extension version: v3.1
+Developer: “Gothicka YW” (independent publisher)
+
+Summary
+YoWorld Paint does not collect, sell, or share personal information. The extension operates locally in your browser. When you choose to upload an image using your own ImgBB API key, the image is sent directly to ImgBB’s servers for hosting. No data is sent to or controlled by the developer.
+
+Data the extension handles
+• User‑generated images that you choose to upload.
+• A user‑provided ImgBB API key (optional; required only if you use the upload feature).
+• Local preferences and settings (e.g., saved image links, board layouts, UI options).
+
+Local storage
+• The extension may store your settings (including your ImgBB API key if you choose) locally using Chrome storage.
+• This data remains on your device under your browser profile.
+• You can delete it at any time by removing the extension or clearing the extension’s stored data in your browser.
+
+Data transmission to third parties
+• If you use the upload feature, images you select are transmitted directly from your browser to ImgBB using your own API key.
+• The developer does not receive, proxy, or store your images, API key, or related metadata.
+• ImgBB processes and hosts the uploaded content under its own terms and policies. See: https://imgbb.com/privacy
+
+What the developer does NOT collect
+• No account information, browsing history, identifiers, or personal information.
+• No analytics, tracking, advertising, fingerprinting, or telemetry.
+• No server‑side collection of any kind.
+
+Purpose of use
+• Images are uploaded solely to provide you with a shareable/hosted image URL for use with YoWorld paint boards.
+• Local storage is used only to remember your preferences and improve extension functionality on your device.
+
+Security
+• Data stored by the extension is kept within your browser’s local storage.
+• Transmissions to ImgBB occur over HTTPS (as provided by ImgBB). Keep your API key private; do not share it.
+• Because the developer does not operate any servers for this extension, no developer‑side data breach surface exists.
+
+Data retention and deletion
+• Local data persists until you clear it or uninstall the extension.
+• Images uploaded to ImgBB are subject to ImgBB’s retention and deletion controls. Manage or delete hosted content via ImgBB.
+
+Children’s privacy
+• The extension is not directed to children under 13 and does not collect personal information.
+
+Changes to this policy
+• If this policy changes, the “Effective date” will be updated. Continued use of the extension after changes indicates acceptance of the revised policy.
+
+Contact
+• For questions or requests regarding this policy, contact the developer at: gothicka.ywa@gmail.com.
