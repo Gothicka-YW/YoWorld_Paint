@@ -1,13 +1,15 @@
 # 📜 YoWorld Paint – Changelog
 
 ## v3.1 — Update
-**Release Date:** 2025-10-04
+**Release Date:** 2025-10-05
 
 Changes
-- FAQ revised:
-  - “Making Art in YW” now shows both Quick Image Uploader and Manual host paths
-  - Added a final “Open the paint board and press OK” step to both paths
-- Version bump: manifest version/name and UI header/title updated to v3.1
+- FAQ updates:
+  - “Making Art in YW” now shows both paths: Quick Image Uploader and Manual host
+  - Added a final step: open your YoWorld paint board and press OK to apply
+  - Minor copy/link cleanup in FAQ
+- Version bump: manifest version/name and UI title updated to v3.1
+- No functional changes to uploader, permissions, or Sales Boards since v3.0
 
 ## v3.0 — Release
 **Release Date:** 2025-10-01
