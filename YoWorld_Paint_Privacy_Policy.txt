@@ -7,8 +7,8 @@ Summary
 YoWorld Paint does not collect, sell, or share personal information. The extension operates locally in your browser. When you choose to upload an image using your own ImgBB API key, the image is sent directly to ImgBB’s servers for hosting. No data is sent to or controlled by the developer.
 
 Data the extension handles
-• User‑generated images that you choose to upload.
-• A user‑provided ImgBB API key (optional; required only if you use the upload feature).
+• User-generated images that you choose to upload.
+• A user-provided ImgBB API key (optional; required only if you use the upload feature).
 • Local preferences and settings (e.g., saved image links, board layouts, UI options).
 
 Local storage
@@ -21,19 +21,35 @@ Data transmission to third parties
 • The developer does not receive, proxy, or store your images, API key, or related metadata.
 • ImgBB processes and hosts the uploaded content under its own terms and policies. See: https://imgbb.com/privacy
 
+Connections to YoWorld.info
+• The extension makes read-only requests to https://api.yoworld.info/* and https://yoworld.info/* to retrieve public game item data and images.
+• These calls are used solely to populate in-game item references and metadata for building YoWorld paint boards.
+• No personal or identifiable user data is sent to or collected from these sites.
+• The extension does not write to or modify any external data.
+
+Connections to Facebook and YoWorld domains
+• The extension interacts with https://*.facebook.com/* and https://*.fbcdn.net/* because YoWorld is accessed through Facebook.
+• These connections are required to allow in-game redirects, apply actions, and load YoWorld assets served from Facebook’s CDNs.
+• The extension also connects to https://yoworld.com/* and https://*.yoworld.com/*, which are core game domains.
+• These permissions enable the minimal content script and “apply” or redirect actions needed to set user-uploaded images as YoWorld boards.
+• No personal information, login data, or Facebook account content is accessed, collected, or stored.
+
 What the developer does NOT collect
 • No account information, browsing history, identifiers, or personal information.
 • No analytics, tracking, advertising, fingerprinting, or telemetry.
-• No server‑side collection of any kind.
+• No server-side collection of any kind.
 
 Purpose of use
-• Images are uploaded solely to provide you with a shareable/hosted image URL for use with YoWorld paint boards.
+• Images are uploaded solely to provide you with a shareable/hosted image URL for use with YoWorld boards.
 • Local storage is used only to remember your preferences and improve extension functionality on your device.
+• YoWorld.info connections are used exclusively for accurate item image and metadata lookups.
+• Facebook and YoWorld host permissions are used to ensure correct operation when the game runs within the Facebook or YoWorld environments.
 
 Security
 • Data stored by the extension is kept within your browser’s local storage.
 • Transmissions to ImgBB occur over HTTPS (as provided by ImgBB). Keep your API key private; do not share it.
-• Because the developer does not operate any servers for this extension, no developer‑side data breach surface exists.
+• YoWorld.info, Facebook, and YoWorld connections are HTTPS-secured and read-only.
+• Because the developer does not operate any servers for this extension, no developer-side data breach surface exists.
 
 Data retention and deletion
 • Local data persists until you clear it or uninstall the extension.
