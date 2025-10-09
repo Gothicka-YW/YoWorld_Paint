@@ -19,6 +19,7 @@ Highlights
 - UI polish
   - Compact, centered tabs; internal red scrollbar
   - Footer moved to Resources only; spacing tightened
+  - Inline “How to Use” expanders added to Sales Boards and Create Boards tabs; duplicate FAQ section removed
 - Documentation
   - README and Privacy Policy updated for new behavior
 

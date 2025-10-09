@@ -19,6 +19,7 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 - UI polish
   - Smaller centered tabs, internal red scrollbar
   - Footer shown only in Resources, with tighter spacing
+  - Added inline “How to Use” expanders on Sales Boards and Create Boards; removed duplicate FAQ bullets
 
 ## 🚀 What’s new in 3.1
 
@@ -109,7 +110,7 @@ Minimal and explicit:
 
 ---
 
-## � Privacy
+## 🔒 Privacy
 
 - No analytics or tracking
 - No data sent anywhere except:
