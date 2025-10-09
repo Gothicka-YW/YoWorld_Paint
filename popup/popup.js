@@ -3,6 +3,7 @@
   const tabs = document.querySelectorAll('nav.tabs .tab');
   const panels = {
     home: document.getElementById('panel-home'),
+    'sales-boards': document.getElementById('panel-sales-boards'),
     sales: document.getElementById('panel-sales'),
     faq: document.getElementById('panel-faq'),
     resources: document.getElementById('panel-resources')

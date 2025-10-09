@@ -1,10 +1,24 @@
-# YoWorld Paint v3.1 🎨
+# YoWorld Paint v3.2 🎨
 
 YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, and share custom Paint Boards and Sales Boards—faster and cleaner than doing it by hand.
 
 > ⚠️ Community fan tool. Not affiliated with YoWorld or Big Viking Games (BVG).
 
 ---
+
+## 🚀 What’s new in 3.2
+
+- New Sales Boards capture (3×2 from YoWorld Info)
+  - Pick a card on yoworld.info and capture 6 items starting at your pick
+  - Tight crop (top) with safe bottom padding for captions
+  - Preview and Export to 390×260 PNG
+  - Buttons: Pick, Reset, Preview, Export, Restore
+- Reliability
+  - Fixes for “Receiving end does not exist” via on‑demand injection
+  - Selector picking works on templates and mid‑list (uses picked index)
+- UI polish
+  - Smaller centered tabs, internal red scrollbar
+  - Footer shown only in Resources, with tighter spacing
 
 ## 🚀 What’s new in 3.1
 

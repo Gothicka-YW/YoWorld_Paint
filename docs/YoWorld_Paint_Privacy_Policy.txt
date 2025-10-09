@@ -1,6 +1,6 @@
 Privacy Policy — YoWorld Paint (Chrome Extension)
-Effective date: October 7, 2025
-Extension version: v3.1
+Effective date: October 9, 2025
+Extension version: v3.2
 Developer: “Gothicka YW” (independent publisher)
 
 Summary
@@ -10,11 +10,13 @@ Data the extension handles
 • User-generated images that you choose to upload.
 • A user-provided ImgBB API key (optional; required only if you use the upload feature).
 • Local preferences and settings (e.g., saved image links, board layouts, UI options).
+• For the Sales Boards capture feature: locally stored CSS selectors and your last picked index to locate repeating cards on yoworld.info. This is used only to compute a local crop for your preview/export.
 
 Local storage
 • The extension may store your settings (including your ImgBB API key if you choose) locally using Chrome storage.
 • This data remains on your device under your browser profile.
 • You can delete it at any time by removing the extension or clearing the extension’s stored data in your browser.
+• Sales Boards capture stores only minimal data (selectors and pick index) needed to repeat the capture; no browsing or personal data is stored.
 
 Data transmission to third parties
 • If you use the upload feature, images you select are transmitted directly from your browser to ImgBB using your own API key.
@@ -23,9 +25,10 @@ Data transmission to third parties
 
 Connections to YoWorld.info
 • The extension makes read-only requests to https://api.yoworld.info/* and https://yoworld.info/* to retrieve public game item data and images.
-• These calls are used solely to populate in-game item references and metadata for building YoWorld paint boards.
+• These calls are used solely to populate in-game item references and metadata for building YoWorld paint boards and to enable on-page selection for the Sales Boards capture.
 • No personal or identifiable user data is sent to or collected from these sites.
 • The extension does not write to or modify any external data.
+• When capturing a Sales Board, the screenshot/crop is computed locally in your browser. No image or metadata is sent to the developer.
 
 Connections to Facebook and YoWorld domains
 • The extension interacts with https://*.facebook.com/* and https://*.fbcdn.net/* because YoWorld is accessed through Facebook.

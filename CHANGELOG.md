@@ -1,5 +1,27 @@
 # 📜 YoWorld Paint – Changelog
 
+## v3.2 — Release
+**Release Date:** 2025-10-09
+
+Highlights
+- New "Sales Boards" tab (capture from YoWorld Info)
+  - Pick any card on yoworld.info and capture a fixed 3×2 (6 items) grid
+  - Tight crop on top; extra bottom padding to protect captions
+  - Crops and scales to 390×260 PNG
+  - Buttons: Pick, Reset, Preview, Export, Restore
+- Robust picking and discovery
+  - Records container selector, card selector, and picked index
+  - Starts capture at your picked index (mid‑list works like YoWishlist‑50)
+  - Flexible sibling/descendant heuristics for repeating cards
+- Connection reliability
+  - Detects missing listener and injects content script on demand
+  - Helpful status messages if not on yoworld.info
+- UI polish
+  - Compact, centered tabs; internal red scrollbar
+  - Footer moved to Resources only; spacing tightened
+- Documentation
+  - README and Privacy Policy updated for new behavior
+
 ## v3.1 — Update
 **Release Date:** 2025-10-05
 

@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>YoWorld Paint v3.1</title>
+<title>YoWorld Paint v3.2</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&amp;family=Spectral+SC:wght@600&amp;display=swap" rel="stylesheet"/>
@@ -49,10 +49,11 @@
 <link href="fonts.css" rel="stylesheet"/></head>
 <body>
 <div class="app-shell">
-<header class="app-header">YoWorld Paint v3.1</header>
+<header class="app-header">YoWorld Paint v3.2</header>
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
-<button aria-selected="false" class="tab" data-tab="sales" role="tab">Sales Boards</button>
+<button aria-selected="false" class="tab" data-tab="sales-boards" role="tab">Sales Boards</button>
+<button aria-selected="false" class="tab" data-tab="sales" role="tab">Create Boards</button>
 <button aria-selected="false" class="tab" data-tab="faq" role="tab">FAQ</button>
 <button aria-selected="false" class="tab" data-tab="resources" role="tab">Resources</button>
 </nav>
@@ -112,7 +113,24 @@
   <div id="qu-warning" style="display:none; font-size:11px; color:#b00020;">ImgBB key missing. Set it in Resources tab.</div>
 </div>
 </section>
-<section aria-label="Sales Boards" class="panel" id="panel-sales" role="region">
+<section aria-label="Sales Boards" class="panel" id="panel-sales-boards" role="region">
+  <div class="content-pad" style="display:flex; flex-direction:column; gap:8px;">
+    <div class="row" style="display:flex; gap:6px;">
+      <button class="btn" id="sb-pick" style="flex:1">Pick Card Selector</button>
+      <button class="btn" id="sb-reset" style="flex:1">Reset Selectors</button>
+    </div>
+    <div class="row" style="display:flex; gap:6px;">
+      <button class="btn btn-primary" id="sb-preview" style="flex:1">Preview (3×2)</button>
+      <button class="btn" id="sb-export" style="flex:1">Export (Crop)</button>
+      <button class="btn" id="sb-restore" style="flex:0 0 auto">Restore List</button>
+    </div>
+  <div class="note" id="sb-status" style="min-height:14px;">Limit: 6 items (3 columns × 2 rows). Crops and scales to 390×260.</div>
+    <div class="preview-card">
+      <div aria-label="Sales Boards preview 390×260" id="sb-preview-img" class="preview" style="background:#fff; box-shadow: inset 0 0 0 1px #ddd;"></div>
+    </div>
+  </div>
+</section>
+<section aria-label="Create Boards" class="panel" id="panel-sales" role="region">
 <div class="layout-row">
   <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; flex:1;">
     <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
@@ -243,7 +261,7 @@
   <li>Enable <strong>Redirect</strong>, save your Paint Board in YoWorld, then turn Redirect off.</li>
   <li>Open the paint board and press <strong>OK</strong>.</li>
 </ol>
-<h3>Creating Sales Boards</h3>
+<h3>Create Boards</h3>
 <ul>
   <li>Select a <strong>Layout</strong> (classic 3×2, banner/hero/strips/mosaic/list variants).</li>
   <li>Choose <strong>Image Fit</strong>:
@@ -267,7 +285,7 @@
 <h3>Tips</h3>
 <ul>
   <li><strong>Fast capture from yoworld.info:</strong> On a template, click “preview template,” then drag the preview into the URL field or screenshot (<kbd>Win+Shift+S</kbd>) and paste.</li>
-  <li><strong>Paste everywhere:</strong> You can paste images directly into Home or Sales Boards fields.</li>
+  <li><strong>Paste everywhere:</strong> You can paste images directly into Home or Create Boards fields.</li>
   <li><strong>Clean captions:</strong> Shorter labels read better; use two lines for long names.</li>
   <li><strong>Hosting:</strong> ImgBB is integrated and reliable; set your API key in <strong>Resources</strong>.</li>
 </ul>
@@ -320,17 +338,21 @@
     <span id="res-imgbb-status" style="font-size:12px; min-height:16px;"></span>
   </div>
 </div>
+
+  <!-- Footer content scoped to Resources only -->
+  <footer class="app-footer"><div class="footer-inner"><div class="bmc-wrap">
+    <a class="bmc" href="https://buymeacoffee.com/ywpaint" rel="noopener" target="_blank">Buy Me a Coffee</a>
+  </div><div class="donate" style="text-align:center;">
+    <p style="font-size:12px; opacity:.8; text-align:center;">
+      Fan tool. Not affiliated with YoWorld or Big Viking Games.<br/>
+      Report Bugs: <a href="mailto:ywa.paint@gmail.com">ywa.paint@gmail.com</a>
+    </p>
+  </div></div></footer>
 </section>
-</main><footer class="app-footer"><div class="footer-inner"><div class="bmc-wrap" style="margin-bottom:6px;">
-<a class="bmc" href="https://buymeacoffee.com/ywpaint" rel="noopener" target="_blank">Buy Me a Coffee</a>
-</div><div class="donate" style="text-align:center; margin-top:12px;">
-<p style="margin-top:8px; font-size:12px; opacity:.8; text-align:center;">
-                  Fan tool. Not affiliated with YoWorld or Big Viking Games.<br/>
-                  Report Bugs: <a href="mailto:ywa.paint@gmail.com">ywa.paint@gmail.com</a>
-</p>
-</div></div></footer>
+</main>
 <script src="popup.js"></script>
 <script src="tabs/home.js"></script>
+<script src="tabs/sales-boards.js"></script>
 <script src="tabs/sales.js"></script>
 <script src="tabs/faq.js"></script>
 <script src="tabs/resources.js"></script>
