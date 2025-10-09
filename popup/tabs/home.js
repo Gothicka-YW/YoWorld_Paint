@@ -237,7 +237,11 @@ async function resizeExactPngFromFile(file, w, h){
       showToast('Upload complete');
       // reset transient sources after success
       pickedFile = null; clipboardBlob = null; if (fileEl) fileEl.value = '';
-    } catch(e){ setStatus('Upload failed: ' + e.message, true); }
+    } catch(e){
+      const msg = (e && e.message) ? e.message : String(e);
+      setStatus('Upload failed: ' + msg, true);
+      if (/imgbb/i.test(msg)) toggleKeyWarning(true);
+    }
     finally { btnUpload.disabled = false; }
   });
 

@@ -32,9 +32,9 @@
 #panel-resources .form-row{ display:flex; flex-direction:column; gap:4px; }
 #panel-resources .form-row > label{ font-weight:600; }
 /* Quick Upload drag/drop */
-.qu-drop{ position:relative; border:2px dashed #d1d5db; border-radius:10px; min-height:70px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#fcfcfd; font-size:12px; color:#6b7280; text-align:center; padding:8px; transition:border-color .15s ease, background .15s ease; }
-.qu-drop:hover{ background:#f5f7fa; }
-.qu-drop.drag{ border-color:#7e1212; background:#fff5f5; }
+.qu-drop{ position:relative; border:2px dashed #d1d5db; border-radius:10px; min-height:70px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:var(--panel-bg); font-size:12px; color:var(--muted); text-align:center; padding:8px; transition:border-color .15s ease, background .15s ease; }
+.qu-drop:hover{ background: color-mix(in srgb, var(--accent) 6%, var(--panel-bg)); }
+.qu-drop.drag{ border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel-bg)); }
 .qu-drop-hint{ pointer-events:none; }
 /* Toasts */
 .toast-container{ position:fixed; left:50%; bottom:8px; transform:translateX(-50%); display:flex; flex-direction:column; gap:6px; z-index:999; pointer-events:none; }
@@ -42,9 +42,9 @@
 @keyframes toast-in{ from{ transform:translate(-50%,6px); opacity:0;} to{ transform:translate(-50%,0); opacity:1;} }
 @keyframes toast-out{ to{ opacity:0; transform:translate(-50%,4px);} }
 /* Quick Upload header */
-.qu-head{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid #f0eaea; border-radius:10px; background:#fff9f9; }
-.qu-head .qu-title{ font-family:'Pacifico', system-ui, sans-serif; font-weight:400; font-size:15px; color:#7e1212; letter-spacing:.2px; }
-.qu-head .qu-sub{ font-size:12px; color:#6b7280; }
+.qu-head{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid var(--frame-border); border-radius:10px; background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg)); }
+.qu-head .qu-title{ font-family:'Pacifico', system-ui, sans-serif; font-weight:400; font-size:15px; color: var(--accent); letter-spacing:.2px; }
+.qu-head .qu-sub{ font-size:12px; color: var(--muted); }
 </style>
 <link href="fonts.css" rel="stylesheet"/></head>
 <body>
@@ -115,7 +115,7 @@
 <section aria-label="Sales Boards" class="panel" id="panel-sales-boards" role="region">
     <div class="note" id="sb-howto" style="margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
       <details id="sb-howto-details" style="margin:0;">
-  <summary style="cursor:pointer; color:#7e1212; text-decoration:underline; display:inline;">How to Use</summary>
+  <summary style="cursor:pointer; color: var(--link); text-decoration:underline; display:inline;">How to Use</summary>
         <ol style="margin:6px 0 0 16px; padding:0; color:#6b7280; font-size:12px;">
           <li>Navigate to yoworld.info/template</li>
           <li>Check "Preview Template"</li>
@@ -148,7 +148,7 @@
 <section aria-label="Create Boards" class="panel" id="panel-sales" role="region">
 <div class="note" id="sales-howto" style="margin-bottom:4px;">
   <details id="sales-howto-details" style="margin:0;">
-    <summary style="cursor:pointer; color:#7e1212; text-decoration:underline; display:inline;">How to Use</summary>
+  <summary style="cursor:pointer; color: var(--link); text-decoration:underline; display:inline;">How to Use</summary>
     <div style="margin-top:6px; color:#6b7280; font-size:12px;">
       <div style="font-weight:600; margin-bottom:4px;">Create Boards</div>
       <ul style="margin:0 0 0 16px; padding:0; list-style:disc;">
@@ -355,12 +355,27 @@
     <input id="res-imgbb-key" type="text" class="input" placeholder="Paste key..." />
   </div>
   <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-    <button id="btn-save-imgbb" class="btn btn-primary" style="background:#7e1212; color:#fff; padding:6px 14px; border-radius:10px; border:1px solid #7e1212; font-weight:600;">Save Key</button>
+  <button id="btn-save-imgbb" class="btn btn-primary" style="padding:6px 14px; border-radius:10px; font-weight:600;">Save Key</button>
     <button id="btn-test-imgbb" class="btn" style="padding:6px 12px; border-radius:10px;">Test Key</button>
   <a href="https://api.imgbb.com/" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Get your API key here</a>
     <span id="res-imgbb-status" style="font-size:12px; min-height:16px;"></span>
   </div>
 </div>
+
+  <div class="theme-settings" style="margin-top:18px; border-top:1px solid #e5e7eb; padding-top:14px;">
+    <h3 style="margin:0 0 8px; font-size:15px;">Theme</h3>
+    <div class="form-row" style="margin-bottom:10px;">
+      <label for="res-theme">Color Theme</label>
+      <select id="res-theme" class="input">
+        <option value="crimson">Crimson (default)</option>
+        <option value="emerald">Emerald</option>
+        <option value="midnight">Midnight</option>
+        <option value="royal">Royal</option>
+        <option value="slate">Slate</option>
+      </select>
+    </div>
+    <p class="note" style="margin:0;">Theme saves to Chrome sync and applies across all tabs.</p>
+  </div>
 
   <!-- Footer content scoped to Resources only -->
   <footer class="app-footer"><div class="footer-inner"><div class="bmc-wrap">
