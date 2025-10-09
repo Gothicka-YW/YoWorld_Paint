@@ -5,7 +5,7 @@
 
 Highlights
 - New "Sales Boards" tab (capture from YoWorld Info)
-  - Pick any card on yoworld.info and capture a fixed 3×2 (6 items) grid
+  - Pick any card on yoworld.info/template and capture a fixed 3×2 (6 items) grid
   - Tight crop on top; extra bottom padding to protect captions
   - Crops and scales to 390×260 PNG
   - Buttons: Pick, Reset, Preview, Export, Restore
