@@ -98,7 +98,8 @@
       if (!el) return; highlightEl = el.closest('*'); const r = highlightEl?.getBoundingClientRect(); if (!r) return; Object.assign(highlight.style, { left:r.left+'px', top:r.top+'px', width:r.width+'px', height:r.height+'px' });
     };
     const click = (e)=>{
-      // don't cancel the page click; we only read the target
+      // Prevent navigation so we stay on the template page while picking
+      try{ e.preventDefault(); e.stopPropagation(); }catch(_){ }
       const target = highlightEl || document.elementFromPoint(e.clientX, e.clientY);
       if (target){
         // choose a card ancestor that likely repeats

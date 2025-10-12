@@ -137,10 +137,10 @@ async function resizeExactPngFromFile(file, w, h){
   function setStatus(msg, isErr){ if (statusEl){ statusEl.textContent = msg || ''; statusEl.style.color = isErr ? '#b00020' : '#6b7280'; } }
   function setResult(url){ if (resultEl){ if (url){ resultEl.style.display='block'; resultEl.textContent = url; } else { resultEl.style.display='none'; resultEl.textContent=''; } } }
 
-  // Load preferred host, key, and auto-resize
+  // Load preferred host, key, and auto-resize (default OFF unless explicitly enabled)
   chrome.storage.sync.get(['quickUploadHost','imgbbKey','quickUploadAutoResize'], data => {
     if (data.quickUploadHost && hostSel) hostSel.value = data.quickUploadHost;
-    if (resizeChk) resizeChk.checked = (data.quickUploadAutoResize !== false); // default true
+    if (resizeChk) resizeChk.checked = (data.quickUploadAutoResize === true); // default OFF
     toggleKeyWarning();
   });
 
