@@ -1,7 +1,7 @@
 {
   "name": "YoWorld Paint",
   "description": "YoWorld Paint is for creating paint and sales boards within YoWorld.",
-  "version": "3.1",
+  "version": "3.2",
   "manifest_version": 3,
   "icons": {
     "48": "icons/icon_48.png",
@@ -20,6 +20,7 @@
   },
   "permissions": [
     "storage",
+    "scripting",
     "declarativeNetRequest",
     "declarativeNetRequestWithHostAccess",
     "declarativeNetRequestFeedback",
@@ -34,7 +35,7 @@
     "https://yoworld.info/*",
     "https://api.imgbb.com/*"
   ],
-  "version_name": "v3.1",
+  "version_name": "v3.2",
   "content_scripts": [
     {
       "matches": [
@@ -43,6 +44,16 @@
       ],
       "js": [
         "content/yw_direct_upload.js"
+      ],
+      "run_at": "document_idle"
+    }
+    ,{
+      "matches": [
+        "https://yoworld.info/*",
+        "https://*.yoworld.info/*"
+      ],
+      "js": [
+        "content/sb_capture.js"
       ],
       "run_at": "document_idle"
     }

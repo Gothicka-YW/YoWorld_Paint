@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>YoWorld Paint v3.1</title>
+<title>YoWorld Paint v3.2</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&amp;family=Spectral+SC:wght@600&amp;display=swap" rel="stylesheet"/>
@@ -32,9 +32,9 @@
 #panel-resources .form-row{ display:flex; flex-direction:column; gap:4px; }
 #panel-resources .form-row > label{ font-weight:600; }
 /* Quick Upload drag/drop */
-.qu-drop{ position:relative; border:2px dashed #d1d5db; border-radius:10px; min-height:70px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#fcfcfd; font-size:12px; color:#6b7280; text-align:center; padding:8px; transition:border-color .15s ease, background .15s ease; }
-.qu-drop:hover{ background:#f5f7fa; }
-.qu-drop.drag{ border-color:#7e1212; background:#fff5f5; }
+.qu-drop{ position:relative; border:2px dashed #d1d5db; border-radius:10px; min-height:70px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:var(--panel-bg); font-size:12px; color:var(--muted); text-align:center; padding:8px; transition:border-color .15s ease, background .15s ease; }
+.qu-drop:hover{ background: color-mix(in srgb, var(--accent) 6%, var(--panel-bg)); }
+.qu-drop.drag{ border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel-bg)); }
 .qu-drop-hint{ pointer-events:none; }
 /* Toasts */
 .toast-container{ position:fixed; left:50%; bottom:8px; transform:translateX(-50%); display:flex; flex-direction:column; gap:6px; z-index:999; pointer-events:none; }
@@ -42,16 +42,17 @@
 @keyframes toast-in{ from{ transform:translate(-50%,6px); opacity:0;} to{ transform:translate(-50%,0); opacity:1;} }
 @keyframes toast-out{ to{ opacity:0; transform:translate(-50%,4px);} }
 /* Quick Upload header */
-.qu-head{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid #f0eaea; border-radius:10px; background:#fff9f9; }
-.qu-head .qu-title{ font-family:'Pacifico', system-ui, sans-serif; font-weight:400; font-size:15px; color:#7e1212; letter-spacing:.2px; }
-.qu-head .qu-sub{ font-size:12px; color:#6b7280; }
+.qu-head{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid var(--frame-border); border-radius:10px; background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg)); }
+.qu-head .qu-title{ font-family:'Pacifico', system-ui, sans-serif; font-weight:400; font-size:15px; color: var(--accent); letter-spacing:.2px; }
+.qu-head .qu-sub{ font-size:12px; color: var(--muted); }
 </style>
 <link href="fonts.css" rel="stylesheet"/></head>
 <body>
 <div class="app-shell">
-<header class="app-header">YoWorld Paint v3.1</header>
+<header class="app-header">YoWorld Paint v3.2</header>
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
+<button aria-selected="false" class="tab" data-tab="sales-boards" role="tab">Sales Boards</button>
 <button aria-selected="false" class="tab" data-tab="sales" role="tab">Create Boards</button>
 <button aria-selected="false" class="tab" data-tab="faq" role="tab">FAQ</button>
 <button aria-selected="false" class="tab" data-tab="resources" role="tab">Resources</button>
@@ -64,7 +65,6 @@
 <span aria-hidden="true" class="slider"></span>
 <span>Enable Redirect</span>
 </label>
-<a class="info-link" href="https://yoworld.info" rel="noopener" target="_blank">YoWorld Info</a>
 </div>
 <div class="preview-card">
 <div aria-label="Image preview 390×260" class="preview"></div>
@@ -77,7 +77,7 @@
 <div id="quick-upload" style="display:flex; flex-direction:column; gap:10px;">
   <div class="qu-head">
     <div class="qu-title">Quick Image Uploader</div>
-  <div class="qu-sub">Paste, drag & drop, or click to select. Auto‑resize to 390×260 is on by default — toggle off to upload original size.</div>
+  <div class="qu-sub">Paste, drag & drop, or click to select. Auto‑resize to 390×260 is OFF by default — toggle on to resize, or leave off to upload original size.</div>
   </div>
   <div style="display:flex; gap:8px; align-items:center;">
     <label style="font-size:12px; font-weight:600; display:flex; flex-direction:column; gap:4px; flex:1;">
@@ -101,7 +101,7 @@
   </div>
   <div style="display:flex; align-items:center; gap:16px; font-size:12px; flex-wrap:wrap;">
     <label style="display:flex; align-items:center; gap:6px;">
-      <input type="checkbox" id="qu-autoresize" checked aria-label="Auto-resize to 390 by 260" aria-describedby="qu-status qu-warning" /> Auto‑resize to 390×260
+  <input type="checkbox" id="qu-autoresize" aria-label="Auto-resize to 390 by 260" aria-describedby="qu-status qu-warning" /> Auto‑resize to 390×260
     </label>
     <label style="display:flex; align-items:center; gap:6px;">
       <input type="checkbox" id="qu-autoset" checked aria-label="Auto-set as current image after upload" aria-describedby="qu-status qu-warning" /> Auto‑set as Current Image
@@ -112,7 +112,67 @@
   <div id="qu-warning" style="display:none; font-size:11px; color:#b00020;">ImgBB key missing. Set it in Resources tab.</div>
 </div>
 </section>
+<section aria-label="Sales Boards" class="panel" id="panel-sales-boards" role="region">
+    <div class="note" id="sb-howto" style="margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <details id="sb-howto-details" style="margin:0;">
+  <summary style="cursor:pointer; color: var(--link); text-decoration:underline; display:inline;">How to Use</summary>
+        <ol style="margin:6px 0 0 16px; padding:0; color:#6b7280; font-size:12px;">
+          <li>Navigate to yoworld.info/template</li>
+          <li>Check "Preview Template"</li>
+          <li>Narrow your browser to see 3 cards per row</li>
+          <li>Find the 3×2 items you'd like on the board</li>
+          <li>Select "Pick Card Selector" and click the first item card's picture for your board</li>
+          <li>Click "Preview (3×2)"</li>
+          <li>Export and save.</li>
+          <li>Upload on the Home tab.</li>
+        </ol>
+      </details>
+      <a class="info-link" href="https://yoworld.info/template" rel="noopener" target="_blank" title="Open yoworld.info/template">YoWorld Info</a>
+    </div>
+  <div class="content-pad" style="display:flex; flex-direction:column; gap:8px;">
+    <div class="row" style="display:flex; gap:6px;">
+      <button class="btn" id="sb-pick" style="flex:1">Pick Card Selector</button>
+      <button class="btn" id="sb-reset" style="flex:1">Reset Selectors</button>
+    </div>
+    <div class="row" style="display:flex; gap:6px;">
+      <button class="btn btn-primary" id="sb-preview" style="flex:1">Preview (3×2)</button>
+      <button class="btn" id="sb-export" style="flex:1">Export (Crop)</button>
+      <button class="btn" id="sb-restore" style="flex:0 0 auto">Restore List</button>
+    </div>
+  <div class="note" id="sb-status" style="min-height:14px;">Limit: 6 items (3 columns × 2 rows). Crops and scales to 390×260.</div>
+    <div class="preview-card">
+      <div aria-label="Sales Boards preview 390×260" id="sb-preview-img" class="preview" style="background:#fff; box-shadow: inset 0 0 0 1px #ddd;"></div>
+    </div>
+  </div>
+</section>
 <section aria-label="Create Boards" class="panel" id="panel-sales" role="region">
+<div class="note" id="sales-howto" style="margin-bottom:4px;">
+  <details id="sales-howto-details" style="margin:0;">
+  <summary style="cursor:pointer; color: var(--link); text-decoration:underline; display:inline;">How to Use</summary>
+    <div style="margin-top:6px; color:#6b7280; font-size:12px;">
+      <div style="font-weight:600; margin-bottom:4px;">Create Boards</div>
+      <ul style="margin:0 0 0 16px; padding:0; list-style:disc;">
+        <li>Select a Layout (classic 3×2, banner/hero/strips/mosaic/list variants).</li>
+        <li>Choose Image Fit:
+          <ul style="margin:4px 0 0 16px; padding:0; list-style:circle;">
+            <li>Contain (no crop)</li>
+            <li>Cover (fills area, may crop edges)</li>
+          </ul>
+        </li>
+        <li>Add images: paste direct links or paste/drag & drop images into the fields.</li>
+        <li>Type captions (up to 160 characters) — two lines are supported with smart sizing.</li>
+        <li>Preview updates live and matches the exported image.</li>
+        <li>Click Export PNG to save your board (always 390×260).</li>
+        <li>To host/share:
+          <ul style="margin:4px 0 0 16px; padding:0; list-style:circle;">
+            <li>Use the Home tab’s Quick Image Uploader (ImgBB) to upload the exported PNG and optionally Auto‑set, or</li>
+            <li>Upload to your own host and paste the link in the Home tab.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </details>
+</div>
 <div class="layout-row">
   <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; flex:1;">
     <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
@@ -243,31 +303,12 @@
   <li>Enable <strong>Redirect</strong>, save your Paint Board in YoWorld, then turn Redirect off.</li>
   <li>Open the paint board and press <strong>OK</strong>.</li>
 </ol>
-<h3>Creating Sales Boards</h3>
-<ul>
-  <li>Select a <strong>Layout</strong> (classic 3×2, banner/hero/strips/mosaic/list variants).</li>
-  <li>Choose <strong>Image Fit</strong>:
-    <ul>
-      <li><em>Contain</em> (no crop)</li>
-      <li><em>Cover</em> (fills area, may crop edges)</li>
-    </ul>
-  </li>
-  <li>Add images: paste <strong>direct links</strong> or <strong>paste/drag &amp; drop</strong> images into the fields.</li>
-  <li>Type captions (up to <strong>160 characters</strong>) — two lines are supported with smart sizing.</li>
-  <li>Preview updates live and matches the exported image.</li>
-  <li>Click <strong>Export PNG</strong> to save your board (always <strong>390×260</strong>).</li>
-  <li>To host/share:
-    <ul>
-      <li>Use the Home tab’s <strong>Quick Image Uploader</strong> (ImgBB) to upload the exported PNG and optionally <strong>Auto‑set</strong>, or</li>
-      <li>Upload to your own host and paste the link in the Home tab.</li>
-    </ul>
-  </li>
-</ul>
+<!-- Create Boards section removed from FAQ (now documented inline in the Create Boards tab) -->
 
 <h3>Tips</h3>
 <ul>
   <li><strong>Fast capture from yoworld.info:</strong> On a template, click “preview template,” then drag the preview into the URL field or screenshot (<kbd>Win+Shift+S</kbd>) and paste.</li>
-  <li><strong>Paste everywhere:</strong> You can paste images directly into Home or Sales Boards fields.</li>
+  <li><strong>Paste everywhere:</strong> You can paste images directly into Home or Create Boards fields.</li>
   <li><strong>Clean captions:</strong> Shorter labels read better; use two lines for long names.</li>
   <li><strong>Hosting:</strong> ImgBB is integrated and reliable; set your API key in <strong>Resources</strong>.</li>
 </ul>
@@ -314,23 +355,42 @@
     <input id="res-imgbb-key" type="text" class="input" placeholder="Paste key..." />
   </div>
   <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-    <button id="btn-save-imgbb" class="btn btn-primary" style="background:#7e1212; color:#fff; padding:6px 14px; border-radius:10px; border:1px solid #7e1212; font-weight:600;">Save Key</button>
+  <button id="btn-save-imgbb" class="btn btn-primary" style="padding:6px 14px; border-radius:10px; font-weight:600;">Save Key</button>
     <button id="btn-test-imgbb" class="btn" style="padding:6px 12px; border-radius:10px;">Test Key</button>
   <a href="https://api.imgbb.com/" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">Get your API key here</a>
     <span id="res-imgbb-status" style="font-size:12px; min-height:16px;"></span>
   </div>
 </div>
+
+  <div class="theme-settings" style="margin-top:18px; border-top:1px solid #e5e7eb; padding-top:14px;">
+    <h3 style="margin:0 0 8px; font-size:15px;">Theme</h3>
+    <div class="form-row" style="margin-bottom:10px;">
+      <label for="res-theme">Color Theme</label>
+      <select id="res-theme" class="input">
+        <option value="crimson">Crimson (default)</option>
+        <option value="emerald">Emerald</option>
+        <option value="midnight">Midnight</option>
+        <option value="royal">Royal</option>
+        <option value="slate">Slate</option>
+      </select>
+    </div>
+    <p class="note" style="margin:0;">Theme saves to Chrome sync and applies across all tabs.</p>
+  </div>
+
+  <!-- Footer content scoped to Resources only -->
+  <footer class="app-footer"><div class="footer-inner"><div class="bmc-wrap">
+    <a class="bmc" href="https://buymeacoffee.com/ywpaint" rel="noopener" target="_blank">Buy Me a Coffee</a>
+  </div><div class="donate" style="text-align:center;">
+    <p style="font-size:12px; opacity:.8; text-align:center;">
+      Fan tool. Not affiliated with YoWorld or Big Viking Games.<br/>
+      Report Bugs: <a href="mailto:ywa.paint@gmail.com">ywa.paint@gmail.com</a>
+    </p>
+  </div></div></footer>
 </section>
-</main><footer class="app-footer"><div class="footer-inner"><div class="bmc-wrap" style="margin-bottom:6px;">
-<a class="bmc" href="https://buymeacoffee.com/ywpaint" rel="noopener" target="_blank">Buy Me a Coffee</a>
-</div><div class="donate" style="text-align:center; margin-top:12px;">
-<p style="margin-top:8px; font-size:12px; opacity:.8; text-align:center;">
-                  Fan tool. Not affiliated with YoWorld or Big Viking Games.<br/>
-                  Report Bugs: <a href="mailto:ywa.paint@gmail.com">ywa.paint@gmail.com</a>
-</p>
-</div></div></footer>
+</main>
 <script src="popup.js"></script>
 <script src="tabs/home.js"></script>
+<script src="tabs/sales-boards.js"></script>
 <script src="tabs/sales.js"></script>
 <script src="tabs/faq.js"></script>
 <script src="tabs/resources.js"></script>
