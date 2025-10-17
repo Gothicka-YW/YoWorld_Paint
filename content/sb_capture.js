@@ -30,7 +30,12 @@
     if (!container || !cardEl) return [];
     const tag = cardEl.tagName;
     const classes = Array.from(cardEl.classList);
-    // Primary: direct children matching tag and containing all classes of the picked card
+    // Get reference image src and item name text from picked card
+    const refImg = cardEl.querySelector('img');
+    const refImgSrc = refImg ? refImg.src : null;
+    const refNameEl = cardEl.querySelector('.item-name');
+    const refName = refNameEl ? refNameEl.textContent.trim() : null;
+    // Find candidate cards by tag and classes
     let nodes = Array.from(container.children).filter(ch => ch.tagName === tag && classes.every(c => ch.classList.contains(c)));
     // Fallback: any descendants that match tag + all classes
     if (nodes.length < 6 && classes.length){
@@ -41,6 +46,16 @@
     if (nodes.length < 6){
       const direct = Array.from(container.children).filter(ch => ch.tagName === tag);
       nodes = direct.filter(ch => (Array.from(ch.classList).some(c => classes.includes(c))) && ch.querySelector('img'));
+    }
+    // Final filter: match by image src and item name text
+    if (refImgSrc || refName) {
+      nodes = nodes.filter(ch => {
+        const img = ch.querySelector('img');
+        const nameEl = ch.querySelector('.item-name');
+        const imgMatch = refImgSrc ? (img && img.src === refImgSrc) : true;
+        const nameMatch = refName ? (nameEl && nameEl.textContent.trim() === refName) : true;
+        return imgMatch && nameMatch;
+      });
     }
     return nodes;
   }
@@ -101,27 +116,38 @@
       // Prevent navigation so we stay on the template page while picking
       try{ e.preventDefault(); e.stopPropagation(); }catch(_){ }
       const target = highlightEl || document.elementFromPoint(e.clientX, e.clientY);
-      if (target){
-        // choose a card ancestor that likely repeats
-        let card = target;
-        for (let up=0; up<5 && card && card.parentElement; up++){
-          const parent = card.parentElement;
-          const siblings = Array.from(parent.children).filter(ch => ch.tagName === card.tagName);
-          if (siblings.length >= 3) { // likely a repeating card
-            // ensure image inside
-            if (card.querySelector('img')) break;
+      if (target) {
+        // Always climb to the nearest .ui.card ancestor
+        let card = target.closest('.ui.card');
+        if (!card) {
+          // fallback: previous logic if .ui.card not found
+          card = target;
+          for (let up=0; up<5 && card && card.parentElement; up++){
+            const parent = card.parentElement;
+            const siblings = Array.from(parent.children).filter(ch => ch.tagName === card.tagName);
+            if (siblings.length >= 3) {
+              if (card.querySelector('img')) break;
+            }
+            card = parent;
           }
-          card = parent;
         }
         const container = card && card.parentElement ? card.parentElement : document.body;
         const csel = cssPath(container);
-        const sel = cssPath(card);
+        // Always use a general card selector for all cards in the container
+        let cardSel = null;
+        if (card.classList.contains('ui') && card.classList.contains('card')) {
+          cardSel = csel + ' > .ui.card';
+        } else {
+          // fallback: use tag and classes
+          cardSel = csel + ' > ' + card.tagName.toLowerCase();
+        }
         save(KEY_CONT, csel);
-        save(KEY_SEL, sel);
-        // determine picked index among derived siblings
-        const nodes = findCardsBySignature(container, card);
+        save(KEY_SEL, cardSel);
+        // determine picked index among all cards
+        const nodes = Array.from(container.querySelectorAll(cardSel.replace(csel + ' > ', '')));
         const idx = Math.max(0, nodes.indexOf(card));
         save(KEY_IDX, idx);
+        console.log('[YWP_SB_PICK] Saved selectors:', {containerSelector: csel, cardSelector: cardSel, pickedIndex: idx, nodesFound: nodes.length});
       }
       cleanup();
       chrome.runtime.sendMessage({ type:'YWP_SB_PICK_DONE', ok: !!target });
@@ -135,26 +161,31 @@
 
   function prepareRect(){
     const cardsAll = findCardsFlexible();
+    const contSel = load(KEY_CONT, '');
+    const cardSel = load(KEY_SEL, '');
+    const idx = load(KEY_IDX, 0);
+    console.log('[YWP_SB_PREPARE_RECT] Loaded selectors:', {containerSelector: contSel, cardSelector: cardSel, pickedIndex: idx, cardsAllLength: cardsAll.length});
     if (!cardsAll.length) return { ok:false, error:'No selector. Use Pick.' };
     // choose start index based on picked index if available
-    let start = load(KEY_IDX, 0);
+    let start = idx;
     if (start < 0) start = 0;
     if (start + 6 > cardsAll.length){
       // fallback to last full window or start of list
       start = Math.max(0, Math.min(start, Math.max(0, cardsAll.length - 6)));
     }
     const cards = cardsAll.slice(start, start + 6);
+    console.log('[YWP_SB_PREPARE_RECT] Cards selected for crop:', {start, cardsLength: cards.length, cards});
     if (cards.length < 6) return { ok:false, error:`Found ${cards.length} cards from start. Scroll to top or adjust selector.` };
-  const rects = cards.map(rectForTile);
+    const rects = cards.map(rectForTile);
     const u = unionRect(rects);
-  const padded = addPadding(u, { t:2, r:6, b:16, l:6 });
+    const padded = addPadding(u, { t:2, r:6, b:16, l:6 });
     // Ensure fully in view: scroll so the top row is visible
     window.scrollTo({ top: Math.max(0, window.scrollY + padded.top - 10), behavior:'instant' });
     const tooTall = padded.height > window.innerHeight - 8;
     // Recompute after scroll
-  const rects2 = cards.map(rectForTile);
+    const rects2 = cards.map(rectForTile);
     const u2 = unionRect(rects2);
-  const padded2 = addPadding(u2, { t:2, r:6, b:16, l:6 });
+    const padded2 = addPadding(u2, { t:2, r:6, b:16, l:6 });
     return { ok:true, rect: { left: Math.max(0, padded2.left), top: Math.max(0, padded2.top), width: Math.max(1, padded2.width), height: Math.max(1, padded2.height) }, tooTall };
   }
 

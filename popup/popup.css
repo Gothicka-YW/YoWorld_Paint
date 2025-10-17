@@ -123,8 +123,9 @@
   border-top: 1px solid #f0eaea;
   background: #f8f3f3;
   font-size: 13px;
-  color: #7e1212;
-  font-weight: bold;
+  color: #000;
+  font-family: Verdana, Tahoma, sans-serif;
+  font-weight: normal;
   margin-bottom: 0;
 }
 .price-stack{ position:relative; display:flex; flex-direction:column; }

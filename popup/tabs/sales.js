@@ -855,7 +855,7 @@
         ctx.save();
         roundRect(ctx, region.x, region.y, region.w, region.h, RADIUS); ctx.clip();
         ctx.font = `${fontSize}px "${st.font}", Tahoma, Verdana, sans-serif`;
-        ctx.fillStyle = '#7e1212';
+    ctx.fillStyle = '#000';
         ctx.textBaseline = 'middle';
 
         if (captionMode === 'below' && (line1 || line2)){
