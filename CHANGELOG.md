@@ -1,4 +1,12 @@
-# 📜 YoWorld Paint – Changelog
+# � YoWorld Paint – Changelog
+
+## v3.2.1 — Update
+**Release Date:** 2025-10-16
+
+Improvements
+- Sales Boards picker now reliably selects the full card container, even with manual text/captions present
+- Selector logic is generalized to capture all cards in the grid, fixing “No selector. Use pick.” errors
+- Debug logging added for troubleshooting (can be removed for release)
 
 ## v3.2 — Release
 **Release Date:** 2025-10-09

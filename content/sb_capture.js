@@ -147,7 +147,6 @@
         const nodes = Array.from(container.querySelectorAll(cardSel.replace(csel + ' > ', '')));
         const idx = Math.max(0, nodes.indexOf(card));
         save(KEY_IDX, idx);
-        console.log('[YWP_SB_PICK] Saved selectors:', {containerSelector: csel, cardSelector: cardSel, pickedIndex: idx, nodesFound: nodes.length});
       }
       cleanup();
       chrome.runtime.sendMessage({ type:'YWP_SB_PICK_DONE', ok: !!target });

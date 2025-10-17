@@ -54,6 +54,8 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
   - Image Fit: Contain or Cover (per‑board setting)
   - Live preview exactly matches exported canvas
   - Export to 390×260 PNG
+  - Picker now reliably selects the full card, even with manual text/captions
+  - Selector logic is robust and works for all grid layouts
 
 - Quick Image Uploader (popup → Home)
   - Paste, drag & drop, or click to select
