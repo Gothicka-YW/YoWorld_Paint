@@ -1,25 +1,32 @@
-# YoWorld Paint v3.2 — Release Notes
 
-Release date: 2025-10-09
+# YoWorld Paint v3.2 Release Notes
 
-Highlights
+**Release Date:** 2025-10-16
+
+## Improvements
 - New Sales Boards capture (3×2 from YoWorld Info)
   - Pick a card on yoworld.info and capture 6 items starting at your pick
-  - Tight crop on top and safe bottom padding for captions
+  - Tight crop (top) with safe bottom padding for captions
   - Preview and Export to 390×260 PNG
   - Buttons: Pick, Reset, Preview, Export, Restore
-- Reliability & UX
-  - Selector picking works on templates; starts from your picked index (mid‑list OK)
-  - Fixes “Receiving end does not exist” by injecting the content script when needed
-  - Tabs are smaller and centered; scrollbar is internal and red‑themed
-  - Footer is shown only in Resources with tighter spacing
-- Docs
-  - README, Changelog, and Privacy Policy updated for v3.2
+- Sales Boards picker now reliably selects the full card container, even with manual text/captions present
+- Selector logic is generalized to capture all cards in the grid, fixing “No selector. Use pick.” errors
+- Selector picking works on templates and mid-list (uses picked index)
+- Flexible sibling/descendant heuristics for repeating cards
+- Connection reliability: fixes for “Receiving end does not exist” via on-demand injection
+- UI polish: smaller centered tabs, internal red scrollbar, tighter spacing
+- Footer shown only in Resources, with tighter spacing
+- Added inline “How to Use” expanders on Sales Boards and Create Boards; removed duplicate FAQ bullets
+- Debug logging removed for release
 
-How to update
-1) In chrome://extensions, toggle “Developer mode”
-2) Click “Load unpacked” (or “Update” if already loaded) and select the YoWorld_Paint folder
-3) Confirm the extension shows v3.2 in the popup header and in the extension details
+## How to Update
+- Reload the extension in Chrome after updating.
+- Use the Pick Card Selector in the Sales Boards tab to select any card in the grid, regardless of extra text/captions.
+- Preview and Export will now work reliably for all layouts.
 
-Notes
-- No analytics, tracking, or server‑side data collection. Sales Boards capture stores minimal selectors and the last picked index locally to repeat the capture reliably.
+## Other Notes
+- No changes to privacy policy or data handling; extension remains local-only and does not collect personal data.
+- See CHANGELOG.md and README.md for full details.
+
+---
+For questions or feedback, contact: gothicka.ywa@gmail.com
