@@ -211,7 +211,13 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
 .preview-card{ margin:8px 0; display:flex; justify-content:center; }
 .preview{
   width:390px; height:260px; border-radius:8px;
-  background: radial-gradient(ellipse at center, #8a0f0f 0%, #2b0000 100%);
+  /* Checkerboard base for transparency preview */
+  background-color: var(--cb-light, #f6f6f6);
+  background-image:
+    linear-gradient(45deg, var(--cb-dark, #e0e0e0) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--cb-dark, #e0e0e0) 75%);
+  background-size: var(--cb-size, 12px) var(--cb-size, 12px);
+  background-position: 0 0, calc(var(--cb-size, 12px) / 2) calc(var(--cb-size, 12px) / 2);
   box-shadow: inset 0 0 0 2px rgba(0,0,0,.25);
 }
 .input-row{ margin:10px 0; display:grid; grid-template-columns: 1fr auto; gap:8px; }
@@ -252,6 +258,15 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
 #panel-sales { overflow-x:hidden; }
 .sales-preview.dynamic .tile{ box-shadow:0 0 0 1px rgba(0,0,0,.05); }
 .sales-preview.dynamic .tile .img-wrap{ overflow:hidden; }
+.sales-preview .tile .img-wrap{
+  /* Checkerboard behind <img> so transparent regions are visible */
+  background-color: var(--cb-light, #f6f6f6);
+  background-image:
+    linear-gradient(45deg, var(--cb-dark, #e0e0e0) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--cb-dark, #e0e0e0) 75%);
+  background-size: var(--cb-size, 12px) var(--cb-size, 12px);
+  background-position: 0 0, calc(var(--cb-size, 12px) / 2) calc(var(--cb-size, 12px) / 2);
+}
 .sales-preview.dynamic .tile .img-wrap img{ width:100%; height:100%; object-fit:cover; }
 .sales-preview .tile.drag-over{ outline:2px dashed #7e1212; outline-offset:-2px; }
 .sales-preview .tile .img-wrap{ cursor:pointer; }
@@ -284,6 +299,9 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
   --panel-bg: #ffffff;
   --text: #1f1f1f;
   --muted: #666;
+  /* checkerboard colors (typical light/dark greys) */
+  --cb-light: #f0f0f0;
+  --cb-dark:  #cfcfcf;
   /* link colors */
   --link: #6a87c9;
   --link-hover: #8aa0e3;
@@ -447,7 +465,13 @@ nav.tabs .tab.is-active{
 .preview-card{ margin:8px 0; display:flex; justify-content:center; }
 .preview{
   width:390px; height:260px; border-radius:8px;
-  background: radial-gradient(ellipse at center, #8a0f0f 0%, #2b0000 100%);
+  /* Checkerboard base for transparency preview (override duplicate rule) */
+  background-color: var(--cb-light, #f6f6f6);
+  background-image:
+    linear-gradient(45deg, var(--cb-dark, #e0e0e0) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--cb-dark, #e0e0e0) 75%);
+  background-size: var(--cb-size, 12px) var(--cb-size, 12px);
+  background-position: 0 0, calc(var(--cb-size, 12px) / 2) calc(var(--cb-size, 12px) / 2);
   box-shadow: inset 0 0 0 2px rgba(0,0,0,.25);
 }
 .input-row{ margin:12px 0; display:grid; grid-template-columns: 1fr auto; gap:10px; }

@@ -8,14 +8,18 @@
 
   function setPreview(url) {
     if (!preview) return;
-    if (url) {
-      preview.style.backgroundImage = `url("${url}")`;
-      preview.style.backgroundSize = "contain";
-      preview.style.backgroundPosition = "center";
-      preview.style.backgroundRepeat = "no-repeat";
-    } else {
-      preview.style.backgroundImage = "none";
+    // Ensure an <img> child shows the image, keeping the checkerboard background visible
+    let img = preview.querySelector('img');
+    if (!img){
+      img = document.createElement('img');
+      img.alt = '';
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'contain';
+      preview.appendChild(img);
     }
+    if (url){ img.src = url; img.style.display = ''; }
+    else { img.remove(); }
   }
 
   function load() {
