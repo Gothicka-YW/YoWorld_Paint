@@ -1,10 +1,25 @@
-# YoWorld Paint v3.2 🎨
+# YoWorld Paint v3.2.1 🎨
 
 YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, and share custom Paint Boards and Sales Boards—faster and cleaner than doing it by hand.
 
 > ⚠️ Community fan tool. Not affiliated with YoWorld or Big Viking Games (BVG).
 
 ---
+
+## 🚀 What’s new in 3.2.1
+
+- Resilience & reliability
+  - Redirect now prefers the YoWorld Info proxy when reachable and falls back safely to the direct image URL if the proxy is down
+  - Added “Save in YoWorld” button (Home tab) to perform a direct upload via the content script so the image truly persists when you click OK in-game
+  - Data URL pasted in the Home input is auto‑uploaded (ImgBB) and converted to a stable https link
+- Sales Boards
+  - Picker works on any page (domain‑agnostic), not just yoworld.info
+  - Status/error messages clarified when injection fails
+- Transparency preview
+  - Home preview and Sales Boards tiles now show a checkerboard pattern behind PNGs with alpha
+- Version bump & docs
+  - Manifest version/name updated to 3.2.1
+  - README + CHANGELOG updated for new behaviors
 
 ## 🚀 What’s new in 3.2
 

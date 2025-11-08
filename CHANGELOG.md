@@ -1,12 +1,15 @@
 # � YoWorld Paint – Changelog
 
 ## v3.2.1 — Update
-**Release Date:** 2025-10-16
+**Release Date:** 2025-11-08
 
 Improvements
-- Sales Boards picker now reliably selects the full card container, even with manual text/captions present
-- Selector logic is generalized to capture all cards in the grid, fixing “No selector. Use pick.” errors
-- Debug logging added for troubleshooting (can be removed for release)
+- Resilience: background redirect probes YoWorld Info proxy and falls back to direct image URL if the proxy is down
+- Home: added “Save in YoWorld” button to upload directly to YoWorld so the image persists when clicking OK (requires the paintboard dialog open)
+- Home: data URLs pasted in the input are auto‑uploaded and converted to https links (ImgBB)
+- Sales Boards: picker works on any page (not limited to yoworld.info); improved messages when injection fails
+- UI: transparency preview uses a standard grey checkerboard behind PNGs (Home preview and Sales tiles)
+- Version bump: manifest version/name and UI title updated to 3.2.1
 
 ## v3.2 — Release
 **Release Date:** 2025-10-09
