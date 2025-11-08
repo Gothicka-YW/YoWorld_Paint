@@ -571,7 +571,15 @@ nav.tabs .tab.is-active{
 
 /* FAQ formatting */
 .faq h3{ font-family:"Spectral SC", serif; font-weight:600; margin:10px 0 6px; color: var(--accent); }
-.qu-head .qu-title{ font-family:"Spectral SC", serif; font-weight:600; margin:10px 0 6px; color: var(--accent); }
+.qu-head .qu-title{
+  color: var(--accent);
+  font-family: 'Dancing Script', cursive !important;
+  font-weight: 400 !important;
+  font-size: 1.7rem !important;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+  margin: 0.5rem 0 0.3rem;
+}
 
 /* Quick Upload (migrated from inline styles) */
 .qu-head{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid var(--frame-border); border-radius:10px; background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg)); }
