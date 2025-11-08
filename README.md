@@ -6,18 +6,6 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 ---
 
-## 🚀 What’s new (post 3.2.1, upcoming)
-
-These changes are committed after 3.2.1 and will appear in the next tagged release:
-
-- New themes: Pastel Breeze, Mint Frost, Aurora Rose, Teal Contrast (high‑contrast dark teal)
-- Removed Solar Gold (insufficient contrast in UI contexts)
-- Theme dropdown now alphabetical (Crimson still default)
-- Enable Redirect toggle ON state visually upgraded (accent gradient, glow, label color)
-- Tools tab added (early placeholder for Perspective Fix & Image Splitter features)
-- Popup width increased to 540px to accommodate six tabs without wrapping
-- Quick Uploader heading matches FAQ heading style; lost drop zone/toast styles restored and centralized in CSS
-
 ## 🚀 What’s new in 3.2.1
 
 - Resilience & reliability
@@ -32,6 +20,10 @@ These changes are committed after 3.2.1 and will appear in the next tagged relea
 - Version bump & docs
   - Manifest version/name updated to 3.2.1
   - README + CHANGELOG updated for new behaviors
+    - Added themes: Pastel Breeze, Mint Frost, Aurora Rose, Teal Contrast (replaced Solar Gold for better contrast); theme dropdown now alphabetical (Crimson default)
+    - Enable Redirect toggle ON state upgraded (accent gradient, glow, label color)
+    - Tools tab placeholder (Perspective Fix & Image Splitter) added; popup width increased to 540px for six tabs
+    - Quick Uploader heading matches FAQ heading; restored lost drop zone/toast styles in CSS (removed inline styling)
 
 ## 🚀 What’s new in 3.2
 

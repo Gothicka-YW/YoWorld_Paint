@@ -1,20 +1,5 @@
 # � YoWorld Paint – Changelog
 
-## Unreleased (post v3.2.1)
-Pending next version tag
-
-Additions / Changes
-- Themes: Added Pastel Breeze, Mint Frost, Aurora Rose, and a high‑contrast Teal Contrast theme
-- Removal: Dropped Solar Gold (low contrast) and replaced with Teal Contrast for better readability
-- Theme selector: Alphabetized dropdown; Crimson remains the default
-- Accessibility: Enable Redirect toggle ON state now uses the active theme accent gradient + glow + label accent for clearer status
-- UI: Added Tools tab placeholder (Perspective Fix & Image Splitter design phase) and widened popup to 540px to fit six tabs
-- Styling: Quick Image Uploader heading standardized to FAQ heading font; restored lost uploader/toast styles into CSS (removed inline styling)
-
-Notes
-- Perspective/Skew correction and Image Splitting are in design only (no shipped logic yet)
-- Testing of offline yoworld.info fallback still pending manual simulation
-
 ## v3.2.1 — Update
 **Release Date:** 2025-11-08
 
@@ -25,6 +10,17 @@ Improvements
 - Sales Boards: picker works on any page (not limited to yoworld.info); improved messages when injection fails
 - UI: transparency preview uses a standard grey checkerboard behind PNGs (Home preview and Sales tiles)
 - Version bump: manifest version/name and UI title updated to 3.2.1
+
+Other updates included in 3.2.1
+- Themes: Added Pastel Breeze, Mint Frost, Aurora Rose, and a high‑contrast Teal Contrast theme; removed Solar Gold (low contrast)
+- Theme selector: Alphabetized dropdown; Crimson remains the default
+- Accessibility: Enable Redirect toggle ON state now uses the active theme accent gradient + glow + label accent for clearer status
+- UI: Added Tools tab placeholder (Perspective Fix & Image Splitter design phase) and widened popup to 540px to fit six tabs
+- Styling: Quick Image Uploader heading standardized to FAQ heading font; restored lost uploader/toast styles into CSS (removed inline styling)
+
+Notes
+- Perspective/Skew correction and Image Splitting are in design only (no shipped logic yet)
+- Testing of offline yoworld.info fallback still pending manual simulation
 
 ## v3.2 — Release
 **Release Date:** 2025-10-09
