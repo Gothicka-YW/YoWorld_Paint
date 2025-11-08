@@ -371,16 +371,17 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
 }
 
 /* Solar Gold */
-.theme-solar-gold{
-  --panel-bg:#fffbea;
-  --text:#4b442e; --muted:#897e62;
-  --pill-border:#e6d6a3; --pill-active-bg:#ffffff; --pill-inactive-bg:transparent; --pill-text:#ffffff; --pill-active-text:#b98e12;
-  --hdr-1:#d4a017; --hdr-2:#b98e12;
-  --accent:#d4a017; --frame-border:#e6d6a3;
-  --accent-1:#e0ad23; --accent-2:#b98e12; --accent-border:#8f6f0e; --accent-press:#8f6f0e; --accent-press-active:#6f560b; --accent-shadow: rgba(143,111,14,.22);
-  --scroll-thumb:#d4a017; --scroll-track:#fbf2d5;
-  --focus-ring: rgba(212,160,23,.30);
-  --link:#b98e12; --link-hover:#d4a017; --link-visited:#8f6f0e;
+/* High Contrast Teal */
+.theme-teal-contrast{
+  --panel-bg:#0f1b1b;
+  --text:#eaf6f6; --muted:#a5c5c5;
+  --pill-border:#2aa39a; --pill-active-bg:#122020; --pill-inactive-bg:transparent; --pill-text:#eaf6f6; --pill-active-text:#7de0d7;
+  --hdr-1:#0e2e2e; --hdr-2:#081a1a;
+  --accent:#1fa7a0; --frame-border:#2aa39a;
+  --accent-1:#2dc1b8; --accent-2:#14928b; --accent-border:#0f6f69; --accent-press:#0f6f69; --accent-press-active:#0b524d; --accent-shadow: rgba(15,111,105,.28);
+  --scroll-thumb:#1fa7a0; --scroll-track:#0a1414;
+  --focus-ring: rgba(31,167,160,.42);
+  --link:#7de0d7; --link-hover:#9aebe4; --link-visited:#6bd2ca;
 }
 /* Crimson (default) */
 .theme-crimson{
