@@ -6,7 +6,8 @@
     'sales-boards': document.getElementById('panel-sales-boards'),
     sales: document.getElementById('panel-sales'),
     faq: document.getElementById('panel-faq'),
-    resources: document.getElementById('panel-resources')
+    resources: document.getElementById('panel-resources'),
+    tools: document.getElementById('panel-tools')
   };
 
   const LAST_TAB_KEY='ywp:lastTab';
@@ -22,7 +23,7 @@
       el.classList.toggle('is-active', k === name);
     });
     // body flag for FAQ (prevents any future bleed)
-    document.body.classList.toggle('faq-active', name === 'faq');
+  document.body.classList.toggle('faq-active', name === 'faq');
     try{ localStorage.setItem(LAST_TAB_KEY, name); }catch(e){}
   }
 

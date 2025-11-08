@@ -172,7 +172,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; overflow: hidden; }
-body { width: 450px; background: var(--panel-bg); color: var(--text); }
+body { width: 540px; background: var(--panel-bg); color: var(--text); }
 
 .app-header{
   background: var(--bg);
@@ -396,7 +396,7 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
 /* Frame */
 body{ background:#ececec; }
 .app-shell{
-  width: 450px; height: 560px;
+  width: 540px; height: 560px;
   margin: 0 auto;
   background: var(--panel-bg);
   border: 2px solid var(--frame-border);
