@@ -14,47 +14,18 @@
 #panel-resources #btn-save-uploader{
   background:#7e1212;
   color:#fff;
-  border:none;
-  border-radius:12px;
-  height:36px;
-  padding:0 16px;
-  min-width:200px;
-  font-weight:600;
-  box-shadow:0 1px 0 rgba(0,0,0,.25);
-  transition:transform .04s ease, filter .12s ease;
 }
-#panel-resources #btn-save-uploader:hover{ filter:brightness(1.06); }
-#panel-resources #btn-save-uploader:active{ transform:translateY(1px); }
-#panel-resources .bmc-wrap{ text-align:center; margin-top:8px; }
-#panel-resources .bmc-wrap a,
-#panel-resources .bmc-wrap button{ display:inline-flex; align-items:center; justify-content:center; margin:0 auto; border-radius:12px; }
-/* Make all uploader rows label-above-input for consistency */
-#panel-resources .form-row{ display:flex; flex-direction:column; gap:4px; }
-#panel-resources .form-row > label{ font-weight:600; }
-/* Quick Upload drag/drop */
-.qu-drop{ position:relative; border:2px dashed #d1d5db; border-radius:10px; min-height:70px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:var(--panel-bg); font-size:12px; color:var(--muted); text-align:center; padding:8px; transition:border-color .15s ease, background .15s ease; }
-.qu-drop:hover{ background: color-mix(in srgb, var(--accent) 6%, var(--panel-bg)); }
-.qu-drop.drag{ border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel-bg)); }
-.qu-drop-hint{ pointer-events:none; }
-/* Toasts */
-.toast-container{ position:fixed; left:50%; bottom:8px; transform:translateX(-50%); display:flex; flex-direction:column; gap:6px; z-index:999; pointer-events:none; }
-.toast{ background:#111; color:#fff; font-size:12px; padding:6px 10px; border-radius:6px; box-shadow:0 4px 14px rgba(0,0,0,.3); opacity:0; animation:toast-in .25s ease forwards, toast-out .35s ease forwards 3.2s; letter-spacing:.25px; }
-@keyframes toast-in{ from{ transform:translate(-50%,6px); opacity:0;} to{ transform:translate(-50%,0); opacity:1;} }
-@keyframes toast-out{ to{ opacity:0; transform:translate(-50%,4px);} }
-/* Quick Upload header */
-.qu-head{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid var(--frame-border); border-radius:10px; background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg)); }
-.qu-head .qu-title{ font-family:'Pacifico', system-ui, sans-serif; font-weight:400; font-size:15px; color: var(--accent); letter-spacing:.2px; }
-.qu-head .qu-sub{ font-size:12px; color: var(--muted); }
 </style>
-<link href="fonts.css" rel="stylesheet"/></head>
+<link href="fonts.css" rel="stylesheet"/>
+</head>
 <body>
 <div class="app-shell">
 <header class="app-header">YoWorld Paint v3.2.1</header>
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
+<button aria-selected="false" class="tab" data-tab="tools" role="tab">Tools</button>
 <button aria-selected="false" class="tab" data-tab="sales-boards" role="tab">Sales Boards</button>
 <button aria-selected="false" class="tab" data-tab="sales" role="tab">Create Boards</button>
-<button aria-selected="false" class="tab" data-tab="tools" role="tab">Tools</button>
 <button aria-selected="false" class="tab" data-tab="faq" role="tab">FAQ</button>
 <button aria-selected="false" class="tab" data-tab="resources" role="tab">Resources</button>
 </nav>
@@ -64,7 +35,7 @@
 <label class="toggle">
 <input id="enable-redirect" type="checkbox"/>
 <span aria-hidden="true" class="slider"></span>
-<span>Enable Redirect</span>
+<span class="label">Enable Redirect</span>
 </label>
 </div>
 <div class="preview-card">
@@ -77,7 +48,7 @@
 <hr style="margin:12px 0; opacity:.25;"/>
 <div id="quick-upload" style="display:flex; flex-direction:column; gap:10px;">
   <div class="qu-head">
-    <div class="qu-title">Quick Image Uploader</div>
+    <h3 class="qu-title">Quick Image Uploader</h3>
   <div class="qu-sub">Paste, drag & drop, or click to select. Auto‑resize to 390×260 is OFF by default — toggle on to resize, or leave off to upload original size.</div>
   </div>
   <div style="display:flex; gap:8px; align-items:center;">
@@ -112,7 +83,7 @@
   <div id="qu-result" style="display:none; font-size:12px; word-break:break-all; background:#fafafa; border:1px solid #e5e7eb; padding:6px 8px; border-radius:8px;"></div>
   <div id="qu-warning" style="display:none; font-size:11px; color:#b00020;">ImgBB key missing. Set it in Resources tab.</div>
 </div>
-></section>
+</section>
 <section aria-label="Sales Boards" class="panel" id="panel-sales-boards" role="region">
     <div class="note" id="sb-howto" style="margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
       <details id="sb-howto-details" style="margin:0;">
@@ -278,6 +249,7 @@
 <div class="tile"></div>
 </div>
 </section>
+<!-- Tools panel moved directly after Home to match tab order -->
 <section aria-label="Tools" class="panel" id="panel-tools" role="region">
   <div class="content-pad" style="display:flex; flex-direction:column; gap:14px;">
     <h3 style="margin:0;">Tools (Preview)</h3>
@@ -309,6 +281,39 @@
     </details>
     <div class="note" id="tools-status" style="min-height:16px; font-size:12px;">Coming soon: interactive prototypes.</div>
   </div>
+</section>
+<section aria-label="Tools" class="panel" id="panel-tools" role="region">
+  <div class="content-pad" style="display:flex; flex-direction:column; gap:14px;">
+    <h3 style="margin:0;">Tools (Preview)</h3>
+    <p style="font-size:12px; color: var(--muted); margin:0;">Early feature workspace. These utilities are experimental. Feedback welcome.</p>
+    <details open style="border:1px solid var(--frame-border); padding:10px 12px; border-radius:10px; background: var(--panel-bg);">
+      <summary style="cursor:pointer; font-weight:600;">Perspective / Skew Fix (Design)</summary>
+      <div style="font-size:12px; color: var(--text); margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+        <p style="margin:0;">Goal: Correct angled screenshots of boards so they appear straight (390×260) while preserving transparency.</p>
+        <ol style="margin:0 0 0 16px; padding:0; display:flex; flex-direction:column; gap:4px;">
+          <li>Paste or drop an image (PNG recommended).</li>
+          <li>Drag the 4 corner handles to match the board corners.</li>
+          <li>Preview the warp result (live) on a checkerboard background.</li>
+          <li>Export corrected PNG (auto 390×260) with alpha retained.</li>
+        </ol>
+        <p style="margin:0;">Status: UI + algorithm not implemented yet — currently design only.</p>
+      </div>
+    </details>
+    <details style="border:1px solid var(--frame-border); padding:10px 12px; border-radius:10px; background: var(--panel-bg);">
+      <summary style="cursor:pointer; font-weight:600;">Image Splitter (Design)</summary>
+      <div style="font-size:12px; color: var(--text); margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+        <p style="margin:0;">Split a larger source image into multiple board-sized slices.</p>
+        <ul style="margin:0 0 0 16px; padding:0; list-style:disc; display:flex; flex-direction:column; gap:4px;">
+          <li>Modes: 2 Vertical (stack) or 4 Grid (2×2).</li>
+          <li>Each slice exported as 390×260 PNG with transparency preserved.</li>
+          <li>Optional safe crop vs. stretch choice.</li>
+        </ul>
+        <p style="margin:0;">Status: Design only; processing pipeline pending.</p>
+      </div>
+    </details>
+    <div class="note" id="tools-status" style="min-height:16px; font-size:12px;">Coming soon: interactive prototypes.</div>
+  </div>
+</section>
 <section aria-label="FAQ" class="panel" id="panel-faq" role="region">
 <div class="content-pad faq">
 <h3>Making Art in YW</h3>
@@ -404,6 +409,10 @@
         <option value="midnight">Midnight</option>
         <option value="royal">Royal</option>
         <option value="slate">Slate</option>
+        <option value="pastel-breeze">Pastel Breeze</option>
+        <option value="mint-frost">Mint Frost</option>
+        <option value="aurora-rose">Aurora Rose</option>
+        <option value="solar-gold">Solar Gold</option>
       </select>
     </div>
     <p class="note" style="margin:0;">Theme saves to Chrome sync and applies across all tabs.</p>

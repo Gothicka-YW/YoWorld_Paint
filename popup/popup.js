@@ -39,12 +39,16 @@
   const themeSel = document.getElementById('res-theme');
   function applyThemeName(name){
     const body = document.body;
-    body.classList.remove('theme-crimson','theme-emerald','theme-midnight','theme-royal','theme-slate');
+    body.classList.remove('theme-crimson','theme-emerald','theme-midnight','theme-royal','theme-slate','theme-pastel-breeze','theme-mint-frost','theme-aurora-rose','theme-solar-gold');
     switch((name||'').toLowerCase()){
       case 'emerald': body.classList.add('theme-emerald'); break;
       case 'midnight': body.classList.add('theme-midnight'); break;
       case 'royal': body.classList.add('theme-royal'); break;
       case 'slate': body.classList.add('theme-slate'); break;
+      case 'pastel-breeze': body.classList.add('theme-pastel-breeze'); break;
+      case 'mint-frost': body.classList.add('theme-mint-frost'); break;
+      case 'aurora-rose': body.classList.add('theme-aurora-rose'); break;
+      case 'solar-gold': body.classList.add('theme-solar-gold'); break;
       case 'crimson': default: body.classList.add('theme-crimson'); break;
     }
   }
