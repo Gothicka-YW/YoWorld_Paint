@@ -1,4 +1,26 @@
-# 📜 YoWorld Paint – Changelog
+# � YoWorld Paint – Changelog
+
+## v3.2.1 — Update
+**Release Date:** 2025-11-08
+
+Improvements
+- Resilience: background redirect probes YoWorld Info proxy and falls back to direct image URL if the proxy is down
+- Home: added “Save in YoWorld” button to upload directly to YoWorld so the image persists when clicking OK (requires the paintboard dialog open)
+- Home: data URLs pasted in the input are auto‑uploaded and converted to https links (ImgBB)
+- Sales Boards: picker works on any page (not limited to yoworld.info); improved messages when injection fails
+- UI: transparency preview uses a standard grey checkerboard behind PNGs (Home preview and Sales tiles)
+- Version bump: manifest version/name and UI title updated to 3.2.1
+
+Other updates included in 3.2.1
+- Themes: Added Pastel Breeze, Mint Frost, Aurora Rose, and a high‑contrast Teal Contrast theme; removed Solar Gold (low contrast)
+- Theme selector: Alphabetized dropdown; Crimson remains the default
+- Accessibility: Enable Redirect toggle ON state now uses the active theme accent gradient + glow + label accent for clearer status
+- UI: Added Tools tab placeholder (Perspective Fix & Image Splitter design phase) and widened popup to 540px to fit six tabs
+- Styling: Quick Image Uploader heading standardized to FAQ heading font; restored lost uploader/toast styles into CSS (removed inline styling)
+
+Notes
+- Perspective/Skew correction and Image Splitting are in design only (no shipped logic yet)
+- Testing of offline yoworld.info fallback still pending manual simulation
 
 ## v3.3 — Unreleased
 **Release Date:** 2025-12-11
@@ -18,7 +40,7 @@ Highlights
 
 Highlights
 - New "Sales Boards" tab (capture from YoWorld Info)
-  - Pick any card on yoworld.info and capture a fixed 3×2 (6 items) grid
+  - Pick any card on yoworld.info/template and capture a fixed 3×2 (6 items) grid
   - Tight crop on top; extra bottom padding to protect captions
   - Crops and scales to 390×260 PNG
   - Buttons: Pick, Reset, Preview, Export, Restore
@@ -32,6 +54,7 @@ Highlights
 - UI polish
   - Compact, centered tabs; internal red scrollbar
   - Footer moved to Resources only; spacing tightened
+  - Inline “How to Use” expanders added to Sales Boards and Create Boards tabs; duplicate FAQ section removed
 - Documentation
   - README and Privacy Policy updated for new behavior
 

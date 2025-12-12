@@ -1,4 +1,4 @@
-# YoWorld Paint v3.2 🎨
+# YoWorld Paint v3.2.1 🎨
 
 YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, and share custom Paint Boards and Sales Boards—faster and cleaner than doing it by hand.
 
@@ -6,6 +6,7 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 ---
 
+<<<<<<< HEAD
 ## 🚀 What’s new in 3.3
 
 - New Tools tab
@@ -16,6 +17,26 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
   - Tiles and tool state persist across popup reopen
 - Home tab preview now shows a checkerboard behind your image to reveal transparent regions
 - Popup widened to 540px and keeps the themed look from 3.2.1
+=======
+## 🚀 What’s new in 3.2.1
+
+- Resilience & reliability
+  - Redirect now prefers the YoWorld Info proxy when reachable and falls back safely to the direct image URL if the proxy is down
+  - Added “Save in YoWorld” button (Home tab) to perform a direct upload via the content script so the image truly persists when you click OK in-game
+  - Data URL pasted in the Home input is auto‑uploaded (ImgBB) and converted to a stable https link
+- Sales Boards
+  - Picker works on any page (domain‑agnostic), not just yoworld.info
+  - Status/error messages clarified when injection fails
+- Transparency preview
+  - Home preview and Sales Boards tiles now show a checkerboard pattern behind PNGs with alpha
+- Version bump & docs
+  - Manifest version/name updated to 3.2.1
+  - README + CHANGELOG updated for new behaviors
+    - Added themes: Pastel Breeze, Mint Frost, Aurora Rose, Teal Contrast (replaced Solar Gold for better contrast); theme dropdown now alphabetical (Crimson default)
+    - Enable Redirect toggle ON state upgraded (accent gradient, glow, label color)
+    - Tools tab placeholder (Perspective Fix & Image Splitter) added; popup width increased to 540px for six tabs
+    - Quick Uploader heading matches FAQ heading; restored lost drop zone/toast styles in CSS (removed inline styling)
+>>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
 
 ## 🚀 What’s new in 3.2
 
@@ -30,6 +51,7 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 - UI polish
   - Smaller centered tabs, internal red scrollbar
   - Footer shown only in Resources, with tighter spacing
+  - Added inline “How to Use” expanders on Sales Boards and Create Boards; removed duplicate FAQ bullets
 
 ## 🚀 What’s new in 3.1
 
@@ -64,6 +86,8 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
   - Image Fit: Contain or Cover (per‑board setting)
   - Live preview exactly matches exported canvas
   - Export to 390×260 PNG
+  - Picker now reliably selects the full card, even with manual text/captions
+  - Selector logic is robust and works for all grid layouts
 
 - Tools (popup → Tools)
   - Board Size Calculator to get the target resize for your grid
@@ -127,7 +151,7 @@ Minimal and explicit:
 
 ---
 
-## � Privacy
+## 🔒 Privacy
 
 - No analytics or tracking
 - No data sent anywhere except:

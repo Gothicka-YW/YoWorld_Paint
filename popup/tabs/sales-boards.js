@@ -52,8 +52,30 @@
     const dstW = 390, dstH = 260;
     const out = document.createElement('canvas'); out.width=dstW; out.height=dstH; const octx=out.getContext('2d'); octx.fillStyle='#fff'; octx.fillRect(0,0,dstW,dstH);
     const scale = Math.min(dstW / sw, dstH / sh);
-    const dw = Math.round(sw * scale), dh = Math.round(sh * scale);
-    const dx = Math.round((dstW - dw)/2), dy = Math.round((dstH - dh)/2);
+    let dw = Math.round(sw * scale), dh = Math.round(sh * scale);
+    let dx = Math.round((dstW - dw)/2), dy = Math.round((dstH - dh)/2);
+    // Mild zoom to reduce side letterboxing: reclaim up to ~36px total on width,
+    // but avoid excessive top/bottom cropping (allow up to ~12px overflow).
+    if (dw < dstW) {
+      const available = dstW - dw;
+      let reclaim = Math.min(36, available);
+      if (reclaim > 0) {
+        // Predict resulting height after boost; cap if would overflow too much vertically.
+        const boost = 1 + (reclaim / dw);
+        const dh2 = Math.round(dh * boost);
+        const maxOverflow = 12; // px beyond canvas height we allow
+        if (dh2 > (dstH + maxOverflow)){
+          // reduce reclaim to fit the overflow cap
+          const maxBoost = (dstH + maxOverflow) / Math.max(1, dh);
+          reclaim = Math.max(0, Math.round(dw * (maxBoost - 1)));
+        }
+        const boost2 = 1 + (reclaim / dw);
+        dw = Math.round(dw * boost2);
+        dh = Math.round(dh * boost2);
+        dx = Math.round((dstW - dw)/2);
+        dy = Math.round((dstH - dh)/2);
+      }
+    }
     octx.imageSmoothingEnabled=true; octx.imageSmoothingQuality='high';
     octx.drawImage(srcCanvas, 0, 0, sw, sh, dx, dy, dw, dh);
     return out.toDataURL('image/png');
@@ -82,7 +104,19 @@
 
   if (btnPick) btnPick.addEventListener('click', async ()=>{
     setStatus('Click a card on yoworld.info…');
-    try{ const r = await sendToActiveTab({ type:'YWP_SB_PICK' }); if (r && r.ok) setStatus('Selector saved.'); else setStatus('Pick canceled or failed.', true);} catch(e){ setStatus('Not on yoworld.info?', true); }
+    try{
+      const r = await sendToActiveTab({ type:'YWP_SB_PICK' });
+      if (r && r.ok) setStatus('Selector saved.');
+      else setStatus('Pick canceled or failed.', true);
+    } catch(e){
+      // Try injecting once more, then report
+      try{
+        const tab = await getActiveTab();
+        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/sb_capture.js'] });
+        const r2 = await chrome.tabs.sendMessage(tab.id, { type:'YWP_SB_PICK' });
+        if (r2 && r2.ok) setStatus('Selector saved.'); else setStatus('Pick canceled or failed.', true);
+      }catch(_){ setStatus('Not on yoworld.info?', true); }
+    }
   });
   if (btnReset) btnReset.addEventListener('click', async ()=>{
     try{ await sendToActiveTab({ type:'YWP_SB_RESET' }); setStatus('Selectors cleared.'); } catch(e){ setStatus('Reset failed', true); }

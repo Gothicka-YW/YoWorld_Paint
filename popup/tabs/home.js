@@ -8,14 +8,18 @@
 
   function setPreview(url) {
     if (!preview) return;
-    if (url) {
-      preview.style.backgroundImage = `url("${url}")`;
-      preview.style.backgroundSize = "contain";
-      preview.style.backgroundPosition = "center";
-      preview.style.backgroundRepeat = "no-repeat";
-    } else {
-      preview.style.backgroundImage = "none";
+    // Ensure an <img> child shows the image, keeping the checkerboard background visible
+    let img = preview.querySelector('img');
+    if (!img){
+      img = document.createElement('img');
+      img.alt = '';
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'contain';
+      preview.appendChild(img);
     }
+    if (url){ img.src = url; img.style.display = ''; }
+    else { img.remove(); }
   }
 
   function load() {
@@ -137,10 +141,10 @@ async function resizeExactPngFromFile(file, w, h){
   function setStatus(msg, isErr){ if (statusEl){ statusEl.textContent = msg || ''; statusEl.style.color = isErr ? '#b00020' : '#6b7280'; } }
   function setResult(url){ if (resultEl){ if (url){ resultEl.style.display='block'; resultEl.textContent = url; } else { resultEl.style.display='none'; resultEl.textContent=''; } } }
 
-  // Load preferred host, key, and auto-resize
+  // Load preferred host, key, and auto-resize (default OFF unless explicitly enabled)
   chrome.storage.sync.get(['quickUploadHost','imgbbKey','quickUploadAutoResize'], data => {
     if (data.quickUploadHost && hostSel) hostSel.value = data.quickUploadHost;
-    if (resizeChk) resizeChk.checked = (data.quickUploadAutoResize !== false); // default true
+    if (resizeChk) resizeChk.checked = (data.quickUploadAutoResize === true); // default OFF
     toggleKeyWarning();
   });
 
@@ -237,7 +241,11 @@ async function resizeExactPngFromFile(file, w, h){
       showToast('Upload complete');
       // reset transient sources after success
       pickedFile = null; clipboardBlob = null; if (fileEl) fileEl.value = '';
-    } catch(e){ setStatus('Upload failed: ' + e.message, true); }
+    } catch(e){
+      const msg = (e && e.message) ? e.message : String(e);
+      setStatus('Upload failed: ' + msg, true);
+      if (/imgbb/i.test(msg)) toggleKeyWarning(true);
+    }
     finally { btnUpload.disabled = false; }
   });
 

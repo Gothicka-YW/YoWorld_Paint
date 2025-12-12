@@ -6,7 +6,21 @@ export async function getSettings() {
       prefer: "uploadcare",
       storeUploads: "auto",
   quickUploadHost: "imgbb",
-      imgbbKey: ""
+      imgbbKey: "",
+      skewOrientation: "right", // 'right' | 'left'
+      skewAutoResize: true,
+      skewAdvanced: false,
+  skewSlantPx: 70,
+      skewHQ: true,
+      skewCalibration: {
+        right: null, // { corners: [ [x,y],...4 ] }
+        left: null
+      },
+      skewPerspectivePct: 0,
+      skewPresets: {
+        right: { H: null, Hinv: null },
+        left: { H: null, Hinv: null }
+      }
     });
     return data;
   } catch (err) {
@@ -17,7 +31,21 @@ export async function getSettings() {
       prefer: "uploadcare",
       storeUploads: "auto",
   quickUploadHost: "imgbb",
-      imgbbKey: ""
+      imgbbKey: "",
+      skewOrientation: "right",
+      skewAutoResize: true,
+      skewAdvanced: false,
+  skewSlantPx: 70,
+      skewHQ: true,
+      skewCalibration: {
+        right: null,
+        left: null
+      },
+      skewPerspectivePct: 0,
+      skewPresets: {
+        right: { H: null, Hinv: null },
+        left: { H: null, Hinv: null }
+      }
     };
   }
 }
