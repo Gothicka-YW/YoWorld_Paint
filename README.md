@@ -6,6 +6,17 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 ---
 
+## 🚀 What’s new in 3.3
+
+- New Tools tab
+  - Board Size Calculator (boards wide/high → target pixels)
+  - Image Splitter with scale toggle (fit to grid) or natural tiling
+  - Drag/drop/paste input, checkerboard thumbs to show transparency
+  - Download individual tiles or a ZIP; Clear resets state
+  - Tiles and tool state persist across popup reopen
+- Home tab preview now shows a checkerboard behind your image to reveal transparent regions
+- Popup widened to 540px and keeps the themed look from 3.2.1
+
 ## 🚀 What’s new in 3.2
 
 - New Sales Boards capture (3×2 from YoWorld Info)
@@ -54,10 +65,17 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
   - Live preview exactly matches exported canvas
   - Export to 390×260 PNG
 
+- Tools (popup → Tools)
+  - Board Size Calculator to get the target resize for your grid
+  - Image Splitter: drag/drop/paste, optional scaling to grid or natural tiling
+  - Checkerboard previews to verify transparency; download tiles or ZIP
+  - Tiles and settings persist after closing/reopening the popup
+
 - Quick Image Uploader (popup → Home)
   - Paste, drag & drop, or click to select
   - Auto‑resize to 390×260 and upload to ImgBB
   - Auto‑copy URL + optional auto‑apply to the current image
+  - Home preview shows checkerboard behind images to reveal transparent areas
 
 - Resources & FAQ
   - How‑to notes for art and boards

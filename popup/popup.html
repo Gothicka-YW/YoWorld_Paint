@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>YoWorld Paint v3.2.1</title>
+<title>YoWorld Paint v3.2</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&amp;family=Spectral+SC:wght@600&amp;display=swap" rel="stylesheet"/>
@@ -49,11 +49,12 @@
 <link href="fonts.css" rel="stylesheet"/></head>
 <body>
 <div class="app-shell">
-<header class="app-header">YoWorld Paint v3.2.1</header>
+<header class="app-header">YoWorld Paint v3.2</header>
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
 <button aria-selected="false" class="tab" data-tab="sales-boards" role="tab">Sales Boards</button>
 <button aria-selected="false" class="tab" data-tab="sales" role="tab">Create Boards</button>
+<button aria-selected="false" class="tab" data-tab="tools" role="tab">Tools</button>
 <button aria-selected="false" class="tab" data-tab="faq" role="tab">FAQ</button>
 <button aria-selected="false" class="tab" data-tab="resources" role="tab">Resources</button>
 </nav>
@@ -65,6 +66,7 @@
 <span aria-hidden="true" class="slider"></span>
 <span>Enable Redirect</span>
 </label>
+<a class="info-link" href="https://yoworld.info" rel="noopener" target="_blank">YoWorld Info</a>
 </div>
 <div class="preview-card">
 <div aria-label="Image preview 390×260" class="preview"></div>
@@ -77,7 +79,7 @@
 <div id="quick-upload" style="display:flex; flex-direction:column; gap:10px;">
   <div class="qu-head">
     <div class="qu-title">Quick Image Uploader</div>
-  <div class="qu-sub">Paste, drag & drop, or click to select. Auto‑resize to 390×260 is OFF by default — toggle on to resize, or leave off to upload original size.</div>
+  <div class="qu-sub">Paste, drag & drop, or click to select. Auto‑resize to 390×260 is on by default — toggle off to upload original size.</div>
   </div>
   <div style="display:flex; gap:8px; align-items:center;">
     <label style="font-size:12px; font-weight:600; display:flex; flex-direction:column; gap:4px; flex:1;">
@@ -101,7 +103,7 @@
   </div>
   <div style="display:flex; align-items:center; gap:16px; font-size:12px; flex-wrap:wrap;">
     <label style="display:flex; align-items:center; gap:6px;">
-  <input type="checkbox" id="qu-autoresize" aria-label="Auto-resize to 390 by 260" aria-describedby="qu-status qu-warning" /> Auto‑resize to 390×260
+  <input type="checkbox" id="qu-autoresize" checked aria-label="Auto-resize to 390 by 260" aria-describedby="qu-status qu-warning" /> Auto‑resize to 390×260
     </label>
     <label style="display:flex; align-items:center; gap:6px;">
       <input type="checkbox" id="qu-autoset" checked aria-label="Auto-set as current image after upload" aria-describedby="qu-status qu-warning" /> Auto‑set as Current Image
@@ -111,6 +113,54 @@
   <div id="qu-result" style="display:none; font-size:12px; word-break:break-all; background:#fafafa; border:1px solid #e5e7eb; padding:6px 8px; border-radius:8px;"></div>
   <div id="qu-warning" style="display:none; font-size:11px; color:#b00020;">ImgBB key missing. Set it in Resources tab.</div>
 </div>
+</section>
+<section aria-label="Tools" class="panel" id="panel-tools" role="region">
+  <div class="content-pad" style="display:flex; flex-direction:column; gap:12px;">
+    <div class="tool-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0 0 6px; font-size:16px;">Board Size Calculator</h3>
+          <p class="note" style="margin:0;">Each board is 390×260. Set how many boards wide × high to get the resize target.</p>
+        </div>
+      </div>
+      <div class="tools-row">
+        <label class="tools-field">Boards wide
+          <input id="tool-cols" class="input" type="number" min="1" step="1" value="3" />
+        </label>
+        <label class="tools-field">Boards high
+          <input id="tool-rows" class="input" type="number" min="1" step="1" value="2" />
+        </label>
+        <div class="tools-output" id="tool-size">Target size: 1170 × 520 px</div>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0 0 6px; font-size:16px;">Image Splitter (390×260 tiles)</h3>
+          <p class="note" style="margin:0;">Resize your image to the target above, then split into board-sized tiles.</p>
+        </div>
+        <button id="tool-file-btn" class="btn">Select Image</button>
+      </div>
+      <input id="tool-file" type="file" accept="image/*" style="display:none;" />
+      <div id="tool-drop" class="qu-drop" role="button" tabindex="0" aria-label="Select or drop an image to split">
+        <span class="qu-drop-hint">Click or Drop / Paste Image</span>
+      </div>
+      <div id="tool-meta" class="tool-meta">No image loaded.</div>
+      <div id="tool-warning" class="tool-warning" role="alert" aria-live="polite"></div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <button id="tool-split" class="btn btn-primary" disabled>Split into tiles</button>
+        <label style="display:flex; align-items:center; gap:6px; font-size:12px;">
+          <input type="checkbox" id="tool-scale" checked aria-label="Scale image to target board grid" /> Scale to target size
+        </label>
+        <button id="tool-zip" class="btn" disabled>Download ZIP</button>
+        <button id="tool-clear" class="btn" aria-label="Clear image and tiles">Clear</button>
+        <span class="note" id="tool-hint" style="margin:0;">Load an image; choose whether to scale or keep original size.</span>
+      </div>
+      <p class="note" style="margin:4px 0 0;">Tip: Right-click a tile and choose Copy Image, then paste in the Home tab to upload.</p>
+      <div id="tool-results" class="tool-results" aria-live="polite"></div>
+    </div>
+  </div>
 </section>
 <section aria-label="Sales Boards" class="panel" id="panel-sales-boards" role="region">
     <div class="note" id="sb-howto" style="margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
@@ -392,6 +442,7 @@
 <script src="tabs/home.js"></script>
 <script src="tabs/sales-boards.js"></script>
 <script src="tabs/sales.js"></script>
+<script src="tabs/tools.js"></script>
 <script src="tabs/faq.js"></script>
 <script src="tabs/resources.js"></script>
 </div>

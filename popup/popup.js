@@ -5,6 +5,7 @@
     home: document.getElementById('panel-home'),
     'sales-boards': document.getElementById('panel-sales-boards'),
     sales: document.getElementById('panel-sales'),
+    tools: document.getElementById('panel-tools'),
     faq: document.getElementById('panel-faq'),
     resources: document.getElementById('panel-resources')
   };

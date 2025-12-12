@@ -1,5 +1,18 @@
 # 📜 YoWorld Paint – Changelog
 
+## v3.3 — Unreleased
+**Release Date:** 2025-12-11
+
+Highlights
+- New Tools tab
+  - Board Size Calculator (quick cols × rows → target pixels)
+  - Image Splitter (390×260 tiles) with scale toggle or natural tiling
+  - Drag/drop/paste input, checkerboard thumbs to show transparency
+  - Download individual tiles or ZIP (store, no compression), Clear button
+  - Tiles and tool state persist across popup reopen
+- Home preview now shows a checkerboard under images to visualize transparency
+- Popup layout widened to 540px; theme styling retained from 3.2.1
+
 ## v3.2 — Release
 **Release Date:** 2025-10-09
 
