@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>YoWorld Paint v3.2.1</title>
+<title>YoWorld Paint v3.3</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&amp;family=Spectral+SC:wght@600&amp;display=swap" rel="stylesheet"/>
@@ -15,7 +15,7 @@
   background:#7e1212;
   color:#fff;
 }
-<<<<<<< HEAD
+
 #panel-resources #btn-save-uploader:hover{ filter:brightness(1.06); }
 #panel-resources #btn-save-uploader:active{ transform:translateY(1px); }
 #panel-resources .bmc-wrap{ text-align:center; margin-top:8px; }
@@ -38,17 +38,14 @@
 .qu-head{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid var(--frame-border); border-radius:10px; background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg)); }
 .qu-head .qu-title{ font-family:'Pacifico', system-ui, sans-serif; font-weight:400; font-size:15px; color: var(--accent); letter-spacing:.2px; }
 .qu-head .qu-sub{ font-size:12px; color: var(--muted); }
-=======
->>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
 </style>
 <link href="fonts.css" rel="stylesheet"/>
 </head>
 <body>
 <div class="app-shell">
-<header class="app-header">YoWorld Paint v3.2.1</header>
+<header class="app-header">YoWorld Paint v3.3</header>
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
-<button aria-selected="false" class="tab" data-tab="tools" role="tab">Tools</button>
 <button aria-selected="false" class="tab" data-tab="sales-boards" role="tab">Sales Boards</button>
 <button aria-selected="false" class="tab" data-tab="sales" role="tab">Create Boards</button>
 <button aria-selected="false" class="tab" data-tab="tools" role="tab">Tools</button>
@@ -99,11 +96,7 @@
   </div>
   <div style="display:flex; align-items:center; gap:16px; font-size:12px; flex-wrap:wrap;">
     <label style="display:flex; align-items:center; gap:6px;">
-<<<<<<< HEAD
-  <input type="checkbox" id="qu-autoresize" checked aria-label="Auto-resize to 390 by 260" aria-describedby="qu-status qu-warning" /> Auto‑resize to 390×260
-=======
   <input type="checkbox" id="qu-autoresize" aria-label="Auto-resize to 390 by 260" aria-describedby="qu-status qu-warning" /> Auto‑resize to 390×260
->>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
     </label>
     <label style="display:flex; align-items:center; gap:6px;">
       <input type="checkbox" id="qu-autoset" checked aria-label="Auto-set as current image after upload" aria-describedby="qu-status qu-warning" /> Auto‑set as Current Image
@@ -557,13 +550,6 @@
     <div class="form-row" style="margin-bottom:10px;">
       <label for="res-theme">Color Theme</label>
       <select id="res-theme" class="input">
-<<<<<<< HEAD
-        <option value="crimson">Crimson (default)</option>
-        <option value="emerald">Emerald</option>
-        <option value="midnight">Midnight</option>
-        <option value="royal">Royal</option>
-        <option value="slate">Slate</option>
-=======
         <option value="aurora-rose">Aurora Rose</option>
         <option value="crimson">Crimson (default)</option>
         <option value="emerald">Emerald</option>
@@ -573,7 +559,6 @@
         <option value="royal">Royal</option>
         <option value="slate">Slate</option>
         <option value="teal-contrast">Teal Contrast</option>
->>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
       </select>
     </div>
     <p class="note" style="margin:0;">Theme saves to Chrome sync and applies across all tabs.</p>
@@ -597,7 +582,6 @@
 <script src="tabs/tools.js"></script>
 <script src="tabs/faq.js"></script>
 <script src="tabs/resources.js"></script>
-<script src="tabs/tools.js"></script>
 </div>
 <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
 </body>

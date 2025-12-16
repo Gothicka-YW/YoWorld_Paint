@@ -7,8 +7,7 @@
     sales: document.getElementById('panel-sales'),
     tools: document.getElementById('panel-tools'),
     faq: document.getElementById('panel-faq'),
-    resources: document.getElementById('panel-resources'),
-    tools: document.getElementById('panel-tools')
+    resources: document.getElementById('panel-resources')
   };
 
   const LAST_TAB_KEY='ywp:lastTab';
@@ -40,23 +39,16 @@
   const themeSel = document.getElementById('res-theme');
   function applyThemeName(name){
     const body = document.body;
-<<<<<<< HEAD
-    body.classList.remove('theme-crimson','theme-emerald','theme-midnight','theme-royal','theme-slate');
-=======
-  body.classList.remove('theme-crimson','theme-emerald','theme-midnight','theme-royal','theme-slate','theme-pastel-breeze','theme-mint-frost','theme-aurora-rose','theme-solar-gold','theme-teal-contrast');
->>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
+    body.classList.remove('theme-crimson','theme-emerald','theme-midnight','theme-royal','theme-slate','theme-pastel-breeze','theme-mint-frost','theme-aurora-rose','theme-solar-gold','theme-teal-contrast');
     switch((name||'').toLowerCase()){
       case 'emerald': body.classList.add('theme-emerald'); break;
       case 'midnight': body.classList.add('theme-midnight'); break;
       case 'royal': body.classList.add('theme-royal'); break;
       case 'slate': body.classList.add('theme-slate'); break;
-<<<<<<< HEAD
-=======
       case 'pastel-breeze': body.classList.add('theme-pastel-breeze'); break;
       case 'mint-frost': body.classList.add('theme-mint-frost'); break;
       case 'aurora-rose': body.classList.add('theme-aurora-rose'); break;
-  case 'teal-contrast': body.classList.add('theme-teal-contrast'); break;
->>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
+      case 'teal-contrast': body.classList.add('theme-teal-contrast'); break;
       case 'crimson': default: body.classList.add('theme-crimson'); break;
     }
   }
