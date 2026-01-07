@@ -38,6 +38,12 @@
 .qu-head{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid var(--frame-border); border-radius:10px; background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg)); }
 .qu-head .qu-title{ font-family:'Pacifico', system-ui, sans-serif; font-weight:400; font-size:15px; color: var(--accent); letter-spacing:.2px; }
 .qu-head .qu-sub{ font-size:12px; color: var(--muted); }
+.matrix-grid{ display:grid; grid-template-columns: repeat(3, minmax(70px, 1fr)); gap:6px; }
+#panel-transform .matrix-grid input{ padding:6px 8px; font-size:12px; border:1px solid #cfcfcf; border-radius:6px; }
+#panel-transform .matrix-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0; }
+#panel-transform .tx-row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0; }
+#panel-transform .tx-status{ font-size:12px; min-height:16px; color:#6b7280; }
+#panel-transform .tx-warn{ font-size:12px; min-height:16px; color:#b00020; }
 </style>
 <link href="fonts.css" rel="stylesheet"/>
 </head>
@@ -189,8 +195,56 @@
   </div>
 </section>
 <section aria-label="Transform" class="panel" id="panel-transform" role="region">
-  <div class="content-pad" style="padding:10px 6px;">
-    <p class="note" style="margin:0;">Create Boards has been removed. Use Sales Boards to capture from yoworld.info or Tools to split/warp images.</p>
+  <div class="content-pad" style="padding:10px 6px; display:flex; flex-direction:column; gap:10px;">
+    <div>
+      <h3 style="margin:0 0 4px;">Perspective (front-facing)</h3>
+      <p class="note" style="margin:0;">Use the right-facing preset matrix from GIMP. Paste a new matrix if needed; invert to pre-warp for in-game slant.</p>
+    </div>
+
+    <div class="tx-row">
+      <button id="tx-preset-right" class="btn btn-primary" style="flex:0 0 auto;">Load Right Preset</button>
+      <button id="tx-preset-left" class="btn" style="flex:0 0 auto;">Load Left Preset</button>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12px;">
+        <input type="checkbox" id="tx-inverse" /> Invert matrix (pre-warp)
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12px;">
+        <input type="checkbox" id="tx-autoresize" checked /> Resize to 390×260
+      </label>
+    </div>
+
+    <div class="matrix-grid" aria-label="Transform matrix inputs">
+      <input aria-label="m00" data-m="0" type="number" step="0.0001" />
+      <input aria-label="m01" data-m="1" type="number" step="0.0001" />
+      <input aria-label="m02" data-m="2" type="number" step="0.0001" />
+      <input aria-label="m10" data-m="3" type="number" step="0.0001" />
+      <input aria-label="m11" data-m="4" type="number" step="0.0001" />
+      <input aria-label="m12" data-m="5" type="number" step="0.0001" />
+      <input aria-label="m20" data-m="6" type="number" step="0.0001" />
+      <input aria-label="m21" data-m="7" type="number" step="0.0001" />
+      <input aria-label="m22" data-m="8" type="number" step="0.0001" />
+    </div>
+
+    <div class="tx-row">
+      <button id="tx-apply" class="btn btn-primary" style="flex:0 0 auto;">Apply</button>
+      <button id="tx-export" class="btn" style="flex:0 0 auto;" disabled>Export PNG</button>
+      <button id="tx-copy" class="btn" style="flex:0 0 auto;" disabled>Copy</button>
+      <button id="tx-clear" class="btn" style="flex:0 0 auto;">Clear</button>
+      <span class="tx-status" id="tx-status"></span>
+    </div>
+
+    <div class="tx-row">
+      <button id="tx-file-btn" class="btn" style="flex:0 0 auto;">Select Image</button>
+      <input id="tx-file" type="file" accept="image/*" style="display:none;" />
+      <div id="tx-drop" class="qu-drop" role="button" tabindex="0" aria-label="Select or drop an image to transform" style="flex:1;">
+        <span class="qu-drop-hint">Click / Drop / Paste Image</span>
+      </div>
+    </div>
+
+    <div class="tx-warn" id="tx-warn"></div>
+
+    <div class="preview-card" style="margin:4px 0 0;">
+      <canvas id="tx-preview" width="390" height="260" aria-label="Transform preview" class="checker-bg"></canvas>
+    </div>
   </div>
 </section>
 <!-- Tools panel moved directly after Home to match tab order -->
@@ -451,8 +505,8 @@
 <script src="popup.js"></script>
 <script src="tabs/home.js"></script>
 <script src="tabs/sales-boards.js"></script>
-<!-- sales.js removed with the Transform tab swap -->
 <script src="tabs/tools.js"></script>
+<script src="tabs/transform.js"></script>
 <script src="tabs/faq.js"></script>
 <script src="tabs/resources.js"></script>
 </div>
