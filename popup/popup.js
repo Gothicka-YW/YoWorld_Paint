@@ -4,7 +4,7 @@
   const panels = {
     home: document.getElementById('panel-home'),
     'sales-boards': document.getElementById('panel-sales-boards'),
-    sales: document.getElementById('panel-sales'),
+    transform: document.getElementById('panel-transform'),
     tools: document.getElementById('panel-tools'),
     faq: document.getElementById('panel-faq'),
     resources: document.getElementById('panel-resources')

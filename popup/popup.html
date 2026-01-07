@@ -47,7 +47,7 @@
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
 <button aria-selected="false" class="tab" data-tab="sales-boards" role="tab">Sales Boards</button>
-<button aria-selected="false" class="tab" data-tab="sales" role="tab">Create Boards</button>
+<button aria-selected="false" class="tab" data-tab="transform" role="tab">Transform</button>
 <button aria-selected="false" class="tab" data-tab="tools" role="tab">Tools</button>
 <button aria-selected="false" class="tab" data-tab="faq" role="tab">FAQ</button>
 <button aria-selected="false" class="tab" data-tab="resources" role="tab">Resources</button>
@@ -188,137 +188,10 @@
     </div>
   </div>
 </section>
-<section aria-label="Create Boards" class="panel" id="panel-sales" role="region">
-<div class="note" id="sales-howto" style="margin-bottom:4px;">
-  <details id="sales-howto-details" style="margin:0;">
-  <summary style="cursor:pointer; color: var(--link); text-decoration:underline; display:inline;">How to Use</summary>
-    <div style="margin-top:6px; color:#6b7280; font-size:12px;">
-      <div style="font-weight:600; margin-bottom:4px;">Create Boards</div>
-      <ul style="margin:0 0 0 16px; padding:0; list-style:disc;">
-        <li>Select a Layout (classic 3×2, banner/hero/strips/mosaic/list variants).</li>
-        <li>Choose Image Fit:
-          <ul style="margin:4px 0 0 16px; padding:0; list-style:circle;">
-            <li>Contain (no crop)</li>
-            <li>Cover (fills area, may crop edges)</li>
-          </ul>
-        </li>
-        <li>Add images: paste direct links or paste/drag & drop images into the fields.</li>
-        <li>Type captions (up to 160 characters) — two lines are supported with smart sizing.</li>
-        <li>Preview updates live and matches the exported image.</li>
-        <li>Click Export PNG to save your board (always 390×260).</li>
-        <li>To host/share:
-          <ul style="margin:4px 0 0 16px; padding:0; list-style:circle;">
-            <li>Use the Home tab’s Quick Image Uploader (ImgBB) to upload the exported PNG and optionally Auto‑set, or</li>
-            <li>Upload to your own host and paste the link in the Home tab.</li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-  </details>
-</div>
-<div class="layout-row">
-  <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; flex:1;">
-    <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
-      Layout:
-      <select id="sales-layout" class="input" style="max-width:220px;">
-        <!-- options injected dynamically by sales.js based on layout registry -->
-      </select>
-    </label>
-    <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
-      Price/Label Font:
-      <select class="input" id="sales-font" style="max-width:160px;">
-        <option>Segoe UI (tight)</option>
-        <option>Tahoma</option>
-        <option>Verdana</option>
-        <option>Pacifico</option>
-  <option>Staatliches-Regular</option>
-        <option>Passion One</option>
-        <option>Dancing Script</option>
-      </select>
-    </label>
-    <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
-      Size:
-      <select class="input" id="sales-size" style="max-width:90px;">
-        <option value="8">8 px</option>
-        <option value="9">9 px</option>
-        <option value="10">10 px</option>
-        <option value="11">11 px</option>
-        <option value="12">12 px</option>
-        <option value="13">13 px</option>
-        <option value="14">14 px</option>
-        <option value="15">15 px</option>
-        <option value="16">16 px</option>
-      </select>
-    </label>
-    <label style="font-weight:600; font-size:13px; display:flex; align-items:center; gap:6px;">
-      Image Fit:
-      <select class="input" id="sales-fit" style="max-width:110px;">
-        <option value="contain">Contain</option>
-        <option value="cover">Cover</option>
-      </select>
-    </label>
+<section aria-label="Transform" class="panel" id="panel-transform" role="region">
+  <div class="content-pad" style="padding:10px 6px;">
+    <p class="note" style="margin:0;">Create Boards has been removed. Use Sales Boards to capture from yoworld.info or Tools to split/warp images.</p>
   </div>
-  <!-- footer inputs removed; layout 'footer2' now means per-item two-line labels -->
-</div>
-<input type="file" id="sales-file-input" accept="image/*" style="display:none" />
-<div class="grid">
-<div class="cell">
-  <input class="input" data-role="img-url" data-slot="1" placeholder="Image 1 URL or Paste Image"/>
-  <div class="price-stack">
-    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
-    <div class="char-count" data-role="price-count"></div>
-  </div>
-</div>
-<div class="cell">
-  <input class="input" data-role="img-url" data-slot="2" placeholder="Image 2 URL or Paste Image"/>
-  <div class="price-stack">
-    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
-    <div class="char-count" data-role="price-count"></div>
-  </div>
-</div>
-<div class="cell">
-  <input class="input" data-role="img-url" data-slot="3" placeholder="Image 3 URL or Paste Image"/>
-  <div class="price-stack">
-    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
-    <div class="char-count" data-role="price-count"></div>
-  </div>
-</div>
-<div class="cell">
-  <input class="input" data-role="img-url" data-slot="4" placeholder="Image 4 URL or Paste Image"/>
-  <div class="price-stack">
-    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
-    <div class="char-count" data-role="price-count"></div>
-  </div>
-</div>
-<div class="cell">
-  <input class="input" data-role="img-url" data-slot="5" placeholder="Image 5 URL or Paste Image"/>
-  <div class="price-stack">
-    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
-    <div class="char-count" data-role="price-count"></div>
-  </div>
-</div>
-<div class="cell">
-  <input class="input" data-role="img-url" data-slot="6" placeholder="Image 6 URL or Paste Image"/>
-  <div class="price-stack">
-    <input class="input" data-role="price" placeholder="Price or Label" maxlength="160"/>
-    <div class="char-count" data-role="price-count"></div>
-  </div>
-</div>
-</div>
-<div class="controls-row">
-  <div class="spacer"></div>
-  <button class="btn btn--primary" id="btn-export">Export PNG</button>
-  <button class="btn" id="btn-upload-last" title="Upload the last exported PNG via Quick Uploader" disabled>Upload Last Export</button>
-  <button class="btn btn--primary" id="btn-clear">Clear</button>
-</div>
-<div class="sales-preview">
-<div class="tile"></div>
-<div class="tile"></div>
-<div class="tile"></div>
-<div class="tile"></div>
-<div class="tile"></div>
-<div class="tile"></div>
-</div>
 </section>
 <!-- Tools panel moved directly after Home to match tab order -->
 <section aria-label="Tools" class="panel" id="panel-tools" role="region">
@@ -486,12 +359,12 @@
   <li>Enable <strong>Redirect</strong>, save your Paint Board in YoWorld, then turn Redirect off.</li>
   <li>Open the paint board and press <strong>OK</strong>.</li>
 </ol>
-<!-- Create Boards section removed from FAQ (now documented inline in the Create Boards tab) -->
+<!-- Create Boards section removed (tab retired) -->
 
 <h3>Tips</h3>
 <ul>
   <li><strong>Fast capture from yoworld.info:</strong> On a template, click “preview template,” then drag the preview into the URL field or screenshot (<kbd>Win+Shift+S</kbd>) and paste.</li>
-  <li><strong>Paste everywhere:</strong> You can paste images directly into Home or Create Boards fields.</li>
+  <li><strong>Paste everywhere:</strong> You can paste images directly into Home fields.</li>
   <li><strong>Clean captions:</strong> Shorter labels read better; use two lines for long names.</li>
   <li><strong>Hosting:</strong> ImgBB is integrated and reliable; set your API key in <strong>Resources</strong>.</li>
 </ul>
@@ -578,7 +451,7 @@
 <script src="popup.js"></script>
 <script src="tabs/home.js"></script>
 <script src="tabs/sales-boards.js"></script>
-<script src="tabs/sales.js"></script>
+<!-- sales.js removed with the Transform tab swap -->
 <script src="tabs/tools.js"></script>
 <script src="tabs/faq.js"></script>
 <script src="tabs/resources.js"></script>
