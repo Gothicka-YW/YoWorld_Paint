@@ -22,8 +22,8 @@ Notes
 - Perspective/Skew correction and Image Splitting are in design only (no shipped logic yet)
 - Testing of offline yoworld.info fallback still pending manual simulation
 
-## v3.3 — Unreleased
-**Release Date:** 2025-12-11
+## v3.3 — Release
+**Release Date:** 2026-01-07
 
 Highlights
 - New Tools tab
@@ -32,6 +32,7 @@ Highlights
   - Drag/drop/paste input, checkerboard thumbs to show transparency
   - Download individual tiles or ZIP (store, no compression), Clear button
   - Tiles and tool state persist across popup reopen
+- Create Boards tab retired; tab renamed to Transform with guidance to use Sales Boards for captures or Tools for splitting/warping
 - Home preview now shows a checkerboard under images to visualize transparency
 - Popup layout widened to 540px; theme styling retained from 3.2.1
 
