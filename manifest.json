@@ -39,16 +39,6 @@
   "content_scripts": [
     {
       "matches": [
-        "https://yoworld.com/*",
-        "https://*.yoworld.com/*"
-      ],
-      "js": [
-        "content/yw_direct_upload.js"
-      ],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": [
         "https://yoworld.info/*",
         "https://*.yoworld.info/*"
       ],

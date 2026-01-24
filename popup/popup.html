@@ -67,6 +67,35 @@
 <span class="label">Enable Redirect</span>
 </label>
 </div>
+<div class="row" style="margin-top:-2px;">
+  <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; width:100%;">
+    <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600;">
+      <input type="checkbox" id="glow-fix" /> Glow Fix (recommended)
+    </label>
+    <label style="display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:600;">
+      Matte Mode
+      <select id="glow-matte-mode" class="input" style="padding:6px 10px; height:32px;">
+        <option value="color">Color</option>
+        <option value="transparent">Transparent</option>
+      </select>
+    </label>
+    <label style="display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:600;">
+      Smoothness
+      <select id="glow-smoothness" class="input" style="padding:6px 10px; height:32px;">
+        <option value="0">Low</option>
+        <option value="1" selected>Medium</option>
+        <option value="2">High</option>
+      </select>
+    </label>
+    <label style="display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:600;">
+      Matte
+      <input type="color" id="glow-matte" value="#ffffff" style="height:32px; width:56px; padding:0; border:1px solid #cfcfcf; border-radius:6px; background:#fff;" />
+    </label>
+    <div style="font-size:11px; color:var(--muted); max-width:360px; line-height:1.2;">
+      YoWorld may flatten semi‑transparent glow into a solid color. Glow Fix converts soft alpha into a visible gradient using the matte color.
+    </div>
+  </div>
+</div>
 <div class="preview-card">
 <div aria-label="Image preview 390×260" class="preview"></div>
 </div>

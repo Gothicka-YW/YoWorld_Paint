@@ -12,7 +12,7 @@
 - **Uploader Logic** (`src/lib/uploader.js`): Handles image uploads to providers (Uploadcare, Catbox). Provider logic in `src/providers/`.
 - **Settings** (`src/lib/settings.js`): Reads/writes user settings (e.g., preferred upload provider, API keys) via `chrome.storage.sync`.
 - **Background Worker** (`background.js`): Listens for storage changes and updates redirect rules using `chrome.declarativeNetRequest`.
-- **Content Script** (`content/yw_direct_upload.js`): Enables direct uploads to YoWorld from the extension.
+- **Content Script** (`content/sb_capture.js`): Captures Sales Board images from YoWorld Info.
 
 ## Developer Workflows
 - **Install/Load**: See `HOW_TO_INSTALL.txt` for step-by-step Chrome extension loading.

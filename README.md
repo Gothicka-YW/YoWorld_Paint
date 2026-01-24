@@ -22,7 +22,6 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 - Resilience & reliability
   - Redirect now prefers the YoWorld Info proxy when reachable and falls back safely to the direct image URL if the proxy is down
-  - Added “Save in YoWorld” button (Home tab) to perform a direct upload via the content script so the image truly persists when you click OK in-game
   - Data URL pasted in the Home input is auto‑uploaded (ImgBB) and converted to a stable https link
 - Sales Boards
   - Picker works on any page (domain‑agnostic), not just yoworld.info

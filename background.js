@@ -1,12 +1,36 @@
 console.log("YoWorld Art MV3 worker running (storage-connected).");
 
+function getChromeLastErrorMessage() {
+    const err = chrome.runtime.lastError;
+    if (!err) return null;
+    if (typeof err === "string") return err;
+    if (err && typeof err.message === "string") return err.message;
+    try {
+        return JSON.stringify(err);
+    } catch (_) {
+        return String(err);
+    }
+}
+
+function logChromeLastError(context) {
+    const msg = getChromeLastErrorMessage();
+    if (!msg) return false;
+    // Common during extension reload/update; not actionable.
+    if (/extension context invalidated/i.test(msg)) return true;
+    console.error(context + ":", msg, chrome.runtime.lastError);
+    return true;
+}
+
 function updateRedirectRules(imgUrl, enableRedirect) {
-    console.log("Updating rules. enableRedirect =", enableRedirect, "imgUrl =", imgUrl);
+    const enabled = !!enableRedirect;
+    const safeImgUrl = (imgUrl || "").trim();
+    const targetUrl = "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+    console.log("Updating rules. enableRedirect =", enabled, "imgUrl =", safeImgUrl);
 
     chrome.declarativeNetRequest.updateDynamicRules(
         {
             removeRuleIds: [1],
-            addRules: enableRedirect
+            addRules: (enabled && safeImgUrl && /^https?:\/\//i.test(targetUrl))
                 ? [
                     {
                         id: 1,
@@ -14,7 +38,7 @@ function updateRedirectRules(imgUrl, enableRedirect) {
                         action: {
                             type: "redirect",
                             redirect: {
-                                url: "https://api.yoworld.info/extension.php?x=" + imgUrl
+                                url: targetUrl
                             }
                         },
                         condition: {
@@ -26,8 +50,8 @@ function updateRedirectRules(imgUrl, enableRedirect) {
                 : []
         },
         () => {
-            if (chrome.runtime.lastError) {
-                console.error("Error updating rules:", chrome.runtime.lastError);
+            if (logChromeLastError("Error updating rules")) {
+                return;
             } else {
                 console.log("Rules updated successfully.");
                 chrome.declarativeNetRequest.getDynamicRules((rules) => {
@@ -39,9 +63,8 @@ function updateRedirectRules(imgUrl, enableRedirect) {
 }
 
 function loadSettings() {
-    chrome.storage.local.get("img", (e) => {
-        if (chrome.runtime.lastError) {
-            console.error("Error loading storage:", chrome.runtime.lastError);
+    chrome.storage.local.get({ img: ["", false] }, (e) => {
+        if (logChromeLastError("Error loading storage")) {
             return;
         }
         if (e.img && e.img.length) {

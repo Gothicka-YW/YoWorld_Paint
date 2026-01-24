@@ -5,7 +5,6 @@
 
 Improvements
 - Resilience: background redirect probes YoWorld Info proxy and falls back to direct image URL if the proxy is down
-- Home: added “Save in YoWorld” button to upload directly to YoWorld so the image persists when clicking OK (requires the paintboard dialog open)
 - Home: data URLs pasted in the input are auto‑uploaded and converted to https links (ImgBB)
 - Sales Boards: picker works on any page (not limited to yoworld.info); improved messages when injection fails
 - UI: transparency preview uses a standard grey checkerboard behind PNGs (Home preview and Sales tiles)
