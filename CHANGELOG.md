@@ -1,5 +1,16 @@
 # � YoWorld Paint – Changelog
+## v3.4 — Update
+**Release Date:** 2026-02-10
 
+Changes
+- Removed "Glow Fix" feature from Home tab
+  - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
+  - Investigating better approaches for handling semi-transparent images (similar to Fiddler's method)
+- Version bump: manifest version/name and UI title updated to 3.4
+
+Notes
+- All other features remain unchanged from v3.3
+- Working on improved solution for dither/glow image handling
 ## v3.2.1 — Update
 **Release Date:** 2025-11-08
 
