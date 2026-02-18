@@ -5,7 +5,6 @@
   const els = {
     presetRight: panel.querySelector('#tx-preset-right'),
     presetLeft: panel.querySelector('#tx-preset-left'),
-    inverse: panel.querySelector('#tx-inverse'),
     autoresize: panel.querySelector('#tx-autoresize'),
     multitile: panel.querySelector('#tx-multitile'),
     matrixInputs: Array.from(panel.querySelectorAll('[data-m]')),
@@ -24,7 +23,7 @@
 
   const PRESETS = {
     right: [0.9970, 0, 0.4618, -0.4771, 0.9994, 89.6913, 0, 0, 1],
-    left: [1, 0, 0, 0, 1, 0, 0, 0, 1] // placeholder until left preset is provided
+    left: [0.9970, 0, -0.4618, 0.4771, 0.9994, 89.6913, 0, 0, 1]
   };
 
   let sourceImage = null;
@@ -151,16 +150,7 @@
       return;
     }
     const mat = getMatrix();
-    const useInverse = !!(els.inverse && els.inverse.checked);
-    let H = mat;
-    if (useInverse) {
-      H = invert3x3(mat);
-      if (!H) {
-        setWarn('Matrix is not invertible.');
-        return;
-      }
-    }
-    const Hinv = invert3x3(H);
+    const Hinv = invert3x3(mat);
     if (!Hinv) {
       setWarn('Matrix is not invertible.');
       return;
@@ -186,7 +176,7 @@
 
     if (multiTile) {
       // Multi-tile mode: calculate full transformed bounds and split into tiles
-      const { minX, minY, maxX, maxY, fullCanvas } = warpImageDataFull(srcData, Hinv, H);
+      const { minX, minY, maxX, maxY, fullCanvas } = warpImageDataFull(srcData, Hinv, mat);
       const fullW = maxX - minX;
       const fullH = maxY - minY;
       
