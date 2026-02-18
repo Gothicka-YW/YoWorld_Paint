@@ -104,7 +104,18 @@
       return;
     }
     setMatrix(preset);
-    setStatus(`${name === 'right' ? 'Right' : 'Left'} preset loaded.`);
+    setStatus(`${name === 'right' ? 'Left' : 'Right'} preset loaded.`);
+    
+    // Update button styling to show active preset
+    if (els.presetRight && els.presetLeft) {
+      if (name === 'right') {
+        els.presetRight.classList.add('btn-primary');
+        els.presetLeft.classList.remove('btn-primary');
+      } else {
+        els.presetLeft.classList.add('btn-primary');
+        els.presetRight.classList.remove('btn-primary');
+      }
+    }
   }
 
   function setMatrix(vals) {
