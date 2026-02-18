@@ -211,6 +211,9 @@
       <label style="display:flex; align-items:center; gap:6px; font-size:12px;">
         <input type="checkbox" id="tx-autoresize" /> Resize to 390×260
       </label>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12px;">
+        <input type="checkbox" id="tx-multitile" /> Multi-tile output
+      </label>
     </div>
 
     <div class="matrix-grid" aria-label="Transform matrix inputs">
@@ -228,6 +231,7 @@
     <div class="tx-row">
       <button id="tx-apply" class="btn btn-primary" style="flex:0 0 auto;">Apply</button>
       <button id="tx-export" class="btn" style="flex:0 0 auto;" disabled>Export PNG</button>
+      <button id="tx-export-all" class="btn" style="flex:0 0 auto; display:none;" disabled>Export All Tiles</button>
       <button id="tx-copy" class="btn" style="flex:0 0 auto;" disabled>Copy</button>
       <button id="tx-clear" class="btn" style="flex:0 0 auto;">Clear</button>
       <span class="tx-status" id="tx-status"></span>

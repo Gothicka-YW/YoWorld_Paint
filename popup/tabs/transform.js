@@ -7,9 +7,11 @@
     presetLeft: panel.querySelector('#tx-preset-left'),
     inverse: panel.querySelector('#tx-inverse'),
     autoresize: panel.querySelector('#tx-autoresize'),
+    multitile: panel.querySelector('#tx-multitile'),
     matrixInputs: Array.from(panel.querySelectorAll('[data-m]')),
     applyBtn: panel.querySelector('#tx-apply'),
     exportBtn: panel.querySelector('#tx-export'),
+    exportAllBtn: panel.querySelector('#tx-export-all'),
     copyBtn: panel.querySelector('#tx-copy'),
     clearBtn: panel.querySelector('#tx-clear'),
     fileBtn: panel.querySelector('#tx-file-btn'),
@@ -27,6 +29,7 @@
 
   let sourceImage = null;
   let lastCanvas = null;
+  let lastTiles = [];
 
   init();
 
@@ -90,6 +93,7 @@
   function wireActions() {
     if (els.applyBtn) els.applyBtn.addEventListener('click', applyTransform);
     if (els.exportBtn) els.exportBtn.addEventListener('click', exportPng);
+    if (els.exportAllBtn) els.exportAllBtn.addEventListener('click', exportAllTiles);
     if (els.copyBtn) els.copyBtn.addEventListener('click', copyPng);
     if (els.clearBtn) els.clearBtn.addEventListener('click', clearAll);
   }
@@ -165,22 +169,54 @@
     const targetW = 390;
     const targetH = 260;
     const autoresize = !!(els.autoresize && els.autoresize.checked);
+    const multiTile = !!(els.multitile && els.multitile.checked);
+    
     const srcW = autoresize ? targetW : (sourceImage.width || sourceImage.naturalWidth || targetW);
     const srcH = autoresize ? targetH : (sourceImage.height || sourceImage.naturalHeight || targetH);
 
+    // Create source canvas at desired size
     const srcCanvas = document.createElement('canvas');
-    srcCanvas.width = targetW;
-    srcCanvas.height = targetH;
+    srcCanvas.width = autoresize ? targetW : srcW;
+    srcCanvas.height = autoresize ? targetH : srcH;
     const sctx = srcCanvas.getContext('2d');
     sctx.imageSmoothingEnabled = true;
     sctx.imageSmoothingQuality = 'high';
-    sctx.drawImage(sourceImage, 0, 0, srcW, srcH, 0, 0, targetW, targetH);
-    const srcData = sctx.getImageData(0, 0, targetW, targetH);
+    sctx.drawImage(sourceImage, 0, 0, srcW, srcH, 0, 0, srcCanvas.width, srcCanvas.height);
+    const srcData = sctx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
 
-    const outData = warpImageData(srcData, Hinv);
-    renderPreview(outData);
-    setWarn('');
-    setStatus('Applied transform.');
+    if (multiTile) {
+      // Multi-tile mode: calculate full transformed bounds and split into tiles
+      const { minX, minY, maxX, maxY, fullCanvas } = warpImageDataFull(srcData, Hinv, H);
+      const fullW = maxX - minX;
+      const fullH = maxY - minY;
+      
+      if (fullW <= targetW && fullH <= targetH) {
+        // Result fits in one tile
+        renderPreview(fullCanvas.getContext('2d').getImageData(0, 0, fullCanvas.width, fullCanvas.height));
+        lastTiles = [fullCanvas];
+        setWarn('');
+        setStatus(`Applied transform (1 tile: ${fullW}×${fullH})`);
+        if (els.exportAllBtn) els.exportAllBtn.style.display = 'none';
+      } else {
+        // Split into tiles
+        const tiles = splitIntoTiles(fullCanvas, targetW, targetH);
+        lastTiles = tiles;
+        renderMultiPreview(tiles, targetW, targetH);
+        setWarn('');
+        setStatus(`Applied transform (${tiles.length} tiles: ${fullW}×${fullH} total)`);
+        if (els.exportAllBtn) {
+          els.exportAllBtn.style.display = '';
+          els.exportAllBtn.disabled = false;
+        }
+      }
+    } else {
+      // Single tile mode (original behavior)
+      const outData = warpImageData(srcData, Hinv);
+      renderPreview(outData);
+      setWarn('');
+      setStatus('Applied transform.');
+      if (els.exportAllBtn) els.exportAllBtn.style.display = 'none';
+    }
   }
 
   function renderPreview(imageData) {
@@ -194,6 +230,7 @@
     lastCanvas.width = imageData.width;
     lastCanvas.height = imageData.height;
     lastCanvas.getContext('2d').putImageData(imageData, 0, 0);
+    lastTiles = [lastCanvas];
 
     if (els.exportBtn) els.exportBtn.disabled = false;
     if (els.copyBtn) els.copyBtn.disabled = false;
@@ -230,12 +267,17 @@
   function clearAll() {
     sourceImage = null;
     lastCanvas = null;
+    lastTiles = [];
     if (els.fileInput) els.fileInput.value = '';
     if (els.preview) {
       const ctx = els.preview.getContext('2d');
       ctx.clearRect(0, 0, els.preview.width, els.preview.height);
     }
     if (els.exportBtn) els.exportBtn.disabled = true;
+    if (els.exportAllBtn) {
+      els.exportAllBtn.disabled = true;
+      els.exportAllBtn.style.display = 'none';
+    }
     if (els.copyBtn) els.copyBtn.disabled = true;
     setStatus('Cleared.');
     setWarn('');
@@ -352,5 +394,169 @@
       }
     }
     return outData;
+  }
+
+  // Multi-tile support functions
+  function warpImageDataFull(srcImageData, Hinv, H) {
+    const w = srcImageData.width;
+    const h = srcImageData.height;
+
+    // Calculate bounding box of transformed image
+    const corners = [
+      [0, 0], [w, 0], [w, h], [0, h]
+    ];
+    let minX = Infinity, minY = Infinity;
+    let maxX = -Infinity, maxY = -Infinity;
+
+    corners.forEach(([x, y]) => {
+      const wx = H[0] * x + H[1] * y + H[2];
+      const wy = H[3] * x + H[4] * y + H[5];
+      const wz = H[6] * x + H[7] * y + H[8];
+      if (wz !== 0) {
+        const tx = wx / wz;
+        const ty = wy / wz;
+        minX = Math.min(minX, tx);
+        minY = Math.min(minY, ty);
+        maxX = Math.max(maxX, tx);
+        maxY = Math.max(maxY, ty);
+      }
+    });
+
+    // Create canvas for full transformed image
+    const fullW = Math.ceil(maxX - minX);
+    const fullH = Math.ceil(maxY - minY);
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width = fullW;
+    fullCanvas.height = fullH;
+    const fullCtx = fullCanvas.getContext('2d');
+    const fullData = fullCtx.createImageData(fullW, fullH);
+
+    const sdata = srcImageData.data;
+    const ddata = fullData.data;
+
+    const h0 = Hinv[0], h1 = Hinv[1], h2 = Hinv[2];
+    const h3 = Hinv[3], h4 = Hinv[4], h5 = Hinv[5];
+    const h6 = Hinv[6], h7 = Hinv[7], h8 = Hinv[8];
+
+    // Transform with offset
+    for (let y = 0; y < fullH; y++) {
+      for (let x = 0; x < fullW; x++) {
+        const dx = x + minX;
+        const dy = y + minY;
+        const wx = h0 * dx + h1 * dy + h2;
+        const wy = h3 * dx + h4 * dy + h5;
+        const wz = h6 * dx + h7 * dy + h8;
+        if (wz === 0) continue;
+        const sx = wx / wz;
+        const sy = wy / wz;
+        const ix = Math.floor(sx);
+        const iy = Math.floor(sy);
+        if (ix >= 0 && iy >= 0 && ix + 1 < w && iy + 1 < h) {
+          const fx = sx - ix;
+          const fy = sy - iy;
+          const i00 = (iy * w + ix) * 4;
+          const i10 = (iy * w + (ix + 1)) * 4;
+          const i01 = ((iy + 1) * w + ix) * 4;
+          const i11 = ((iy + 1) * w + (ix + 1)) * 4;
+          for (let c = 0; c < 4; c++) {
+            const v00 = sdata[i00 + c];
+            const v10 = sdata[i10 + c];
+            const v01 = sdata[i01 + c];
+            const v11 = sdata[i11 + c];
+            const v0 = v00 + fx * (v10 - v00);
+            const v1 = v01 + fx * (v11 - v01);
+            ddata[(y * fullW + x) * 4 + c] = v0 + fy * (v1 - v0);
+          }
+        }
+      }
+    }
+
+    fullCtx.putImageData(fullData, 0, 0);
+    return { minX, minY, maxX, maxY, fullCanvas };
+  }
+
+  function splitIntoTiles(canvas, tileW, tileH) {
+    const tiles = [];
+    const cols = Math.ceil(canvas.width / tileW);
+    const rows = Math.ceil(canvas.height / tileH);
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const tileCanvas = document.createElement('canvas');
+        tileCanvas.width = tileW;
+        tileCanvas.height = tileH;
+        const ctx = tileCanvas.getContext('2d');
+        
+        const sx = col * tileW;
+        const sy = row * tileH;
+        const sw = Math.min(tileW, canvas.width - sx);
+        const sh = Math.min(tileH, canvas.height - sy);
+        
+        ctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+        tiles.push({ canvas: tileCanvas, row, col });
+      }
+    }
+
+    return tiles;
+  }
+
+  function renderMultiPreview(tiles, tileW, tileH) {
+    if (!els.preview || tiles.length === 0) return;
+
+    // Calculate grid dimensions
+    const cols = Math.max(...tiles.map(t => t.col)) + 1;
+    const rows = Math.max(...tiles.map(t => t.row)) + 1;
+    
+    // Set preview canvas to show all tiles
+    const previewW = cols * tileW;
+    const previewH = rows * tileH;
+    els.preview.width = previewW;
+    els.preview.height = previewH;
+    
+    const ctx = els.preview.getContext('2d');
+    ctx.clearRect(0, 0, previewW, previewH);
+
+    // Draw each tile
+    tiles.forEach(({ canvas, row, col }) => {
+      ctx.drawImage(canvas, col * tileW, row * tileH);
+    });
+
+    // Store full preview canvas for copy/export
+    lastCanvas = document.createElement('canvas');
+    lastCanvas.width = previewW;
+    lastCanvas.height = previewH;
+    const lastCtx = lastCanvas.getContext('2d');
+    lastCtx.drawImage(els.preview, 0, 0);
+
+    if (els.exportBtn) els.exportBtn.disabled = false;
+    if (els.copyBtn) els.copyBtn.disabled = false;
+  }
+
+  async function exportAllTiles() {
+    if (lastTiles.length === 0) return;
+    
+    try {
+      setStatus('Exporting all tiles...');
+      
+      for (let i = 0; i < lastTiles.length; i++) {
+        const tile = lastTiles[i];
+        const canvas = tile.canvas || tile;
+        const blob = await canvasToPng(canvas);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ywp-perspective-tile-${i + 1}.png`;
+        a.click();
+        
+        // Stagger downloads to avoid browser blocking
+        await new Promise(resolve => setTimeout(resolve, 200));
+        URL.revokeObjectURL(url);
+      }
+      
+      setStatus(`Exported ${lastTiles.length} tiles.`);
+    } catch (err) {
+      console.error(err);
+      setWarn('Export failed.');
+    }
   }
 })();
