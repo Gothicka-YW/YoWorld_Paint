@@ -36,11 +36,18 @@
 
   // Theme boot + wiring
   const THEME_KEY = 'ywp:theme';
+  const DEFAULT_THEME = 'midnight';
+  const KNOWN_THEMES = new Set(['aurora-rose','crimson','emerald','midnight','mint-frost','pastel-breeze','royal','slate','teal-contrast','violet-contrast']);
   const themeSel = document.getElementById('res-theme');
+  function normalizeThemeName(name){
+    const key = String(name || '').toLowerCase();
+    return KNOWN_THEMES.has(key) ? key : DEFAULT_THEME;
+  }
   function applyThemeName(name){
+    const normalized = normalizeThemeName(name);
     const body = document.body;
-    body.classList.remove('theme-crimson','theme-emerald','theme-midnight','theme-royal','theme-slate','theme-pastel-breeze','theme-mint-frost','theme-aurora-rose','theme-solar-gold','theme-teal-contrast');
-    switch((name||'').toLowerCase()){
+    body.classList.remove('theme-crimson','theme-emerald','theme-midnight','theme-royal','theme-slate','theme-pastel-breeze','theme-mint-frost','theme-aurora-rose','theme-solar-gold','theme-teal-contrast','theme-violet-contrast');
+    switch(normalized){
       case 'emerald': body.classList.add('theme-emerald'); break;
       case 'midnight': body.classList.add('theme-midnight'); break;
       case 'royal': body.classList.add('theme-royal'); break;
@@ -49,25 +56,26 @@
       case 'mint-frost': body.classList.add('theme-mint-frost'); break;
       case 'aurora-rose': body.classList.add('theme-aurora-rose'); break;
       case 'teal-contrast': body.classList.add('theme-teal-contrast'); break;
+      case 'violet-contrast': body.classList.add('theme-violet-contrast'); break;
       case 'crimson': default: body.classList.add('theme-crimson'); break;
     }
+    return normalized;
   }
   // load theme
   try {
     chrome.storage.sync.get(['theme'], st => {
-      const saved = st && st.theme ? String(st.theme) : (localStorage.getItem(THEME_KEY) || 'crimson');
-      applyThemeName(saved);
+      const raw = st && st.theme ? String(st.theme) : localStorage.getItem(THEME_KEY);
+      const saved = applyThemeName(raw || DEFAULT_THEME);
       if (themeSel) themeSel.value = saved;
     });
   } catch(_) {
-    const saved = localStorage.getItem(THEME_KEY) || 'crimson';
-    applyThemeName(saved);
+    const saved = applyThemeName(localStorage.getItem(THEME_KEY) || DEFAULT_THEME);
     if (themeSel) themeSel.value = saved;
   }
   if (themeSel){
     themeSel.addEventListener('change', () => {
-      const val = themeSel.value || 'crimson';
-      applyThemeName(val);
+      const val = applyThemeName(themeSel.value || DEFAULT_THEME);
+      themeSel.value = val;
       try{ chrome.storage.sync.set({ theme: val }); }catch(_){ localStorage.setItem(THEME_KEY, val); }
     });
   }

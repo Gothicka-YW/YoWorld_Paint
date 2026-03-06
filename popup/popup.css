@@ -377,8 +377,6 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
   --scroll-track: #fff1f1;
 }
 
-<<<<<<< HEAD
-=======
 /* === Additional Themes === */
 /* Pastel Breeze */
 .theme-pastel-breeze{
@@ -419,7 +417,6 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
   --link:#cd477d; --link-hover:#d85d8d; --link-visited:#b8406e;
 }
 
-/* Solar Gold */
 /* High Contrast Teal */
 .theme-teal-contrast{
   --panel-bg:#0f1b1b;
@@ -432,7 +429,19 @@ nav.tabs .tab.is-active{ background: var(--pill-active); color: var(--pill-text)
   --focus-ring: rgba(31,167,160,.42);
   --link:#7de0d7; --link-hover:#9aebe4; --link-visited:#6bd2ca;
 }
->>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
+
+/* High Contrast Violet */
+.theme-violet-contrast{
+  --panel-bg:#131022;
+  --text:#f3efff; --muted:#c4b8ea;
+  --pill-border:#8c70de; --pill-active-bg:#1b1530; --pill-inactive-bg:transparent; --pill-text:#f3efff; --pill-active-text:#d8caff;
+  --hdr-1:#2c1f57; --hdr-2:#181035;
+  --accent:#9a7dff; --frame-border:#8c70de;
+  --accent-1:#ab92ff; --accent-2:#8467ec; --accent-border:#5f47b5; --accent-press:#5f47b5; --accent-press-active:#4a3790; --accent-shadow: rgba(95,71,181,.30);
+  --scroll-thumb:#9a7dff; --scroll-track:#0f0b1d;
+  --focus-ring: rgba(154,125,255,.45);
+  --link:#d8caff; --link-hover:#e4d9ff; --link-visited:#c8b7ff;
+}
 /* Crimson (default) */
 .theme-crimson{
   --panel-bg:#fff;
