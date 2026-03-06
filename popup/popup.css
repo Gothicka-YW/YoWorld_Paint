@@ -31,7 +31,6 @@
   border-radius: inherit;
   pointer-events: none;
 }
-<<<<<<< HEAD
 .tool-card{
   border:1px solid #e5e7eb;
   border-radius:12px;
@@ -61,8 +60,6 @@
   background-size: var(--cb-size, 12px) var(--cb-size, 12px);
   background-position: 0 0, calc(var(--cb-size, 12px) / 2) calc(var(--cb-size, 12px) / 2);
 }
-=======
->>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
 .btn:hover{ filter: brightness(0.99); }
 .btn:active{
   transform: translateY(1px);
