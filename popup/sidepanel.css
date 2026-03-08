@@ -1,0 +1,75 @@
+html, body {
+  width: 100% !important;
+  height: 100%;
+  overflow: hidden;
+}
+
+body.sidepanel-ui {
+  min-width: 0 !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+body.sidepanel-ui .app-shell {
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body.sidepanel-ui .app-header {
+  flex: 0 0 auto;
+}
+
+body.sidepanel-ui nav.tabs {
+  flex: 0 0 auto;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+body.sidepanel-ui #panels {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px;
+}
+
+body.sidepanel-ui .preview-card {
+  display: flex;
+  justify-content: center;
+}
+
+body.sidepanel-ui .preview {
+  width: 390px;
+  height: 260px;
+}
+
+body.sidepanel-ui .sales-preview.dynamic {
+  width: 390px;
+  height: 260px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body.sidepanel-ui #tx-preview,
+body.sidepanel-ui #skew-preview {
+  max-width: 100%;
+}
+
+body.sidepanel-ui .content-pad,
+body.sidepanel-ui #panel-home,
+body.sidepanel-ui #panel-sales-boards,
+body.sidepanel-ui #panel-transform,
+body.sidepanel-ui #panel-tools,
+body.sidepanel-ui #panel-faq,
+body.sidepanel-ui #panel-resources {
+  width: 100%;
+}
+
+body.sidepanel-ui .input,
+body.sidepanel-ui select,
+body.sidepanel-ui textarea,
+body.sidepanel-ui .btn {
+  max-width: 100%;
+}

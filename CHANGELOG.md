@@ -3,6 +3,34 @@
 **Release Date:** 2026-02-10
 
 Changes
+- Added Side Panel view support
+  - Extension can now open as a traditional popup or as a browser side panel
+  - Side panel provides a full-height, flexible-width view that stays open alongside browser tabs
+  - Dedicated side panel UI (`sidepanel.html`) with optimized full-space layout
+- View Mode preference in Resources tab
+  - New "Preferred View" selector above theme settings
+  - Choose between "Popup" (traditional) or "Side Panel" (new)
+  - Preference is saved and automatically applied when opening the extension
+  - Switching to side panel mode automatically opens the side panel view
+- Theme system now works correctly in both popup and side panel modes
+- All features (Quick Upload, Sales Boards, Transform, Tools, FAQ) fully functional in both views
+- Side panel UI uses responsive sizing with scrollable content areas
+- Added `sidePanel` permission to manifest
+- Removed "Glow Fix" feature from Home tab
+  - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
+  - Investigating better approaches for handling semi-transparent images (similar to Fiddler's method)
+
+Files Added
+- `popup/sidepanel.html` - Dedicated side panel interface
+- `popup/sidepanel.css` - Side panel-specific layout styling
+
+Notes
+- Default view mode remains "Popup" for existing users
+- All functionality is identical between popup and side panel views
+- Side panel view is optimized for wider screens and extended use
+- Working on improved solution for dither/glow image handling
+
+Changes
 - Removed "Glow Fix" feature from Home tab
   - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
   - Investigating better approaches for handling semi-transparent images (similar to Fiddler's method)

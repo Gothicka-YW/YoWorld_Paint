@@ -79,4 +79,34 @@
       try{ chrome.storage.sync.set({ theme: val }); }catch(_){ localStorage.setItem(THEME_KEY, val); }
     });
   }
+
+  // View mode wiring (Popup / Side Panel)
+  const viewModeSel = document.getElementById('res-view-mode');
+  if (viewModeSel){
+    try {
+      chrome.storage.sync.get(['viewMode'], st => {
+        const saved = (st && (st.viewMode === 'popup' || st.viewMode === 'sidepanel')) ? st.viewMode : 'popup';
+        viewModeSel.value = saved;
+      });
+    } catch(_) {
+      viewModeSel.value = 'popup';
+    }
+
+    viewModeSel.addEventListener('change', async () => {
+      const mode = (viewModeSel.value === 'sidepanel') ? 'sidepanel' : 'popup';
+      try { chrome.storage.sync.set({ viewMode: mode }); } catch(_) {}
+
+      if (mode === 'sidepanel' && chrome.sidePanel && chrome.windows){
+        try {
+          const win = await chrome.windows.getCurrent();
+          if (win && typeof win.id === 'number') {
+            await chrome.sidePanel.open({ windowId: win.id });
+            window.close();
+          }
+        } catch(err) {
+          console.error('Unable to open side panel:', err);
+        }
+      }
+    });
+  }
 })();

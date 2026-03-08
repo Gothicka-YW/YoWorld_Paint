@@ -12,6 +12,9 @@
     "default_title": "YoWorld Paint",
     "default_popup": "popup/popup.html"
   },
+  "side_panel": {
+    "default_path": "popup/sidepanel.html"
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -21,7 +24,8 @@
     "declarativeNetRequest",
     "declarativeNetRequestWithHostAccess",
     "declarativeNetRequestFeedback",
-    "activeTab"
+    "activeTab",
+    "sidePanel"
   ],
   "host_permissions": [
     "https://*.facebook.com/*",
