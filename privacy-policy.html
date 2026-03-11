@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YoWorld Paint Privacy Policy</title>
+  <meta name="description" content="YoWorld Paint Privacy Policy" />
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --accent: #7e1212;
+      --code-bg: #f3f4f6;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 55%);
+      color: var(--text);
+      font: 16px/1.65 "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px 40px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      padding: 28px;
+    }
+
+    h1, h2 {
+      line-height: 1.25;
+      margin: 0 0 12px;
+      color: #111827;
+    }
+
+    h1 {
+      font-size: 32px;
+      letter-spacing: 0.2px;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-top: 28px;
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+    }
+
+    p, li {
+      margin: 0 0 10px;
+    }
+
+    ul {
+      margin: 0 0 8px 22px;
+      padding: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    code {
+      background: var(--code-bg);
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.95em;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 22px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <article class="card">
+      <h1>YoWorld Paint Privacy Policy</h1>
+      <p class="muted">Last updated: 2026-03-11</p>
+
+      <p>YoWorld Paint is a Chrome extension fan tool for creating and applying paint/sales board images. This policy explains what data is processed, why permissions are used, and what is not collected.</p>
+
+      <h2>Summary</h2>
+      <ul>
+        <li>No analytics or tracking.</li>
+        <li>No sale of personal data.</li>
+        <li>No third-party ad SDKs.</li>
+        <li>Data is only processed to provide extension features requested by the user.</li>
+      </ul>
+
+      <h2>Data We Process</h2>
+      <p>YoWorld Paint may process the following data only as needed for functionality:</p>
+      <ul>
+        <li>Image links you enter or generate</li>
+        <li>Images you choose to paste, drop, or upload</li>
+        <li>User preferences/settings (theme, view mode, uploader settings, API key)</li>
+        <li>Temporary state needed for board generation, preview, tools, and redirect workflows</li>
+      </ul>
+
+      <h2>Where Data Is Stored</h2>
+      <ul>
+        <li><code>chrome.storage.sync</code>: Used for cross-device preference sync where available (for example: theme, view mode, uploader settings, API key)</li>
+        <li><code>chrome.storage.local</code>: Used for local runtime/state values required by extension features</li>
+      </ul>
+
+      <h2>External Services and Network Use</h2>
+      <p>Data is sent externally only when necessary for user-initiated features:</p>
+      <ul>
+        <li>ImgBB API (<code>https://api.imgbb.com/*</code>): Used only when you upload an image via Quick Upload</li>
+        <li>YoWorld / YoWorld Info domains: Used for page integration, capture, and redirect-related functionality</li>
+      </ul>
+      <p>The extension does not continuously transmit browsing activity.</p>
+
+      <h2>Permissions and Why They Are Required</h2>
+      <p>The extension requests the following permissions in <code>manifest.json</code>:</p>
+      <ul>
+        <li><code>storage</code>: Save settings and feature state.</li>
+        <li><code>scripting</code>: Run extension scripts on supported pages when required by user actions.</li>
+        <li><code>declarativeNetRequest</code>: Manage redirect rules used by paint-board workflow behavior.</li>
+        <li><code>declarativeNetRequestWithHostAccess</code>: Allow declarative network rules on approved hosts.</li>
+        <li><code>declarativeNetRequestFeedback</code>: Support debugging/feedback for rule behavior.</li>
+        <li><code>activeTab</code>: Perform tab-scoped actions after user interaction.</li>
+        <li><code>sidePanel</code>: Enable Side Panel mode.</li>
+      </ul>
+
+      <p>Host permissions:</p>
+      <ul>
+        <li><code>https://*.facebook.com/*</code></li>
+        <li><code>https://*.fbcdn.net/*</code></li>
+        <li><code>https://*.yoworld.com/*</code></li>
+        <li><code>https://api.yoworld.info/*</code></li>
+        <li><code>https://yoworld.com/*</code></li>
+        <li><code>https://yoworld.info/*</code></li>
+        <li><code>https://api.imgbb.com/*</code></li>
+      </ul>
+
+      <h2>Content Script Scope</h2>
+      <p>The extension injects content script logic for supported YoWorld Info pages as declared in the manifest:</p>
+      <ul>
+        <li><code>https://yoworld.info/*</code></li>
+        <li><code>https://*.yoworld.info/*</code></li>
+      </ul>
+
+      <h2>Data Retention</h2>
+      <p>Data remains in Chrome extension storage until:</p>
+      <ul>
+        <li>You change/remove values in the extension UI,</li>
+        <li>You clear extension storage,</li>
+        <li>Or you uninstall the extension.</li>
+      </ul>
+
+      <h2>Children's Privacy</h2>
+      <p>YoWorld Paint is not directed to children under 13 and does not knowingly collect personal information from children.</p>
+
+      <h2>Changes to This Policy</h2>
+      <p>This policy may be updated as features evolve. The "Last updated" date reflects the latest revision.</p>
+
+      <h2>Contact</h2>
+      <p>Questions or requests:</p>
+      <ul>
+        <li>Email: <a href="mailto:ywa.paint@gmail.com">ywa.paint@gmail.com</a></li>
+      </ul>
+
+      <p class="footer">YoWorld Paint is a community fan tool and is not affiliated with YoWorld or Big Viking Games.</p>
+    </article>
+  </main>
+</body>
+</html>
