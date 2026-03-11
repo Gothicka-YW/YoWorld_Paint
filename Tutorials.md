@@ -11,20 +11,15 @@ YoWorld Paint Set Up & Home Tab Tutorial | YoWorld Paint Boards Made Easy
 "In this video, I will show you how to set up the YoWorld Paint extension and use the Home tab to upload an image on to YoWorld paint boards. The process is quick and easy because I like to be as lazy and efficient as possible! The link to the download is found in the description of this video."
 
 ### Script (0:10-2:30)
-"In your browser - it can be Google Chrome, Edge, Opera, Brave, or any other Chromium based browser - I'm using Google Chrome. Go to the Chrome Web Store and search for YoWorld Paint. Click "Add to Chrome." Now go to this puzzle piece at the right of your address bar to pin the icon so you can find it easily. 
+In your browser - it can be Google Chrome, Edge, Opera, Brave, or any other Chromium based browser - I'm using Google Chrome. Go to the Chrome Web Store and search for YoWorld Paint. Click "Add to Chrome." Now go to this puzzle piece at the right of your address bar to pin the icon so you can find it easily. 
 
-"Open YoWorld Paint and stay on the Home tab. At the top, you will see Enable Redirect. Keep this off for now."
-
-"You have two ways to set an image. Method one: paste a direct image URL into the field and click Set New Image."
-
-"Method two, and usually faster: use Quick Image Uploader. You can click to choose a file, drag and drop an image, or paste directly from your clipboard."
-
-"Choose your host, then click Upload. If Auto-set as Current Image is checked, the extension will automatically use that uploaded image in the Home tab field."
-
-"Now turn on Enable Redirect, go into YoWorld, save your paint board, then come back and turn Redirect off when you are done."
+There are two ways to upload - manually how we used to do things or let the extension do the work for you. 
+- Explain manual uploading
+- Explain quick upload feature
+- How to set up quick upload
 
 ### Outro (2:30-2:45)
-"That is the full Home tab flow. In the next video, we will build a 3 by 2 Sales Board from YoWorld Info."
+"That is the full Home tab flow. In the next video, we will make a sales board from YoWorld Info."
 
 ---
 
