@@ -1,4 +1,4 @@
-# � YoWorld Paint – Changelog
+# YoWorld Paint - Changelog
 ## v3.4 — Update
 **Release Date:** 2026-02-10
 
@@ -18,7 +18,7 @@ Changes
 - Added `sidePanel` permission to manifest
 - Removed "Glow Fix" feature from Home tab
   - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
-  - Investigating better approaches for handling semi-transparent images (similar to Fiddler's method)
+  - Fiddler-style injection/interception approaches are non-viable for this MV3 extension architecture
 
 Files Added
 - `popup/sidepanel.html` - Dedicated side panel interface
@@ -28,17 +28,8 @@ Notes
 - Default view mode remains "Popup" for existing users
 - All functionality is identical between popup and side panel views
 - Side panel view is optimized for wider screens and extended use
-- Working on improved solution for dither/glow image handling
+- Dither/glow handling remains an open problem for future updates
 
-Changes
-- Removed "Glow Fix" feature from Home tab
-  - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
-  - Investigating better approaches for handling semi-transparent images (similar to Fiddler's method)
-- Version bump: manifest version/name and UI title updated to 3.4
-
-Notes
-- All other features remain unchanged from v3.3
-- Working on improved solution for dither/glow image handling
 ## v3.2.1 — Update
 **Release Date:** 2025-11-08
 

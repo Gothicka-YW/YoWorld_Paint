@@ -130,20 +130,36 @@ The extension icon should appear in your toolbar.
 ## 🔒 Permissions
 
 Minimal and explicit:
-- storage (remember settings and board data)
-- declarativeNetRequest (+WithHostAccess +Feedback) for redirect rules
-- activeTab (to assist when applying on yoworld.com)
-- Host permissions: YoWorld domains, imgbb.com API
+- `storage` - Saves user settings and state (theme, selected view mode, uploader preferences, redirect state, board/tool data)
+- `scripting` - Injects helper logic when needed for capture/selection flows on supported pages
+- `declarativeNetRequest` - Applies redirect rules used by the paint-board workflow
+- `declarativeNetRequestWithHostAccess` - Allows redirect rules to operate on approved host patterns
+- `declarativeNetRequestFeedback` - Supports rule diagnostics/feedback while troubleshooting
+- `activeTab` - Allows tab-scoped actions when you explicitly use extension features
+- `sidePanel` - Enables opening and running YoWorld Paint in Chrome Side Panel mode
+- Host permissions:
+  - `https://*.facebook.com/*`
+  - `https://*.fbcdn.net/*`
+  - `https://*.yoworld.com/*`
+  - `https://api.yoworld.info/*`
+  - `https://yoworld.com/*`
+  - `https://yoworld.info/*`
+  - `https://api.imgbb.com/*`
 
 ---
 
 ## 🔒 Privacy
 
 - No analytics or tracking
-- No data sent anywhere except:
-  - ImgBB (only when you upload via Quick Uploader)
-  - YoWorld domains (when applying/previewing boards)
-- Settings are stored in Chrome storage (local + sync for your API key)
+- No sale of personal data
+- No background collection of browsing history
+- Data is only sent to external services when required by user actions:
+  - ImgBB API (only when you upload an image using Quick Upload)
+  - YoWorld/YoWorld Info pages (only while using capture/redirect features)
+- Settings/state are stored in Chrome extension storage:
+  - `chrome.storage.sync` (preferences such as theme, view mode, API key)
+  - `chrome.storage.local` (runtime/state values needed for extension behavior)
+- See `PRIVACY_POLICY.md` for full policy text and permission details
 
 ---
 

@@ -1,0 +1,97 @@
+# YoWorld Paint Privacy Policy
+
+Last updated: 2026-03-11
+
+YoWorld Paint is a Chrome extension fan tool for creating and applying paint/sales board images. This policy explains what data is processed, why permissions are used, and what is not collected.
+
+## Summary
+
+- No analytics or tracking.
+- No sale of personal data.
+- No third-party ad SDKs.
+- Data is only processed to provide extension features requested by the user.
+
+## Data We Process
+
+YoWorld Paint may process the following data only as needed for functionality:
+
+- Image links you enter or generate
+- Images you choose to paste, drop, or upload
+- User preferences/settings (theme, view mode, uploader settings, API key)
+- Temporary state needed for board generation, preview, tools, and redirect workflows
+
+## Where Data Is Stored
+
+- `chrome.storage.sync`
+  - Used for cross-device preference sync where available (for example: theme, view mode, uploader settings, API key)
+- `chrome.storage.local`
+  - Used for local runtime/state values required by extension features
+
+## External Services and Network Use
+
+Data is sent externally only when necessary for user-initiated features:
+
+- ImgBB API (`https://api.imgbb.com/*`)
+  - Used only when you upload an image via Quick Upload
+- YoWorld / YoWorld Info domains
+  - Used for page integration, capture, and redirect-related functionality
+
+The extension does not continuously transmit browsing activity.
+
+## Permissions and Why They Are Required
+
+The extension requests the following permissions in `manifest.json`:
+
+- `storage`
+  - Save settings and feature state.
+- `scripting`
+  - Run extension scripts on supported pages when required by user actions.
+- `declarativeNetRequest`
+  - Manage redirect rules used by paint-board workflow behavior.
+- `declarativeNetRequestWithHostAccess`
+  - Allow declarative network rules on approved hosts.
+- `declarativeNetRequestFeedback`
+  - Support debugging/feedback for rule behavior.
+- `activeTab`
+  - Perform tab-scoped actions after user interaction.
+- `sidePanel`
+  - Enable Side Panel mode.
+
+Host permissions:
+
+- `https://*.facebook.com/*`
+- `https://*.fbcdn.net/*`
+- `https://*.yoworld.com/*`
+- `https://api.yoworld.info/*`
+- `https://yoworld.com/*`
+- `https://yoworld.info/*`
+- `https://api.imgbb.com/*`
+
+## Content Script Scope
+
+The extension injects content script logic for supported YoWorld Info pages as declared in the manifest:
+
+- `https://yoworld.info/*`
+- `https://*.yoworld.info/*`
+
+## Data Retention
+
+Data remains in Chrome extension storage until:
+
+- You change/remove values in the extension UI,
+- You clear extension storage,
+- Or you uninstall the extension.
+
+## Children’s Privacy
+
+YoWorld Paint is not directed to children under 13 and does not knowingly collect personal information from children.
+
+## Changes to This Policy
+
+This policy may be updated as features evolve. The "Last updated" date reflects the latest revision.
+
+## Contact
+
+Questions or requests:
+
+- Email: ywa.paint@gmail.com

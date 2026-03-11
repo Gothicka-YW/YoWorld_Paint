@@ -12,13 +12,21 @@ Highlights (includes v3.3 + v3.4 updates)
 - Home preview now shows a checkerboard under images to reveal transparent regions
 - Create Boards tab retired; renamed to Transform with a note to use Sales Boards for captures or Tools for splitting/warping
 - Popup widened to 540px and keeps the themed look from 3.2.1
+- Added Side Panel view support
+  - Extension can open as a traditional popup or in Chrome Side Panel
+  - Side panel uses a dedicated full-height UI with responsive layout
+- Added View Mode preference in Resources tab
+  - Choose Popup or Side Panel in "Preferred View"
+  - Preference is saved and applied for future use
+- Theme support works across both popup and side panel views
 
 v3.4 specific changes
 - Removed experimental "Glow Fix" feature from Home tab
   - Feature was designed to preserve dither/glow effects by converting semi-transparent pixels
   - Did not reliably work when images were uploaded to YoWorld paint boards
-  - Currently investigating better approaches similar to Fiddler's method
-- Version bump: manifest version/name and UI title updated to 3.4
+  - Fiddler-style alternatives are currently considered non-viable for this extension because they depend on traffic injection/interception behavior that is against TOS.
+  - Version bump: manifest version/name and UI title updated to 3.4
+- Added side panel manifest support and permission (`side_panel` + `sidePanel`)
 
 How to update
 1) In chrome://extensions, turn on Developer mode.
@@ -28,4 +36,4 @@ How to update
 Notes
 - No analytics or tracking. Uploads only go to ImgBB when you choose to upload; other state lives in Chrome storage.
 - ZIP export uses a hand-rolled store archive (no compression) to avoid MV3 restrictions.
-- Working on improved solution for handling dithered/glow images that will work properly with YoWorld's upload system.
+- Dither/glow handling remains an open problem; prior Fiddler-style injection/interception direction is not a viable path for this project architecture.
