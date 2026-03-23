@@ -2,6 +2,7 @@
 (function(){
   const PANEL = document.getElementById('panel-sales-boards');
   if (!PANEL) return;
+  const STORAGE_KEY = 'ywp-salesboards-state';
   const q = sel => PANEL.querySelector(sel);
   const btnPick = q('#sb-pick');
   const btnReset = q('#sb-reset');
@@ -13,8 +14,21 @@
 
   let lastDataUrl = '';
 
-  function setStatus(msg, isErr){ if (statusEl){ statusEl.textContent = msg || ''; statusEl.style.color = isErr ? '#7e1212' : '#6b7280'; } }
-  function setPreview(url){ if (!previewEl) return; previewEl.style.backgroundImage = url ? `url("${url}")` : 'none'; previewEl.style.backgroundSize='contain'; previewEl.style.backgroundPosition='center'; previewEl.style.backgroundRepeat='no-repeat'; }
+  function setStatus(msg, isErr){
+    if (statusEl){
+      statusEl.textContent = msg || '';
+      statusEl.style.color = isErr ? '#7e1212' : '#6b7280';
+    }
+    persistState();
+  }
+  function setPreview(url){
+    if (!previewEl) return;
+    previewEl.style.backgroundImage = url ? `url("${url}")` : 'none';
+    previewEl.style.backgroundSize='contain';
+    previewEl.style.backgroundPosition='center';
+    previewEl.style.backgroundRepeat='no-repeat';
+    persistState();
+  }
 
   async function getActiveTab(){ const [tab] = await chrome.tabs.query({active:true, currentWindow:true}); return tab; }
 
@@ -126,4 +140,44 @@
   if (btnRestore) btnRestore.addEventListener('click', async ()=>{
     try{ await sendToActiveTab({ type:'YWP_SB_RESTORE' }); setStatus('Restored.'); } catch(e){ setStatus('Restore failed', true); }
   });
+
+  restoreState();
+
+  function persistState() {
+    try {
+      const state = {
+        lastDataUrl: lastDataUrl || '',
+        status: statusEl ? (statusEl.textContent || '') : '',
+        statusErr: statusEl ? statusEl.style.color === 'rgb(126, 18, 18)' || statusEl.style.color === '#7e1212' : false
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      console.warn('Failed to persist sales state', err);
+    }
+  }
+
+  function restoreState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const state = JSON.parse(raw);
+      if (state && state.lastDataUrl) {
+        lastDataUrl = state.lastDataUrl;
+        if (previewEl) {
+          previewEl.style.backgroundImage = `url("${lastDataUrl}")`;
+          previewEl.style.backgroundSize = 'contain';
+          previewEl.style.backgroundPosition = 'center';
+          previewEl.style.backgroundRepeat = 'no-repeat';
+        }
+      }
+      if (state && typeof state.status === 'string' && state.status) {
+        if (statusEl) {
+          statusEl.textContent = state.status;
+          statusEl.style.color = state.statusErr ? '#7e1212' : '#6b7280';
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to restore sales state', err);
+    }
+  }
 })();
