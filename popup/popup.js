@@ -3,7 +3,6 @@
   const tabs = document.querySelectorAll('nav.tabs .tab');
   const panels = {
     home: document.getElementById('panel-home'),
-    'sales-boards': document.getElementById('panel-sales-boards'),
     transform: document.getElementById('panel-transform'),
     tools: document.getElementById('panel-tools'),
     faq: document.getElementById('panel-faq'),
@@ -85,11 +84,11 @@
   if (viewModeSel){
     try {
       chrome.storage.sync.get(['viewMode'], st => {
-        const saved = (st && (st.viewMode === 'popup' || st.viewMode === 'sidepanel')) ? st.viewMode : 'popup';
+        const saved = (st && (st.viewMode === 'popup' || st.viewMode === 'sidepanel')) ? st.viewMode : 'sidepanel';
         viewModeSel.value = saved;
       });
     } catch(_) {
-      viewModeSel.value = 'popup';
+      viewModeSel.value = 'sidepanel';
     }
 
     viewModeSel.addEventListener('change', async () => {

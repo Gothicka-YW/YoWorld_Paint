@@ -1,5 +1,7 @@
 console.log("YoWorld Art MV3 worker running (storage-connected).");
 
+const DEFAULT_VIEW_MODE = "sidepanel";
+
 function getChromeLastErrorMessage() {
     const err = chrome.runtime.lastError;
     if (!err) return null;
@@ -24,7 +26,7 @@ function logChromeLastError(context) {
 function updateRedirectRules(imgUrl, enableRedirect) {
     const enabled = !!enableRedirect;
     const safeImgUrl = (imgUrl || "").trim();
-    const targetUrl = "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+    const targetUrl = buildRedirectTarget(safeImgUrl);
     console.log("Updating rules. enableRedirect =", enabled, "imgUrl =", safeImgUrl);
 
     chrome.declarativeNetRequest.updateDynamicRules(
@@ -62,6 +64,65 @@ function updateRedirectRules(imgUrl, enableRedirect) {
     );
 }
 
+function buildRedirectTarget(imgUrl) {
+    const safeImgUrl = (imgUrl || "").trim();
+    if (isDirectTransparentPngUrl(safeImgUrl)) {
+        return safeImgUrl;
+    }
+    return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+}
+
+function isDirectTransparentPngUrl(urlString) {
+    if (!/^https?:\/\//i.test(urlString || "")) return false;
+    try {
+        const url = new URL(urlString);
+        const host = url.hostname.toLowerCase();
+        const path = url.pathname.toLowerCase();
+        const isImgBbDirectHost = host === "i.ibb.co" || host === "i.imgbb.com";
+        return isImgBbDirectHost && /\.png$/i.test(path);
+    } catch (_) {
+        return false;
+    }
+}
+
+function applyViewModeBehavior(mode) {
+    if (!chrome.sidePanel || typeof chrome.sidePanel.setPanelBehavior !== "function") {
+        return;
+    }
+
+    chrome.sidePanel.setPanelBehavior(
+        { openPanelOnActionClick: mode === "sidepanel" },
+        () => {
+            logChromeLastError("Error applying side panel behavior");
+        }
+    );
+}
+
+function loadViewMode() {
+    if (!chrome.storage?.sync) {
+        applyViewModeBehavior(DEFAULT_VIEW_MODE);
+        return;
+    }
+
+    chrome.storage.sync.get({ viewMode: DEFAULT_VIEW_MODE }, (result) => {
+        if (logChromeLastError("Error loading view mode")) {
+            applyViewModeBehavior(DEFAULT_VIEW_MODE);
+            return;
+        }
+
+        const mode = result && (result.viewMode === "popup" || result.viewMode === "sidepanel")
+            ? result.viewMode
+            : DEFAULT_VIEW_MODE;
+        applyViewModeBehavior(mode);
+
+        if (!result || (result.viewMode !== "popup" && result.viewMode !== "sidepanel")) {
+            chrome.storage.sync.set({ viewMode: DEFAULT_VIEW_MODE }, () => {
+                logChromeLastError("Error saving default view mode");
+            });
+        }
+    });
+}
+
 function loadSettings() {
     chrome.storage.local.get({ img: ["", false] }, (e) => {
         if (logChromeLastError("Error loading storage")) {
@@ -77,9 +138,19 @@ function loadSettings() {
 
 // Run at startup
 loadSettings();
+loadViewMode();
+
+chrome.runtime.onInstalled.addListener(() => {
+    loadViewMode();
+});
 
 // Watch for changes from popup
 chrome.storage.onChanged.addListener((changes) => {
     console.log("Storage changed:", changes);
     loadSettings();
+    if (changes.viewMode) {
+        const next = changes.viewMode.newValue;
+        const mode = (next === "popup" || next === "sidepanel") ? next : DEFAULT_VIEW_MODE;
+        applyViewModeBehavior(mode);
+    }
 });

@@ -129,7 +129,7 @@
       <p>Data is sent externally only when necessary for user-initiated features:</p>
       <ul>
         <li>ImgBB API (<code>https://api.imgbb.com/*</code>): Used only when you upload an image via Quick Upload</li>
-        <li>YoWorld / YoWorld Info domains: Used for page integration, capture, and redirect-related functionality</li>
+        <li>YoWorld / redirect-related domains: Used only for paint-board redirect functionality and related image proxy requests</li>
       </ul>
       <p>The extension does not continuously transmit browsing activity.</p>
 
@@ -137,11 +137,9 @@
       <p>The extension requests the following permissions in <code>manifest.json</code>:</p>
       <ul>
         <li><code>storage</code>: Save settings and feature state.</li>
-        <li><code>scripting</code>: Run extension scripts on supported pages when required by user actions.</li>
         <li><code>declarativeNetRequest</code>: Manage redirect rules used by paint-board workflow behavior.</li>
         <li><code>declarativeNetRequestWithHostAccess</code>: Allow declarative network rules on approved hosts.</li>
         <li><code>declarativeNetRequestFeedback</code>: Support debugging/feedback for rule behavior.</li>
-        <li><code>activeTab</code>: Perform tab-scoped actions after user interaction.</li>
         <li><code>sidePanel</code>: Enable Side Panel mode.</li>
       </ul>
 
@@ -152,16 +150,11 @@
         <li><code>https://*.yoworld.com/*</code></li>
         <li><code>https://api.yoworld.info/*</code></li>
         <li><code>https://yoworld.com/*</code></li>
-        <li><code>https://yoworld.info/*</code></li>
         <li><code>https://api.imgbb.com/*</code></li>
       </ul>
 
       <h2>Content Script Scope</h2>
-      <p>The extension injects content script logic for supported YoWorld Info pages as declared in the manifest:</p>
-      <ul>
-        <li><code>https://yoworld.info/*</code></li>
-        <li><code>https://*.yoworld.info/*</code></li>
-      </ul>
+      <p>The extension does not declare persistent content scripts in the manifest.</p>
 
       <h2>Data Retention</h2>
       <p>Data remains in Chrome extension storage until:</p>

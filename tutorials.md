@@ -57,23 +57,20 @@ Follow these steps:
 
 If you ever load into yw and have multiple boards turn into 1 image - don't freak out. It means you didn't turn off "Redirect" in the home tab of the extension. All you do is go turn it off and refresh. All the boards will be normal again.
 
-## How to Use the Sales Boards Tab
+## Making Board Images with Windows Crop
 
-- Navigate to yoworld.info.
-- Create your sales items & pricing in the template page.
-- Check the box for "Preview Template".
-- Narrow your browser to three item cards per row.
-- Find the 3×2 items you'd like on the board
-- Open YoWorld Paint's Sales Boards tab: Select "Pick Card Selector" and click the first item card's picture for your board
-- Click "Preview (3×2)"
-- If you're happy with it, Export and save.
-- Upload on the Home tab.
+The dedicated Sales Boards tab has been retired. The replacement workflow is to crop exactly what you want in Windows, then paste it straight into Home.
 
-If you are using windows, you can also use this trick to create boards quicker:
+If you are using windows, use this trick to create boards quickly:
 
 - Hold shift + Ctrl + S to activate the selective screen shot mode.
-- Drag the box around the 2x3 items you want on the sales board. It will copy the item cards you "screen shot."
+- Drag the box around the exact area you want on the board. It will copy the image to your clipboard.
 - Go to the Home tab's quick uploader, and hold Ctrl and press "V" to paste the image there. Upload as normal.
+- If you want the final image normalized to one board, enable "Prepare as 390×260 PNG" before upload.
+
+MAC COMMAND FOR THE SAME SEEN ABOVE: Press Cmd + Ctrl + Shift + 4, then drag to select. The screenshot is copied directly to your clipboard.
+
+A tutorial video can be added later to demonstrate this workflow visually.
 
 If you ever want to use the same images, you can find them in your free Imgbb account you created. This is quicker than saving locally on your computer.
 

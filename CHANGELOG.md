@@ -1,8 +1,16 @@
 # YoWorld Paint - Changelog
-## v3.4 — Update
+## v3.5 — Update
 **Release Date:** 2026-02-10
 
 Changes
+- Sales Boards tab and YoWorld Info capture flow removed
+  - Recommended replacement is Windows crop/snipping plus Home Quick Upload
+- Home redirect now bypasses the YoWorld Info proxy for direct ImgBB PNG links
+  - Intended to better preserve transparency for PNG uploads
+  - Non-ImgBB links and non-PNG links still use the proxy path
+- Side Panel is now the default preferred view for new or unset installs
+  - Existing users who already saved Popup keep their preference
+  - Extension action click behavior now follows the saved view mode more consistently
 - Added Side Panel view support
   - Extension can now open as a traditional popup or as a browser side panel
   - Side panel provides a full-height, flexible-width view that stays open alongside browser tabs
@@ -13,7 +21,7 @@ Changes
   - Preference is saved and automatically applied when opening the extension
   - Switching to side panel mode automatically opens the side panel view
 - Theme system now works correctly in both popup and side panel modes
-- All features (Quick Upload, Sales Boards, Transform, Tools, FAQ) fully functional in both views
+- All remaining features (Quick Upload, Transform, Tools, FAQ, Resources) fully functional in both views
 - Side panel UI uses responsive sizing with scrollable content areas
 - Added `sidePanel` permission to manifest
 - Removed "Glow Fix" feature from Home tab

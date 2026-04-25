@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>YoWorld Paint v3.4</title>
+<title>YoWorld Paint v3.5</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&amp;family=Spectral+SC:wght@600&amp;display=swap" rel="stylesheet"/>
@@ -49,10 +49,9 @@
 </head>
 <body>
 <div class="app-shell">
-<header class="app-header">YoWorld Paint v3.4</header>
+<header class="app-header">YoWorld Paint v3.5</header>
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
-<button aria-selected="false" class="tab" data-tab="sales-boards" role="tab">Sales Boards</button>
 <button aria-selected="false" class="tab" data-tab="transform" role="tab">Transform</button>
 <button aria-selected="false" class="tab" data-tab="tools" role="tab">Tools</button>
 <button aria-selected="false" class="tab" data-tab="faq" role="tab">FAQ</button>
@@ -79,7 +78,7 @@
 <div id="quick-upload" style="display:flex; flex-direction:column; gap:10px;">
   <div class="qu-head">
     <h3 class="qu-title">Quick Image Uploader</h3>
-  <div class="qu-sub">Paste, drag & drop, or click to select. Auto‑resize to 390×260 is OFF by default — toggle on to resize, or leave off to upload original size.</div>
+  <div class="qu-sub">Paste, drag & drop, or click to select. Auto‑resize is optional: larger images are prepared as a 390×260 PNG, while smaller art stays transparent and will not be stretched.</div>
   </div>
   <div style="display:flex; gap:8px; align-items:center;">
     <label style="font-size:12px; font-weight:600; display:flex; flex-direction:column; gap:4px; flex:1;">
@@ -103,7 +102,7 @@
   </div>
   <div style="display:flex; align-items:center; gap:16px; font-size:12px; flex-wrap:wrap;">
     <label style="display:flex; align-items:center; gap:6px;">
-  <input type="checkbox" id="qu-autoresize" aria-label="Auto-resize to 390 by 260" aria-describedby="qu-status qu-warning" /> Auto‑resize to 390×260
+  <input type="checkbox" id="qu-autoresize" aria-label="Auto-resize to 390 by 260" aria-describedby="qu-status qu-warning" /> Prepare as 390×260 PNG
     </label>
     <label style="display:flex; align-items:center; gap:6px;">
       <input type="checkbox" id="qu-autoset" checked aria-label="Auto-set as current image after upload" aria-describedby="qu-status qu-warning" /> Auto‑set as Current Image
@@ -159,39 +158,6 @@
       </div>
       <p class="note" style="margin:4px 0 0;">Tip: Right-click a tile and choose Copy Image, then paste in the Home tab to upload.</p>
       <div id="tool-results" class="tool-results" aria-live="polite"></div>
-    </div>
-  </div>
-</section>
-<section aria-label="Sales Boards" class="panel" id="panel-sales-boards" role="region">
-    <div class="note" id="sb-howto" style="margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-      <details id="sb-howto-details" style="margin:0;">
-  <summary style="cursor:pointer; color: var(--link); text-decoration:underline; display:inline;">How to Use</summary>
-        <ol style="margin:6px 0 0 16px; padding:0; color:#6b7280; font-size:12px;">
-          <li>Navigate to yoworld.info/template</li>
-          <li>Check "Preview Template"</li>
-          <li>Narrow your browser to see 3 cards per row</li>
-          <li>Find the 3×2 items you'd like on the board</li>
-          <li>Select "Pick Card Selector" and click the first item card's picture for your board</li>
-          <li>Click "Preview (3×2)"</li>
-          <li>Export and save.</li>
-          <li>Upload on the Home tab.</li>
-        </ol>
-      </details>
-      <a class="info-link" href="https://yoworld.info/template" rel="noopener" target="_blank" title="Open yoworld.info/template">YoWorld Info</a>
-    </div>
-  <div class="content-pad" style="display:flex; flex-direction:column; gap:8px;">
-    <div class="row" style="display:flex; gap:6px;">
-      <button class="btn" id="sb-pick" style="flex:1">Pick Card Selector</button>
-      <button class="btn" id="sb-reset" style="flex:1">Reset Selectors</button>
-    </div>
-    <div class="row" style="display:flex; gap:6px;">
-      <button class="btn btn-primary" id="sb-preview" style="flex:1">Preview (3×2)</button>
-      <button class="btn" id="sb-export" style="flex:1">Export (Crop)</button>
-      <button class="btn" id="sb-restore" style="flex:0 0 auto">Restore List</button>
-    </div>
-  <div class="note" id="sb-status" style="min-height:14px;">Limit: 6 items (3 columns × 2 rows). Crops and scales to 390×260.</div>
-    <div class="preview-card">
-      <div aria-label="Sales Boards preview 390×260" id="sb-preview-img" class="preview" style="background:#fff; box-shadow: inset 0 0 0 1px #ddd;"></div>
     </div>
   </div>
 </section>
@@ -425,6 +391,12 @@
 </div>
 </section>
 <section aria-label="Resources" class="panel" id="panel-resources" role="region">
+<div style="margin:0 0 14px; padding:12px 14px; border:1px solid rgba(126,18,18,.18); border-radius:12px; background:rgba(126,18,18,.06); font-size:16px; line-height:1.45; font-weight:700;">
+  Tutorials Found Here:
+  <a href="https://www.youtube.com/@GothickaYW" rel="noopener" target="_blank" style="display:block; margin-top:4px; font-size:15px; font-weight:600;">https://www.youtube.com/@GothickaYW</a>
+  <span style="display:block; margin-top:10px;">Follow me on Facebook:</span>
+  <a href="https://www.facebook.com/gothicka.yw/" rel="noopener" target="_blank" style="display:block; margin-top:4px; font-size:15px; font-weight:600;">https://www.facebook.com/gothicka.yw/</a>
+</div>
 <h3>Useful Links</h3>
 <h4>AI Generators</h4>
 <ul class="links">
@@ -517,7 +489,6 @@
 </main>
 <script src="popup.js"></script>
 <script src="tabs/home.js"></script>
-<script src="tabs/sales-boards.js"></script>
 <script src="tabs/tools.js"></script>
 <script src="tabs/transform.js"></script>
 <script src="tabs/faq.js"></script>

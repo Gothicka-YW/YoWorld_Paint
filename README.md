@@ -1,13 +1,16 @@
-# YoWorld Paint v3.4 🎨
+# YoWorld Paint v3.5 🎨
 
-YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, and share custom Paint Boards and Sales Boards—faster and cleaner than doing it by hand.
+YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, and share custom Paint Boards faster and cleaner than doing it by hand.
 
 > ⚠️ Community fan tool. Not affiliated with YoWorld or Big Viking Games (BVG).
 
 ---
 
-## 🚀 What's new in 3.4
+## 🚀 What's new in 3.5
 
+- Sales Boards has been retired
+  - The dedicated Sales Boards tab and YoWorld Info capture flow were removed
+  - Use Windows crop/snipping plus Home Quick Upload instead
 - Removed experimental "Glow Fix" feature
   - Feature did not reliably preserve dither/glow effects in YoWorld
   - Investigating better approaches for handling semi-transparent images
@@ -50,7 +53,8 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 - Quick Image Uploader (Home tab)
   - Click, drag & drop, or paste images directly into the popup
-  - Auto‑resizes to 390×260 PNG before upload
+  - Optional high-quality PNG preparation for larger images before upload
+  - Smaller transparent art is preserved without stretching when board-size prep is enabled
   - ImgBB‑only upload for reliability; link auto‑copied on success
   - Optional “Auto‑set as Current Image” applies your uploaded image immediately
   - Subtle status toasts; keyboard accessible (Enter/Space)
@@ -66,15 +70,6 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 ## ✨ Features
 
-- Sales Boards (popup → Sales Boards)
-  - Multiple layouts (classic 3×2, banner/hero/strips/mosaic/list variants)
-  - Two‑line captions with intelligent wrapping and font fitting
-  - Image Fit: Contain or Cover (per‑board setting)
-  - Live preview exactly matches exported canvas
-  - Export to 390×260 PNG
-  - Picker now reliably selects the full card, even with manual text/captions
-  - Selector logic is robust and works for all grid layouts
-
 - Tools (popup → Tools)
   - Board Size Calculator to get the target resize for your grid
   - Image Splitter: drag/drop/paste, optional scaling to grid or natural tiling
@@ -83,13 +78,15 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 - Quick Image Uploader (popup → Home)
   - Paste, drag & drop, or click to select
-  - Auto‑resize to 390×260 and upload to ImgBB
+  - Optional 390×260 PNG prep with high-quality downscaling for larger images
+  - Smaller transparent art stays centered on a transparent board without stretching
   - Auto‑copy URL + optional auto‑apply to the current image
   - Home preview shows checkerboard behind images to reveal transparent areas
 
 - Resources & FAQ
   - How‑to notes for art and boards
   - Useful Links including ImgBB host and API key page
+  - Guidance for using Windows crop/snipping with the Home uploader
 
 ---
 
@@ -117,13 +114,13 @@ The extension icon should appear in your toolbar.
 - Home tab
   - Paste an image URL and click “Set New Image”, or
   - Use the Quick Image Uploader to paste/drag/click → Upload → Auto‑set
+  - Enable board-size prep only when you want a 390×260 PNG; smaller art will stay transparent and centered instead of stretching
   - Toggle “Enable Redirect” when you’re ready to apply on YoWorld
 
-- Sales Boards
-  - Pick a layout and Image Fit
-  - Paste up to 6 direct image links (or paste images directly)
-  - Type captions; adjust font and size
-  - Export PNG when satisfied
+- Windows crop workflow
+  - Use Shift + Ctrl + S to capture the exact item area you want
+  - Paste directly into Home → Quick Image Uploader
+  - Upload as-is or enable board-size prep if you want a 390×260 PNG
 
 ---
 
@@ -131,11 +128,9 @@ The extension icon should appear in your toolbar.
 
 Minimal and explicit:
 - `storage` - Saves user settings and state (theme, selected view mode, uploader preferences, redirect state, board/tool data)
-- `scripting` - Injects helper logic when needed for capture/selection flows on supported pages
 - `declarativeNetRequest` - Applies redirect rules used by the paint-board workflow
 - `declarativeNetRequestWithHostAccess` - Allows redirect rules to operate on approved host patterns
 - `declarativeNetRequestFeedback` - Supports rule diagnostics/feedback while troubleshooting
-- `activeTab` - Allows tab-scoped actions when you explicitly use extension features
 - `sidePanel` - Enables opening and running YoWorld Paint in Chrome Side Panel mode
 - Host permissions:
   - `https://*.facebook.com/*`
@@ -143,7 +138,6 @@ Minimal and explicit:
   - `https://*.yoworld.com/*`
   - `https://api.yoworld.info/*`
   - `https://yoworld.com/*`
-  - `https://yoworld.info/*`
   - `https://api.imgbb.com/*`
 
 ---
@@ -155,7 +149,7 @@ Minimal and explicit:
 - No background collection of browsing history
 - Data is only sent to external services when required by user actions:
   - ImgBB API (only when you upload an image using Quick Upload)
-  - YoWorld/YoWorld Info pages (only while using capture/redirect features)
+  - YoWorld and related redirect/proxy endpoints (only while using paint-board redirect features)
 - Settings/state are stored in Chrome extension storage:
   - `chrome.storage.sync` (preferences such as theme, view mode, API key)
   - `chrome.storage.local` (runtime/state values needed for extension behavior)

@@ -1,8 +1,8 @@
 # YoWorld Paint Privacy Policy
 
-Last updated: 2026-03-11
+Last updated: 2026-04-25
 
-YoWorld Paint is a Chrome extension fan tool for creating and applying paint/sales board images. This policy explains what data is processed, why permissions are used, and what is not collected.
+YoWorld Paint is a Chrome extension fan tool for creating and applying paint board images. This policy explains what data is processed, why permissions are used, and what is not collected.
 
 ## Summary
 
@@ -33,8 +33,8 @@ Data is sent externally only when necessary for user-initiated features:
 
 - ImgBB API (`https://api.imgbb.com/*`)
   - Used only when you upload an image via Quick Upload
-- YoWorld / YoWorld Info domains
-  - Used for page integration, capture, and redirect-related functionality
+- YoWorld / redirect-related domains
+  - Used only for paint-board redirect functionality and related image proxy requests
 
 The extension does not continuously transmit browsing activity.
 
@@ -44,16 +44,12 @@ The extension requests the following permissions in `manifest.json`:
 
 - `storage`
   - Save settings and feature state.
-- `scripting`
-  - Run extension scripts on supported pages when required by user actions.
 - `declarativeNetRequest`
   - Manage redirect rules used by paint-board workflow behavior.
 - `declarativeNetRequestWithHostAccess`
   - Allow declarative network rules on approved hosts.
 - `declarativeNetRequestFeedback`
   - Support debugging/feedback for rule behavior.
-- `activeTab`
-  - Perform tab-scoped actions after user interaction.
 - `sidePanel`
   - Enable Side Panel mode.
 
@@ -61,18 +57,16 @@ Host permissions:
 
 - `https://*.facebook.com/*`
 - `https://*.fbcdn.net/*`
+- `https://i.ibb.co/*`
+- `https://i.imgbb.com/*`
 - `https://*.yoworld.com/*`
 - `https://api.yoworld.info/*`
 - `https://yoworld.com/*`
-- `https://yoworld.info/*`
 - `https://api.imgbb.com/*`
 
 ## Content Script Scope
 
-The extension injects content script logic for supported YoWorld Info pages as declared in the manifest:
-
-- `https://yoworld.info/*`
-- `https://*.yoworld.info/*`
+The extension does not declare persistent content scripts in the manifest.
 
 ## Data Retention
 
