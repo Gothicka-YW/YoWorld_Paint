@@ -13,17 +13,22 @@
     if (!img){
       img = document.createElement('img');
       img.alt = '';
+      img.decoding = 'async';
+      img.loading = 'eager';
       img.style.width = '100%';
       img.style.height = '100%';
       img.style.objectFit = 'contain';
       preview.appendChild(img);
     }
-    if (url){ img.src = url; img.style.display = ''; }
+    if (url){
+      if (img.src !== url) img.src = url;
+      img.style.display = '';
+    }
     else { img.remove(); }
   }
 
   function load() {
-    chrome.storage.local.get({ img: ["", false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, null] }, (o)=>{
       let url = Array.isArray(o.img) ? (o.img[0] || "") : "";
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
       // If no image is set, use the sticky default
@@ -37,19 +42,24 @@
 
   function saveUrl() {
     const url = (input && input.value || "").trim();
-    chrome.storage.local.get({ img: ["", false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, null] }, (o)=>{
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
+      const oldUrl = Array.isArray(o.img) ? (o.img[0] || '') : '';
+      const pendingMeta = takePendingRedirectMeta(url);
+      const existingMeta = extractExistingRedirectMeta(o.img);
+      const nextMeta = pendingMeta || (url === oldUrl ? existingMeta : null);
       // immediate preview
       setPreview(url);
-      chrome.storage.local.set({ img: [url, enabled] });
+      chrome.storage.local.set({ img: [url, enabled, nextMeta] });
     });
   }
 
   function saveToggle() {
     const enabled = !!(toggle && toggle.checked);
-    chrome.storage.local.get({ img: ["", false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, null] }, (o)=>{
       const url = Array.isArray(o.img) ? (o.img[0] || "") : "";
-      chrome.storage.local.set({ img: [url, enabled] });
+      const meta = extractExistingRedirectMeta(o.img);
+      chrome.storage.local.set({ img: [url, enabled, meta] });
     });
   }
 
@@ -59,6 +69,9 @@
   if (input) input.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); saveUrl(); }});
   if (toggle) toggle.addEventListener('change', saveToggle);
 
+  // Allow Quick Upload flow to push an immediate local preview while remote image URL loads.
+  window.ywpSetHomePreview = setPreview;
+
   load();
 })();
 
@@ -66,6 +79,9 @@ const HOME_UPLOAD_STATE_KEY = 'ywp-home-upload-state';
 const HOME_UPLOAD_DB = 'ywp-home-upload-db';
 const HOME_UPLOAD_STORE = 'artifacts';
 const HOME_UPLOAD_SOURCE_KEY = 'quick-upload-source';
+const HOME_BOARD_WIDTH = 390;
+const HOME_BOARD_HEIGHT = 260;
+const HOME_LARGE_SOURCE_RATIO_WARN = 2.6;
 
 
 async function toPngBlobFromFile(file){
@@ -98,7 +114,9 @@ async function preparePngBlobFromFile(file, targetW, targetH){
         sourceHeight: srcH,
         outputWidth: targetW,
         outputHeight: targetH,
-        mode: 'exact-original'
+        mode: 'exact-original',
+        downscaleRatio: 1,
+        sharpenApplied: false
       }
     };
   }
@@ -132,6 +150,9 @@ async function preparePngBlobFromFile(file, targetW, targetH){
     mode = 'downscaled';
   }
 
+  const downscaleRatio = Math.max(srcW / targetW, srcH / targetH);
+  const sharpenApplied = maybeApplyDownscaleSharpen(targetCanvas, mode, downscaleRatio);
+
   return {
     blob: await canvasToPngBlob(targetCanvas),
     meta: {
@@ -139,7 +160,9 @@ async function preparePngBlobFromFile(file, targetW, targetH){
       sourceHeight: srcH,
       outputWidth: targetW,
       outputHeight: targetH,
-      mode
+      mode,
+      downscaleRatio,
+      sharpenApplied
     }
   };
 }
@@ -182,6 +205,54 @@ async function progressiveDownscaleToCanvas(img, targetW, targetH){
   }
 
   return workCanvas;
+}
+
+function maybeApplyDownscaleSharpen(canvas, mode, downscaleRatio) {
+  if (!canvas || mode !== 'downscaled') return false;
+  if (!Number.isFinite(downscaleRatio) || downscaleRatio < 2.1) return false;
+  if (canvas.width < 3 || canvas.height < 3) return false;
+
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return false;
+
+  const amount = downscaleRatio >= 4 ? 0.36 : (downscaleRatio >= 3 ? 0.3 : 0.24);
+  applySharpenKernel(ctx, canvas.width, canvas.height, amount);
+  return true;
+}
+
+function applySharpenKernel(ctx, width, height, amount) {
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const src = imageData.data;
+  const out = new Uint8ClampedArray(src);
+  const stride = width * 4;
+
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = (y * width + x) * 4;
+      if (src[idx + 3] === 0) continue;
+
+      for (let c = 0; c < 3; c++) {
+        const center = src[idx + c];
+        const top = src[idx - stride + c];
+        const bottom = src[idx + stride + c];
+        const left = src[idx - 4 + c];
+        const right = src[idx + 4 + c];
+        const sharpened = center * 5 - top - bottom - left - right;
+        const blended = center + (sharpened - center) * amount;
+        out[idx + c] = clampByte(blended);
+      }
+      out[idx + 3] = src[idx + 3];
+    }
+  }
+
+  imageData.data.set(out);
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function clampByte(value) {
+  if (value <= 0) return 0;
+  if (value >= 255) return 255;
+  return Math.round(value);
 }
 
 function createAlphaSafeCanvas(img, width, height) {
@@ -276,10 +347,18 @@ function loadImageSource(file) {
 function loadImageElement(file) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to decode image'));
-    img.src = URL.createObjectURL(file);
-    setTimeout(() => URL.revokeObjectURL(img.src), 4000);
+    const objectUrl = URL.createObjectURL(file);
+    const cleanup = () => URL.revokeObjectURL(objectUrl);
+    img.decoding = 'async';
+    img.onload = () => {
+      cleanup();
+      resolve(img);
+    };
+    img.onerror = () => {
+      cleanup();
+      reject(new Error('Failed to decode image'));
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -347,6 +426,7 @@ async function idbDelete(key) {
   const statusEl = document.getElementById('qu-status');
   const resultEl = document.getElementById('qu-result');
   const warnEl = document.getElementById('qu-warning');
+  const clarityWarnEl = document.getElementById('qu-clarity-warning');
   const autoChk = document.getElementById('qu-autoset');
   const resizeChk = document.getElementById('qu-autoresize');
   const clearBtn = document.getElementById('qu-clear');
@@ -357,6 +437,7 @@ async function idbDelete(key) {
   let clipboardBlob = null;
   let pickedFile = null; // single source for chosen/dropped file
   let uploadStateLoaded = false;
+  let tempPreviewUrl = '';
 
   function setStatus(msg, isErr){
     if (statusEl){
@@ -365,7 +446,88 @@ async function idbDelete(key) {
     }
     if (uploadStateLoaded) persistUploaderState();
   }
+
+  function setClarityWarning(msg) {
+    if (!clarityWarnEl) return;
+    const text = String(msg || '').trim();
+    clarityWarnEl.textContent = text;
+    clarityWarnEl.style.display = text ? 'block' : 'none';
+  }
+
   function setResult(url){ if (resultEl){ if (url){ resultEl.style.display='block'; resultEl.textContent = url; } else { resultEl.style.display='none'; resultEl.textContent=''; } } }
+
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read image data'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function switchToToolsTab() {
+    const toolsTab = document.querySelector('nav.tabs .tab[data-tab="tools"]');
+    if (toolsTab && typeof toolsTab.click === 'function') {
+      toolsTab.click();
+    }
+  }
+
+  async function routeImageToToolsSplitter(file, dims) {
+    const sourceWidth = Math.max(1, dims && dims.width ? dims.width : HOME_BOARD_WIDTH);
+    const sourceHeight = Math.max(1, dims && dims.height ? dims.height : HOME_BOARD_HEIGHT);
+    const cols = Math.max(1, Math.ceil(sourceWidth / HOME_BOARD_WIDTH));
+    const rows = Math.max(1, Math.ceil(sourceHeight / HOME_BOARD_HEIGHT));
+    const sourceImage = await fileToDataUrl(file);
+    const state = {
+      cols,
+      rows,
+      scale: false,
+      sourceImage,
+      hadSplit: false,
+      tiles: []
+    };
+
+    try { localStorage.setItem('ywp-tools-state', JSON.stringify(state)); } catch (_) {}
+    try {
+      if (chrome?.storage?.local) {
+        chrome.storage.local.set({ 'ywp-tools-state-v2': state }, () => {
+          void chrome.runtime?.lastError;
+        });
+      }
+    } catch (_) {}
+
+    try {
+      window.dispatchEvent(new CustomEvent('ywp-tools-import-source', {
+        detail: {
+          ...state,
+          sourceName: file && file.name ? file.name : 'image'
+        }
+      }));
+    } catch (_) {}
+
+    switchToToolsTab();
+    return { cols, rows };
+  }
+
+  function showInstantPreviewFromBlob(blobLike) {
+    if (!blobLike || typeof window.ywpSetHomePreview !== 'function') return;
+    clearTempPreview(0);
+    try {
+      tempPreviewUrl = URL.createObjectURL(blobLike);
+      window.ywpSetHomePreview(tempPreviewUrl);
+    } catch (_) {
+      tempPreviewUrl = '';
+    }
+  }
+
+  function clearTempPreview(delayMs = 0) {
+    const url = tempPreviewUrl;
+    tempPreviewUrl = '';
+    if (!url) return;
+    setTimeout(() => {
+      try { URL.revokeObjectURL(url); } catch (_) {}
+    }, Math.max(0, delayMs | 0));
+  }
 
   function getSourceMeta(file){
     if (!file) return null;
@@ -376,16 +538,55 @@ async function idbDelete(key) {
     };
   }
 
-  function describePreparedUpload(meta, didResize) {
-    if (!meta) return didResize ? 'PNG prepared.' : 'PNG ready.';
-    if (!didResize) return `PNG ready at ${meta.sourceWidth} x ${meta.sourceHeight}.`;
+  function describePreparedUpload(meta) {
+    if (!meta) return 'PNG prepared.';
+    if (meta.mode === 'routed-to-splitter') {
+      return `Sent to Image Splitter (${meta.suggestedCols} x ${meta.suggestedRows}) so the full image is preserved.`;
+    }
+    if (meta.mode === 'original-png') {
+      return `Original-size PNG kept at ${meta.sourceWidth} x ${meta.sourceHeight}.`;
+    }
     if (meta.mode === 'contain-no-upscale') {
       return `Smaller image preserved on a transparent ${meta.outputWidth} x ${meta.outputHeight} board with no stretching.`;
     }
     if (meta.mode === 'downscaled') {
-      return `Resized to ${meta.outputWidth} x ${meta.outputHeight} PNG with high-quality downscaling.`;
+      const sharpenedNote = meta.sharpenApplied ? ' Added readability sharpening for small text.' : '';
+      return `Resized to ${meta.outputWidth} x ${meta.outputHeight} PNG with high-quality downscaling.${sharpenedNote}`;
+    }
+    if (meta.mode === 'exact' || meta.mode === 'exact-original') {
+      return `Prepared at ${meta.outputWidth} x ${meta.outputHeight} PNG.`;
     }
     return `PNG prepared at ${meta.outputWidth} x ${meta.outputHeight}.`;
+  }
+
+  function getClarityWarning(meta) {
+    if (!meta) return '';
+    if (meta.mode === 'routed-to-splitter') {
+      return 'Image is larger than one board. Use Tools > Image Splitter to keep the full image and readable details.';
+    }
+    if (meta.mode === 'original-png') {
+      const sourceW = meta.sourceWidth || HOME_BOARD_WIDTH;
+      const sourceH = meta.sourceHeight || HOME_BOARD_HEIGHT;
+      if (sourceW > HOME_BOARD_WIDTH || sourceH > HOME_BOARD_HEIGHT) {
+        return 'Original-size upload selected. Large images can blur or fail to save after Redirect is turned off. Turn on Prepare as 390×260 PNG for best reliability.';
+      }
+      return '';
+    }
+
+    const outputW = meta.outputWidth || HOME_BOARD_WIDTH;
+    const outputH = meta.outputHeight || HOME_BOARD_HEIGHT;
+    const ratio = Number(meta.downscaleRatio) || Math.max(
+      (meta.sourceWidth || outputW) / outputW,
+      (meta.sourceHeight || outputH) / outputH
+    );
+    const sourcePixels = (meta.sourceWidth || outputW) * (meta.sourceHeight || outputH);
+    const outputPixels = outputW * outputH;
+    const isLargeForSingleBoard = ratio >= HOME_LARGE_SOURCE_RATIO_WARN || sourcePixels >= outputPixels * 5;
+    if (!isLargeForSingleBoard) return '';
+    const forceProxyMsg = (meta.sourceWidth || 0) > HOME_BOARD_WIDTH || (meta.sourceHeight || 0) > HOME_BOARD_HEIGHT
+      ? ' Redirect will use compatibility mode for this upload.'
+      : '';
+    return `Large source detected. Text-heavy sales-board collages may still blur on one board. For sharper text, use Tools > Image Splitter.${forceProxyMsg}`;
   }
 
   async function persistUploaderState(extra = {}) {
@@ -445,6 +646,7 @@ async function idbDelete(key) {
       } else if (state && state.status) {
         setStatus(state.status, !!state.statusErr);
       }
+      setClarityWarning(getClarityWarning(state && state.preparedMeta ? state.preparedMeta : null));
     } catch (err) {
       console.warn('Failed to restore Home upload state', err);
     } finally {
@@ -452,10 +654,10 @@ async function idbDelete(key) {
     }
   }
 
-  // Load preferred host, key, and auto-resize (default OFF unless explicitly enabled)
+  // Load preferred host, key, and auto-resize (default ON for reliability, optional to disable).
   chrome.storage.sync.get(['quickUploadHost','imgbbKey','quickUploadAutoResize'], data => {
     if (data.quickUploadHost && hostSel) hostSel.value = data.quickUploadHost;
-    if (resizeChk) resizeChk.checked = (data.quickUploadAutoResize === true); // default OFF
+    if (resizeChk) resizeChk.checked = (data.quickUploadAutoResize !== false);
     toggleKeyWarning();
   });
   void restoreUploaderState();
@@ -525,6 +727,8 @@ async function idbDelete(key) {
       pickedFile = null; clipboardBlob = null; lastUrl='';
       if (fileEl) fileEl.value='';
       setStatus(''); setResult('');
+      setClarityWarning('');
+      clearTempPreview(0);
       btnCopy.disabled = true;
       await clearUploaderState();
       showToast('Cleared');
@@ -536,36 +740,73 @@ async function idbDelete(key) {
   // Prefer fresh file input; fall back to dropped/pasted
   const file = (fileEl.files && fileEl.files[0]) || pickedFile || clipboardBlob;
     if (!file){ setStatus('Select or paste an image.', true); return; }
+    setClarityWarning('');
     if (host === 'imgbb'){
       const { imgbbKey } = await chrome.storage.sync.get(['imgbbKey']);
       if (!imgbbKey){ setStatus('ImgBB key missing.', true); toggleKeyWarning(true); return; }
     }
-    const doResize = !resizeChk || resizeChk.checked;
+    const doResize = !resizeChk || !!resizeChk.checked;
     btnUpload.disabled = true;
     btnCopy.disabled = true;
-    setStatus(doResize ? 'Resizing…' : 'Uploading…');
+    setStatus(doResize ? 'Preparing 390×260 PNG…' : 'Preparing original PNG…');
     setResult('');
     lastUrl='';
     try {
       let uploadFile = file;
       let preparedMeta = null;
-      if (doResize){
-        const prepared = await preparePngBlobFromFile(file, 390, 260);
-        setStatus('Uploading…');
+
+      if (!doResize) {
+        const sourceDims = await getBlobImageDimensions(file);
+        const sourceWidth = sourceDims && sourceDims.width ? sourceDims.width : 0;
+        const sourceHeight = sourceDims && sourceDims.height ? sourceDims.height : 0;
+        const isLargerThanBoard = sourceWidth > HOME_BOARD_WIDTH || sourceHeight > HOME_BOARD_HEIGHT;
+
+        if (isLargerThanBoard) {
+          setStatus('Opening Image Splitter…');
+          const routed = await routeImageToToolsSplitter(file, sourceDims);
+          clearPendingRedirectMeta();
+          preparedMeta = {
+            sourceWidth,
+            sourceHeight,
+            outputWidth: sourceWidth,
+            outputHeight: sourceHeight,
+            mode: 'routed-to-splitter',
+            downscaleRatio: 1,
+            sharpenApplied: false,
+            suggestedCols: routed.cols,
+            suggestedRows: routed.rows
+          };
+          setClarityWarning(getClarityWarning(preparedMeta));
+          setStatus(`Image is ${sourceWidth} x ${sourceHeight}. ${describePreparedUpload(preparedMeta)}`);
+          await persistUploaderState({ preparedMeta });
+          showToast('Sent to Image Splitter');
+          return;
+        }
+      }
+
+      if (doResize) {
+        const prepared = await preparePngBlobFromFile(file, HOME_BOARD_WIDTH, HOME_BOARD_HEIGHT);
         preparedMeta = prepared.meta;
         uploadFile = new File([prepared.blob], toPngFilename(file.name), { type:'image/png' });
       } else {
-        const pngBlob = await toPngBlobFromFile(file);
-        preparedMeta = await getBlobImageDimensions(pngBlob);
-        preparedMeta.mode = 'original-png';
-        preparedMeta.sourceWidth = preparedMeta.width;
-        preparedMeta.sourceHeight = preparedMeta.height;
-        uploadFile = new File([pngBlob], toPngFilename(file.name), { type:'image/png' });
+        // Keep smaller images fully visible by placing them on a transparent board canvas.
+        setStatus('Preparing transparent board…');
+        const prepared = await preparePngBlobFromFile(file, HOME_BOARD_WIDTH, HOME_BOARD_HEIGHT);
+        preparedMeta = prepared.meta;
+        uploadFile = new File([prepared.blob], toPngFilename(file.name), { type:'image/png' });
       }
+
+      if (autoChk && autoChk.checked) {
+        showInstantPreviewFromBlob(uploadFile);
+      }
+
+      setStatus('Uploading…');
+      setClarityWarning(getClarityWarning(preparedMeta));
       const { uploadImage } = await import('../../src/lib/uploader.js');
       const url = await uploadImage(uploadFile, { host });
+      queuePendingRedirectMeta(url, preparedMeta);
       lastUrl = url; setResult(url);
-      const preparedMsg = describePreparedUpload(preparedMeta, doResize);
+      const preparedMsg = describePreparedUpload(preparedMeta);
       try { await navigator.clipboard.writeText(url); setStatus(`Uploaded & copied. ${preparedMsg}`); btnCopy.disabled=false; }
       catch { setStatus(`Uploaded. Use Copy button. ${preparedMsg}`, true); btnCopy.disabled=false; }
       // Auto-set as current image
@@ -573,6 +814,9 @@ async function idbDelete(key) {
         const mainInput = document.getElementById('img-url');
         if (mainInput){ mainInput.value = url; mainInput.dispatchEvent(new Event('input', {bubbles:true})); }
         const btn = document.getElementById('btn-set'); if (btn) btn.click();
+        clearTempPreview(12000);
+      } else {
+        clearTempPreview(0);
       }
       await persistUploaderState({ preparedMeta });
       showToast('Upload complete');
@@ -581,6 +825,8 @@ async function idbDelete(key) {
     } catch(e){
       const msg = (e && e.message) ? e.message : String(e);
       setStatus('Upload failed: ' + msg, true);
+      clearPendingRedirectMeta();
+      clearTempPreview(0);
       if (/imgbb/i.test(msg)) toggleKeyWarning(true);
     }
     finally { btnUpload.disabled = false; }
@@ -634,4 +880,59 @@ function showToast(msg){
 function toPngFilename(name) {
   const safe = String(name || 'image').replace(/\.[a-zA-Z0-9]+$/, '');
   return `${safe || 'image'}.png`;
+}
+
+function createRedirectMetaFromPrepared(preparedMeta) {
+  if (!preparedMeta || typeof preparedMeta !== 'object') return null;
+  const sourceWidth = Number(preparedMeta.sourceWidth) || 0;
+  const sourceHeight = Number(preparedMeta.sourceHeight) || 0;
+  const outputWidth = Number(preparedMeta.outputWidth) || 0;
+  const outputHeight = Number(preparedMeta.outputHeight) || 0;
+  const mode = String(preparedMeta.mode || '');
+  if (!sourceWidth && !sourceHeight && !outputWidth && !outputHeight && !mode) return null;
+  return {
+    sourceWidth,
+    sourceHeight,
+    outputWidth,
+    outputHeight,
+    mode,
+    downscaleRatio: Number(preparedMeta.downscaleRatio) || 0,
+    forceProxy: sourceWidth > HOME_BOARD_WIDTH || sourceHeight > HOME_BOARD_HEIGHT
+  };
+}
+
+function queuePendingRedirectMeta(url, preparedMeta) {
+  const meta = createRedirectMetaFromPrepared(preparedMeta);
+  const safeUrl = String(url || '').trim();
+  if (!meta || !safeUrl) {
+    window.ywpPendingRedirectMeta = null;
+    return;
+  }
+  window.ywpPendingRedirectMeta = { url: safeUrl, meta };
+}
+
+function clearPendingRedirectMeta() {
+  window.ywpPendingRedirectMeta = null;
+}
+
+function takePendingRedirectMeta(nextUrl) {
+  const pending = window.ywpPendingRedirectMeta;
+  if (!pending || typeof pending !== 'object') return null;
+
+  const expectedUrl = String(nextUrl || '').trim();
+  const pendingUrl = String(pending.url || '').trim();
+  const pendingMeta = pending.meta && typeof pending.meta === 'object' ? pending.meta : null;
+
+  if (pendingMeta && pendingUrl && pendingUrl === expectedUrl) {
+    window.ywpPendingRedirectMeta = null;
+    return pendingMeta;
+  }
+
+  return null;
+}
+
+function extractExistingRedirectMeta(rawImgState) {
+  if (!Array.isArray(rawImgState)) return null;
+  const candidate = rawImgState.length >= 3 ? rawImgState[2] : null;
+  return (candidate && typeof candidate === 'object') ? candidate : null;
 }

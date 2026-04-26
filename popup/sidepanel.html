@@ -79,7 +79,7 @@
 <div id="quick-upload" style="display:flex; flex-direction:column; gap:10px;">
   <div class="qu-head">
     <h3 class="qu-title">Quick Image Uploader</h3>
-  <div class="qu-sub">Paste, drag & drop, or click to select. Auto‑resize is optional: larger images are prepared as a 390×260 PNG, while smaller art stays transparent and will not be stretched.</div>
+  <div class="qu-sub">Paste, drag & drop, or click to select. Resize to 390×260 is recommended for reliable board saves. If turned off, images larger than one board are sent to Image Splitter.</div>
   </div>
   <div style="display:flex; gap:8px; align-items:center;">
     <label style="font-size:12px; font-weight:600; display:flex; flex-direction:column; gap:4px; flex:1;">
@@ -103,15 +103,16 @@
   </div>
   <div style="display:flex; align-items:center; gap:16px; font-size:12px; flex-wrap:wrap;">
     <label style="display:flex; align-items:center; gap:6px;">
-  <input type="checkbox" id="qu-autoresize" aria-label="Auto-resize to 390 by 260" aria-describedby="qu-status qu-warning" /> Prepare as 390×260 PNG
+  <input type="checkbox" id="qu-autoresize" aria-label="Resize to 390 by 260" aria-describedby="qu-status qu-warning qu-clarity-warning" /> Resize to 390×260 (recommended)
     </label>
     <label style="display:flex; align-items:center; gap:6px;">
-      <input type="checkbox" id="qu-autoset" checked aria-label="Auto-set as current image after upload" aria-describedby="qu-status qu-warning" /> Auto‑set as Current Image
+      <input type="checkbox" id="qu-autoset" checked aria-label="Auto-set as current image after upload" aria-describedby="qu-status qu-warning qu-clarity-warning" /> Auto‑set as Current Image
     </label>
   </div>
   <div id="qu-status" style="font-size:12px; min-height:16px; color:#6b7280;"></div>
-  <div id="qu-result" style="display:none; font-size:12px; word-break:break-all; background:#fafafa; border:1px solid #e5e7eb; padding:6px 8px; border-radius:8px;"></div>
+  <div id="qu-result" style="display:none; font-size:12px; word-break:break-all; color:#000; background:#fafafa; border:1px solid #e5e7eb; padding:6px 8px; border-radius:8px;"></div>
   <div id="qu-warning" style="display:none; font-size:11px; color:#b00020;">ImgBB key missing. Set it in Resources tab.</div>
+  <div id="qu-clarity-warning" style="display:none; font-size:11px; color:#8a4b00;"></div>
 </div>
 </section>
 <section aria-label="Tools" class="panel" id="panel-tools" role="region">
@@ -366,6 +367,8 @@
   <li>Open the <strong>Home</strong> tab.</li>
   <li>In <strong>Quick Image Uploader</strong>: paste, drag &amp; drop, or click to select an image.</li>
   <li>Click <strong>Upload</strong>.</li>
+  <li>Leave <strong>Prepare as 390×260 PNG</strong> ON for the most reliable save workflow.</li>
+  <li>If Prepare is OFF: smaller images are kept fully visible, and larger images are sent to <strong>Tools &gt; Image Splitter</strong>.</li>
   <li>Optional: leave <strong>“Auto‑set as Current Image”</strong> ON to apply immediately.</li>
   <li>Enable <strong>Redirect</strong> at the top.</li>
   <li>Go to YoWorld and save your Paint Board.</li>
@@ -388,6 +391,7 @@
 <ul>
   <li><strong>Paste everywhere:</strong> You can paste images directly into Home fields.</li>
   <li><strong>Hosting:</strong> ImgBB is integrated and reliable; set your API key in <strong>Resources</strong>.</li>
+  <li><strong>Text readability:</strong> If a large collage has tiny text, split it in <strong>Tools &gt; Image Splitter</strong> instead of squeezing everything into one board.</li>
 </ul>
 </div>
 </section>

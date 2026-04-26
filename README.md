@@ -78,7 +78,9 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 - Quick Image Uploader (popup → Home)
   - Paste, drag & drop, or click to select
-  - Optional 390×260 PNG prep with high-quality downscaling for larger images
+  - Optional 390×260 PNG prep (recommended for reliable in-game board saves)
+  - If prep is OFF: images larger than one board are routed to Image Splitter
+  - Adaptive clarity sharpening is applied for heavy downscales to help text readability
   - Smaller transparent art stays centered on a transparent board without stretching
   - Auto‑copy URL + optional auto‑apply to the current image
   - Home preview shows checkerboard behind images to reveal transparent areas
@@ -114,13 +116,17 @@ The extension icon should appear in your toolbar.
 - Home tab
   - Paste an image URL and click “Set New Image”, or
   - Use the Quick Image Uploader to paste/drag/click → Upload → Auto‑set
-  - Enable board-size prep only when you want a 390×260 PNG; smaller art will stay transparent and centered instead of stretching
+  - Keep Prepare as 390×260 PNG ON for the most reliable board-save behavior
+  - Turn Prepare OFF when you intentionally want original-size behavior
+  - With Prepare OFF: smaller images are kept fully visible, larger images are sent to Tools → Image Splitter
+  - If your source is a large text-heavy collage, use Tools → Image Splitter for clearer text across multiple boards
   - Toggle “Enable Redirect” when you’re ready to apply on YoWorld
 
 - Windows crop workflow
   - Use Shift + Ctrl + S to capture the exact item area you want
   - Paste directly into Home → Quick Image Uploader
-  - Upload as-is or enable board-size prep if you want a 390×260 PNG
+  - Keep Prepare as 390×260 PNG ON when you want one-board output that saves consistently
+  - For multi-board text-heavy images, split in Tools instead of squeezing into one board
 
 ---
 

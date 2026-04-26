@@ -38,26 +38,81 @@
     wireSplitter();
     wireClear();
     wireZip();
+    wireHomeImportBridge();
     restoreState().finally(() => {
       isHydrating = false;
     });
   }
 
+  function updateTargetSizeLabel(shouldPersist = false) {
+    if (!els.cols || !els.rows || !els.size) {
+      return { cols: 1, rows: 1, w: BOARD_W, h: BOARD_H };
+    }
+    const cols = clampInt(els.cols.value, 1, 20, 3);
+    const rows = clampInt(els.rows.value, 1, 20, 2);
+    els.cols.value = cols;
+    els.rows.value = rows;
+    const w = cols * BOARD_W;
+    const h = rows * BOARD_H;
+    els.size.textContent = `Target size: ${w} × ${h} px`;
+    if (shouldPersist) persistSettings();
+    return { cols, rows, w, h };
+  }
+
   function wireCalculator() {
     if (!els.cols || !els.rows || !els.size) return;
     const update = (shouldPersist = true) => {
-      const cols = clampInt(els.cols.value, 1, 20, 3);
-      const rows = clampInt(els.rows.value, 1, 20, 2);
-      els.cols.value = cols;
-      els.rows.value = rows;
-      const w = cols * BOARD_W;
-      const h = rows * BOARD_H;
-      els.size.textContent = `Target size: ${w} × ${h} px`;
-      if (shouldPersist) persistSettings();
+      updateTargetSizeLabel(shouldPersist);
     };
     els.cols.addEventListener('input', () => update(true));
     els.rows.addEventListener('input', () => update(true));
     update(false);
+  }
+
+  function wireHomeImportBridge() {
+    window.addEventListener('ywp-tools-import-source', (event) => {
+      void importFromHome(event && event.detail ? event.detail : null);
+    });
+  }
+
+  async function importFromHome(detail) {
+    if (!detail || !detail.sourceImage) return;
+
+    try {
+      resetTiles();
+      if (els.results) {
+        els.results.textContent = 'Ready to split.';
+      }
+
+      if (typeof detail.cols === 'number' && els.cols) {
+        els.cols.value = clampInt(detail.cols, 1, 20, 3);
+      }
+      if (typeof detail.rows === 'number' && els.rows) {
+        els.rows.value = clampInt(detail.rows, 1, 20, 2);
+      }
+      if (els.scale && typeof detail.scale === 'boolean') {
+        els.scale.checked = detail.scale;
+      }
+
+      updateTargetSizeLabel(false);
+
+      sourceImageDataUrl = String(detail.sourceImage || '');
+      sourceImage = await dataUrlToImageSource(sourceImageDataUrl);
+
+      const w = sourceImage.width || sourceImage.naturalWidth || 0;
+      const h = sourceImage.height || sourceImage.naturalHeight || 0;
+      const sourceName = detail.sourceName ? String(detail.sourceName) : 'image';
+      setMeta(`Loaded ${sourceName} (${w} × ${h}) from Home.`);
+      setWarning('Image is larger than one board. Click "Split into tiles" to preserve the full image.', '#8a4b00');
+
+      if (els.split) els.split.disabled = false;
+      if (els.zip) els.zip.disabled = true;
+
+      persistSettings();
+    } catch (err) {
+      console.warn('Failed to import image from Home tab', err);
+      setWarning('Could not load image in Tools. Try selecting it directly in Image Splitter.', '#b00020');
+    }
   }
 
   function wireFileInputs() {
@@ -535,11 +590,7 @@
         sourceImageDataUrl = '';
       }
     }
-    if (els.cols && els.rows && els.size) {
-      const w = clampInt(els.cols.value, 1, 20, 3) * BOARD_W;
-      const h = clampInt(els.rows.value, 1, 20, 2) * BOARD_H;
-      els.size.textContent = `Target size: ${w} × ${h} px`;
-    }
+    updateTargetSizeLabel(false);
     if (Array.isArray(state.tiles) && state.tiles.length) {
       const restored = await Promise.all(state.tiles.map(async (t, idx) => {
         const canvas = await dataUrlToCanvas(t.dataUrl);

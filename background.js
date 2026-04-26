@@ -23,11 +23,12 @@ function logChromeLastError(context) {
     return true;
 }
 
-function updateRedirectRules(imgUrl, enableRedirect) {
+function updateRedirectRules(imgUrl, enableRedirect, imgMeta) {
     const enabled = !!enableRedirect;
     const safeImgUrl = (imgUrl || "").trim();
-    const targetUrl = buildRedirectTarget(safeImgUrl);
-    console.log("Updating rules. enableRedirect =", enabled, "imgUrl =", safeImgUrl);
+    const safeMeta = normalizeImgMeta(imgMeta);
+    const targetUrl = buildRedirectTarget(safeImgUrl, safeMeta);
+    console.log("Updating rules. enableRedirect =", enabled, "imgUrl =", safeImgUrl, "meta =", safeMeta);
 
     chrome.declarativeNetRequest.updateDynamicRules(
         {
@@ -64,12 +65,46 @@ function updateRedirectRules(imgUrl, enableRedirect) {
     );
 }
 
-function buildRedirectTarget(imgUrl) {
+function buildRedirectTarget(imgUrl, imgMeta) {
     const safeImgUrl = (imgUrl || "").trim();
+    const safeMeta = normalizeImgMeta(imgMeta);
+    if (isYoworldProxyUrl(safeImgUrl)) {
+        return safeImgUrl;
+    }
+    if (safeMeta.forceProxy) {
+        return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+    }
     if (isDirectTransparentPngUrl(safeImgUrl)) {
         return safeImgUrl;
     }
     return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+}
+
+function isYoworldProxyUrl(urlString) {
+    if (!/^https?:\/\//i.test(urlString || "")) return false;
+    try {
+        const url = new URL(urlString);
+        const host = url.hostname.toLowerCase();
+        return host === "api.yoworld.info" && /\/extension\.php$/i.test(url.pathname || "");
+    } catch (_) {
+        return false;
+    }
+}
+
+function normalizeImgMeta(rawMeta) {
+    if (!rawMeta || typeof rawMeta !== "object") {
+        return { forceProxy: false, sourceWidth: 0, sourceHeight: 0, mode: "" };
+    }
+    const sourceWidth = Number(rawMeta.sourceWidth) || 0;
+    const sourceHeight = Number(rawMeta.sourceHeight) || 0;
+    const mode = typeof rawMeta.mode === "string" ? rawMeta.mode : "";
+    const forceProxy = !!rawMeta.forceProxy || sourceWidth > 390 || sourceHeight > 260;
+    return {
+        forceProxy,
+        sourceWidth,
+        sourceHeight,
+        mode
+    };
 }
 
 function isDirectTransparentPngUrl(urlString) {
@@ -124,14 +159,17 @@ function loadViewMode() {
 }
 
 function loadSettings() {
-    chrome.storage.local.get({ img: ["", false] }, (e) => {
+    chrome.storage.local.get({ img: ["", false, null] }, (e) => {
         if (logChromeLastError("Error loading storage")) {
             return;
         }
         if (e.img && e.img.length) {
-            updateRedirectRules(e.img[0], e.img[1]);
+            const meta = (Array.isArray(e.img) && e.img.length > 2 && e.img[2] && typeof e.img[2] === "object")
+                ? e.img[2]
+                : null;
+            updateRedirectRules(e.img[0], e.img[1], meta);
         } else {
-            updateRedirectRules("https://i.imgur.com/j146uKh.png", false);
+            updateRedirectRules("https://i.imgur.com/j146uKh.png", false, null);
         }
     });
 }

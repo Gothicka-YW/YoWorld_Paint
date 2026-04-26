@@ -24,9 +24,12 @@ Now you are ready to use the Quick Uploader feature on the Home tab.
 
 - On the Home tab, scroll down to the "Quick Image Uploader" section.
 - Either click the box encased in the dotted line or press ctrl+V to paste an image.
-- Choose if you would like to resize the image to 390x260 (the size of 1 board).
+- Leave "Prepare as 390x260 PNG" ON for the most reliable in-game save flow.
+- You can turn it OFF when you intentionally want original-size behavior.
+- If Prepare is OFF: smaller images are kept fully visible, and larger images are sent to Tools > Image Splitter.
 - "Auto-set Image" is checked by default. This is so you can see the preview above after it is uploaded.
 - Click "Upload" and you will see the image above if successful!
+- If your source has tiny text and was designed for multiple boards, use Tools > Image Splitter so text stays readable.
 
 Next time, I will show you how to upload images manually in case you are unable to use imgbb for whatever reason.
 
@@ -66,7 +69,8 @@ If you are using windows, use this trick to create boards quickly:
 - Hold shift + Ctrl + S to activate the selective screen shot mode.
 - Drag the box around the exact area you want on the board. It will copy the image to your clipboard.
 - Go to the Home tab's quick uploader, and hold Ctrl and press "V" to paste the image there. Upload as normal.
-- If you want the final image normalized to one board, enable "Prepare as 390×260 PNG" before upload.
+- Keep "Prepare as 390×260 PNG" ON when you want one-board output that saves consistently.
+- With Prepare OFF, larger images are automatically routed to Tools > Image Splitter.
 
 MAC COMMAND FOR THE SAME SEEN ABOVE: Press Cmd + Ctrl + Shift + 4, then drag to select. The screenshot is copied directly to your clipboard.
 
