@@ -82,6 +82,7 @@ const HOME_UPLOAD_SOURCE_KEY = 'quick-upload-source';
 const HOME_BOARD_WIDTH = 390;
 const HOME_BOARD_HEIGHT = 260;
 const HOME_LARGE_SOURCE_RATIO_WARN = 2.6;
+const HOME_SAVE_SAFE_TARGET_BYTES = 220 * 1024;
 
 
 async function toPngBlobFromFile(file){
@@ -106,25 +107,12 @@ async function preparePngBlobFromFile(file, targetW, targetH){
   const srcH = img.height || img.naturalHeight || 0;
   if (!srcW || !srcH) throw new Error('Invalid image size');
 
-  if (srcW === targetW && srcH === targetH && isPngFile(file)) {
-    return {
-      blob: file,
-      meta: {
-        sourceWidth: srcW,
-        sourceHeight: srcH,
-        outputWidth: targetW,
-        outputHeight: targetH,
-        mode: 'exact-original',
-        downscaleRatio: 1,
-        sharpenApplied: false
-      }
-    };
-  }
+  const sourceHasTransparency = imageHasTransparency(img, srcW, srcH);
 
   const targetCanvas = document.createElement('canvas');
   targetCanvas.width = targetW;
   targetCanvas.height = targetH;
-  const targetCtx = targetCanvas.getContext('2d');
+  const targetCtx = targetCanvas.getContext('2d', { willReadFrequently: true });
   targetCtx.clearRect(0, 0, targetW, targetH);
   targetCtx.imageSmoothingEnabled = true;
   targetCtx.imageSmoothingQuality = 'high';
@@ -132,7 +120,7 @@ async function preparePngBlobFromFile(file, targetW, targetH){
   let mode = 'exact';
   if (srcW === targetW && srcH === targetH) {
     copyImagePixels(targetCtx, img, 0, 0, srcW, srcH);
-    mode = 'exact';
+    mode = isPngFile(file) ? 'exact-original' : 'exact';
   } else if (srcW <= targetW && srcH <= targetH) {
     const dx = Math.round((targetW - srcW) / 2);
     const dy = Math.round((targetH - srcH) / 2);
@@ -153,8 +141,17 @@ async function preparePngBlobFromFile(file, targetW, targetH){
   const downscaleRatio = Math.max(srcW / targetW, srcH / targetH);
   const sharpenApplied = maybeApplyDownscaleSharpen(targetCanvas, mode, downscaleRatio);
 
+  const initialBlob = await canvasToPngBlob(targetCanvas);
+  const optimized = await maybeOptimizeBoardPng(targetCanvas, initialBlob, {
+    sourceWidth: srcW,
+    sourceHeight: srcH,
+    downscaleRatio,
+    mode
+  });
+  const hasTransparency = canvasHasTransparency(targetCanvas);
+
   return {
-    blob: await canvasToPngBlob(targetCanvas),
+    blob: optimized.blob,
     meta: {
       sourceWidth: srcW,
       sourceHeight: srcH,
@@ -162,9 +159,143 @@ async function preparePngBlobFromFile(file, targetW, targetH){
       outputHeight: targetH,
       mode,
       downscaleRatio,
-      sharpenApplied
+      sharpenApplied,
+      sourceHasTransparency,
+      hasTransparency,
+      initialBytes: initialBlob.size || 0,
+      outputBytes: optimized.blob.size || initialBlob.size || 0,
+      optimizedForSave: !!optimized.optimized,
+      optimizationRgbLevels: optimized.rgbLevels || 0,
+      optimizationAlphaLevels: optimized.alphaLevels || 0
     }
   };
+}
+
+async function maybeOptimizeBoardPng(canvas, initialBlob, options = {}) {
+  if (!canvas || !initialBlob) {
+    return { blob: initialBlob, optimized: false, rgbLevels: 0, alphaLevels: 0 };
+  }
+
+  const sourceWidth = Number(options.sourceWidth) || canvas.width;
+  const sourceHeight = Number(options.sourceHeight) || canvas.height;
+  const downscaleRatio = Number(options.downscaleRatio) || 1;
+  const mode = String(options.mode || '');
+  const resizedFromLargerSource = sourceWidth > canvas.width || sourceHeight > canvas.height || downscaleRatio > 1;
+  const shouldAttempt =
+    initialBlob.size > HOME_SAVE_SAFE_TARGET_BYTES ||
+    ((mode === 'exact-original' || mode === 'exact') && initialBlob.size > Math.round(HOME_SAVE_SAFE_TARGET_BYTES * 0.8)) ||
+    (resizedFromLargerSource && downscaleRatio >= HOME_LARGE_SOURCE_RATIO_WARN) ||
+    (mode === 'downscaled' && initialBlob.size > Math.round(HOME_SAVE_SAFE_TARGET_BYTES * 0.75));
+  if (!shouldAttempt) {
+    return { blob: initialBlob, optimized: false, rgbLevels: 0, alphaLevels: 0 };
+  }
+
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) {
+    return { blob: initialBlob, optimized: false, rgbLevels: 0, alphaLevels: 0 };
+  }
+
+  const width = canvas.width;
+  const height = canvas.height;
+  const base = ctx.getImageData(0, 0, width, height);
+
+  const attempts = [
+    { rgbLevels: 128, alphaLevels: 128 },
+    { rgbLevels: 96, alphaLevels: 96 },
+    { rgbLevels: 80, alphaLevels: 80 },
+    { rgbLevels: 64, alphaLevels: 64 },
+    { rgbLevels: 48, alphaLevels: 48 }
+  ];
+
+  let bestBlob = initialBlob;
+  let bestAttempt = null;
+  const isExactMode = mode === 'exact-original' || mode === 'exact';
+  const minSavingsBytes = isExactMode
+    ? Math.max(2 * 1024, Math.round(initialBlob.size * 0.015))
+    : Math.max(6 * 1024, Math.round(initialBlob.size * 0.05));
+
+  for (const attempt of attempts) {
+    ctx.putImageData(base, 0, 0);
+    quantizeCanvasChannels(ctx, width, height, attempt.rgbLevels, attempt.alphaLevels);
+    const candidate = await canvasToPngBlob(canvas);
+    if (candidate.size <= (bestBlob.size - minSavingsBytes)) {
+      bestBlob = candidate;
+      bestAttempt = attempt;
+    }
+    if (candidate.size <= HOME_SAVE_SAFE_TARGET_BYTES) {
+      break;
+    }
+  }
+
+  if (!bestAttempt) {
+    ctx.putImageData(base, 0, 0);
+    return { blob: initialBlob, optimized: false, rgbLevels: 0, alphaLevels: 0 };
+  }
+
+  const bestImage = await loadImageSource(bestBlob).catch(() => null);
+  if (bestImage) {
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(bestImage, 0, 0, width, height);
+  } else {
+    ctx.putImageData(base, 0, 0);
+  }
+
+  return {
+    blob: bestBlob,
+    optimized: true,
+    rgbLevels: bestAttempt.rgbLevels,
+    alphaLevels: bestAttempt.alphaLevels
+  };
+}
+
+function quantizeCanvasChannels(ctx, width, height, rgbLevels, alphaLevels) {
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  const rgbStep = 255 / Math.max(1, (Math.max(2, rgbLevels) - 1));
+  const alphaStep = 255 / Math.max(1, (Math.max(2, alphaLevels) - 1));
+
+  for (let i = 0; i < data.length; i += 4) {
+    const a = data[i + 3];
+    if (a === 0) continue;
+
+    data[i] = quantizeChannel(data[i], rgbStep);
+    data[i + 1] = quantizeChannel(data[i + 1], rgbStep);
+    data[i + 2] = quantizeChannel(data[i + 2], rgbStep);
+    data[i + 3] = a < 5 ? 0 : quantizeChannel(a, alphaStep);
+  }
+
+  imageData.data.set(data);
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function quantizeChannel(value, step) {
+  if (!Number.isFinite(step) || step <= 0) return clampByte(value);
+  return clampByte(Math.round(value / step) * step);
+}
+
+function canvasHasTransparency(canvas) {
+  if (!canvas || !canvas.width || !canvas.height) return false;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return false;
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < 255) return true;
+  }
+  return false;
+}
+
+function imageHasTransparency(img, width, height) {
+  const safeW = Math.max(1, Number(width) || 1);
+  const safeH = Math.max(1, Number(height) || 1);
+  const canvas = document.createElement('canvas');
+  canvas.width = safeW;
+  canvas.height = safeH;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return false;
+  ctx.clearRect(0, 0, safeW, safeH);
+  ctx.drawImage(img, 0, 0, safeW, safeH);
+  return canvasHasTransparency(canvas);
 }
 
 async function progressiveDownscaleToCanvas(img, targetW, targetH){
@@ -551,7 +682,10 @@ async function idbDelete(key) {
     }
     if (meta.mode === 'downscaled') {
       const sharpenedNote = meta.sharpenApplied ? ' Added readability sharpening for small text.' : '';
-      return `Resized to ${meta.outputWidth} x ${meta.outputHeight} PNG with high-quality downscaling.${sharpenedNote}`;
+      const optimizedNote = meta.optimizedForSave
+        ? ` Applied transparent-safe PNG optimization (${formatKilobytes(meta.outputBytes)}).`
+        : '';
+      return `Resized to ${meta.outputWidth} x ${meta.outputHeight} PNG with high-quality downscaling.${sharpenedNote}${optimizedNote}`;
     }
     if (meta.mode === 'exact' || meta.mode === 'exact-original') {
       return `Prepared at ${meta.outputWidth} x ${meta.outputHeight} PNG.`;
@@ -568,7 +702,7 @@ async function idbDelete(key) {
       const sourceW = meta.sourceWidth || HOME_BOARD_WIDTH;
       const sourceH = meta.sourceHeight || HOME_BOARD_HEIGHT;
       if (sourceW > HOME_BOARD_WIDTH || sourceH > HOME_BOARD_HEIGHT) {
-        return 'Original-size upload selected. Large images can blur or fail to save after Redirect is turned off. Turn on Prepare as 390×260 PNG for best reliability.';
+        return 'Original-size upload selected. Large images can blur or fail to save after Redirect is turned off. Turn on Resize to 390×260 for best reliability.';
       }
       return '';
     }
@@ -583,10 +717,21 @@ async function idbDelete(key) {
     const outputPixels = outputW * outputH;
     const isLargeForSingleBoard = ratio >= HOME_LARGE_SOURCE_RATIO_WARN || sourcePixels >= outputPixels * 5;
     if (!isLargeForSingleBoard) return '';
-    const forceProxyMsg = (meta.sourceWidth || 0) > HOME_BOARD_WIDTH || (meta.sourceHeight || 0) > HOME_BOARD_HEIGHT
-      ? ' Redirect will use compatibility mode for this upload.'
+    const sizeMsg = meta.optimizedForSave
+      ? ` PNG was optimized (${formatKilobytes(meta.outputBytes)}) to improve save reliability.`
       : '';
-    return `Large source detected. Text-heavy sales-board collages may still blur on one board. For sharper text, use Tools > Image Splitter.${forceProxyMsg}`;
+    const needsOpaqueFallback = ((meta.sourceWidth || 0) > HOME_BOARD_WIDTH || (meta.sourceHeight || 0) > HOME_BOARD_HEIGHT)
+      && meta.hasTransparency === false;
+    const reliabilityModeMsg = needsOpaqueFallback
+      ? ' Opaque large images use save-reliability routing to reduce disappearing after Redirect OFF.'
+      : '';
+    return `Large source detected. Text-heavy sales-board collages may still blur on one board. For sharper text, use Tools > Image Splitter.${sizeMsg}${reliabilityModeMsg}`;
+  }
+
+  function formatKilobytes(bytes) {
+    const value = Number(bytes);
+    if (!Number.isFinite(value) || value <= 0) return '0 KB';
+    return `${Math.max(1, Math.round(value / 1024))} KB`;
   }
 
   async function persistUploaderState(extra = {}) {
@@ -889,7 +1034,10 @@ function createRedirectMetaFromPrepared(preparedMeta) {
   const outputWidth = Number(preparedMeta.outputWidth) || 0;
   const outputHeight = Number(preparedMeta.outputHeight) || 0;
   const mode = String(preparedMeta.mode || '');
+  const sourceHasTransparency = !!preparedMeta.sourceHasTransparency;
+  const hasTransparency = !!preparedMeta.hasTransparency;
   if (!sourceWidth && !sourceHeight && !outputWidth && !outputHeight && !mode) return null;
+  const largeSource = sourceWidth > HOME_BOARD_WIDTH || sourceHeight > HOME_BOARD_HEIGHT;
   return {
     sourceWidth,
     sourceHeight,
@@ -897,7 +1045,9 @@ function createRedirectMetaFromPrepared(preparedMeta) {
     outputHeight,
     mode,
     downscaleRatio: Number(preparedMeta.downscaleRatio) || 0,
-    forceProxy: sourceWidth > HOME_BOARD_WIDTH || sourceHeight > HOME_BOARD_HEIGHT
+    sourceHasTransparency,
+    hasTransparency,
+    forceProxy: largeSource && !sourceHasTransparency
   };
 }
 

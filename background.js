@@ -68,16 +68,35 @@ function updateRedirectRules(imgUrl, enableRedirect, imgMeta) {
 function buildRedirectTarget(imgUrl, imgMeta) {
     const safeImgUrl = (imgUrl || "").trim();
     const safeMeta = normalizeImgMeta(imgMeta);
+    if (safeMeta.forceProxy) {
+        if (isYoworldProxyUrl(safeImgUrl)) {
+            return safeImgUrl;
+        }
+        return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+    }
+    const unwrappedDirect = getDirectUrlFromYoworldProxy(safeImgUrl);
+    if (isDirectTransparentPngUrl(unwrappedDirect)) {
+        return unwrappedDirect;
+    }
     if (isYoworldProxyUrl(safeImgUrl)) {
         return safeImgUrl;
-    }
-    if (safeMeta.forceProxy) {
-        return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
     }
     if (isDirectTransparentPngUrl(safeImgUrl)) {
         return safeImgUrl;
     }
     return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+}
+
+function getDirectUrlFromYoworldProxy(urlString) {
+    if (!isYoworldProxyUrl(urlString)) return "";
+    try {
+        const url = new URL(urlString);
+        const nested = (url.searchParams.get("x") || "").trim();
+        if (!/^https?:\/\//i.test(nested)) return "";
+        return nested;
+    } catch (_) {
+        return "";
+    }
 }
 
 function isYoworldProxyUrl(urlString) {
@@ -93,14 +112,18 @@ function isYoworldProxyUrl(urlString) {
 
 function normalizeImgMeta(rawMeta) {
     if (!rawMeta || typeof rawMeta !== "object") {
-        return { forceProxy: false, sourceWidth: 0, sourceHeight: 0, mode: "" };
+        return { forceProxy: false, sourceHasTransparency: false, hasTransparency: false, sourceWidth: 0, sourceHeight: 0, mode: "" };
     }
     const sourceWidth = Number(rawMeta.sourceWidth) || 0;
     const sourceHeight = Number(rawMeta.sourceHeight) || 0;
     const mode = typeof rawMeta.mode === "string" ? rawMeta.mode : "";
-    const forceProxy = !!rawMeta.forceProxy || sourceWidth > 390 || sourceHeight > 260;
+    const sourceHasTransparency = !!rawMeta.sourceHasTransparency;
+    const hasTransparency = !!rawMeta.hasTransparency;
+    const forceProxy = !!rawMeta.forceProxy && !sourceHasTransparency;
     return {
         forceProxy,
+        sourceHasTransparency,
+        hasTransparency,
         sourceWidth,
         sourceHeight,
         mode
