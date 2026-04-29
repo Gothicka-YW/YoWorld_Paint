@@ -141,6 +141,7 @@
     });
 
     window.addEventListener('paste', (e) => {
+      if (!panel.classList.contains('is-active')) return;
       const file = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/'));
       if (file) handleFiles([file]);
     });

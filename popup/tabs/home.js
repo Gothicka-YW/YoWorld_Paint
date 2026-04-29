@@ -558,6 +558,9 @@ async function idbDelete(key) {
   const resultEl = document.getElementById('qu-result');
   const warnEl = document.getElementById('qu-warning');
   const clarityWarnEl = document.getElementById('qu-clarity-warning');
+  const splitSuggestEl = document.getElementById('qu-split-suggest');
+  const splitNoteEl = document.getElementById('qu-split-note');
+  const splitBtn = document.getElementById('qu-split-large');
   const autoChk = document.getElementById('qu-autoset');
   const resizeChk = document.getElementById('qu-autoresize');
   const clearBtn = document.getElementById('qu-clear');
@@ -567,6 +570,7 @@ async function idbDelete(key) {
   let lastUrl = '';
   let clipboardBlob = null;
   let pickedFile = null; // single source for chosen/dropped file
+  let pickedDims = null;
   let uploadStateLoaded = false;
   let tempPreviewUrl = '';
 
@@ -640,6 +644,49 @@ async function idbDelete(key) {
     return { cols, rows };
   }
 
+  function hideSplitSuggestion() {
+    if (splitSuggestEl) splitSuggestEl.style.display = 'none';
+  }
+
+  function showSplitSuggestion(dims) {
+    if (!splitSuggestEl) return;
+    const width = dims && dims.width ? dims.width : HOME_BOARD_WIDTH;
+    const height = dims && dims.height ? dims.height : HOME_BOARD_HEIGHT;
+    const cols = Math.max(1, Math.ceil(width / HOME_BOARD_WIDTH));
+    const rows = Math.max(1, Math.ceil(height / HOME_BOARD_HEIGHT));
+    if (splitNoteEl) {
+      splitNoteEl.textContent = `Large image detected (${width} x ${height}). Split into ${cols} x ${rows} boards for full detail.`;
+    }
+    splitSuggestEl.style.display = 'flex';
+  }
+
+  function getCurrentSourceFile() {
+    return pickedFile || clipboardBlob || (fileEl.files && fileEl.files[0]) || null;
+  }
+
+  async function updateSplitSuggestion(preferredFile, preferredDims) {
+    const doResize = !resizeChk || !!resizeChk.checked;
+    if (doResize) {
+      hideSplitSuggestion();
+      return;
+    }
+
+    const sourceFile = preferredFile || getCurrentSourceFile();
+    if (!sourceFile) {
+      hideSplitSuggestion();
+      return;
+    }
+
+    const dims = preferredDims || pickedDims || await getBlobImageDimensions(sourceFile).catch(() => null);
+    if (!dims || !(dims.width > HOME_BOARD_WIDTH || dims.height > HOME_BOARD_HEIGHT)) {
+      hideSplitSuggestion();
+      return;
+    }
+
+    pickedDims = dims;
+    showSplitSuggestion(dims);
+  }
+
   function showInstantPreviewFromBlob(blobLike) {
     if (!blobLike || typeof window.ywpSetHomePreview !== 'function') return;
     clearTempPreview(0);
@@ -695,6 +742,7 @@ async function idbDelete(key) {
 
   function getClarityWarning(meta) {
     if (!meta) return '';
+    const largeOneBoardWarning = 'Large source detected. Text-heavy or large images may still blur on one board. For sharper image, use Tools > Image Splitter.';
     if (meta.mode === 'routed-to-splitter') {
       return 'Image is larger than one board. Use Tools > Image Splitter to keep the full image and readable details.';
     }
@@ -702,7 +750,7 @@ async function idbDelete(key) {
       const sourceW = meta.sourceWidth || HOME_BOARD_WIDTH;
       const sourceH = meta.sourceHeight || HOME_BOARD_HEIGHT;
       if (sourceW > HOME_BOARD_WIDTH || sourceH > HOME_BOARD_HEIGHT) {
-        return 'Original-size upload selected. Large images can blur or fail to save after Redirect is turned off. Turn on Resize to 390×260 for best reliability.';
+        return largeOneBoardWarning;
       }
       return '';
     }
@@ -717,15 +765,7 @@ async function idbDelete(key) {
     const outputPixels = outputW * outputH;
     const isLargeForSingleBoard = ratio >= HOME_LARGE_SOURCE_RATIO_WARN || sourcePixels >= outputPixels * 5;
     if (!isLargeForSingleBoard) return '';
-    const sizeMsg = meta.optimizedForSave
-      ? ` PNG was optimized (${formatKilobytes(meta.outputBytes)}) to improve save reliability.`
-      : '';
-    const needsOpaqueFallback = ((meta.sourceWidth || 0) > HOME_BOARD_WIDTH || (meta.sourceHeight || 0) > HOME_BOARD_HEIGHT)
-      && meta.hasTransparency === false;
-    const reliabilityModeMsg = needsOpaqueFallback
-      ? ' Opaque large images use save-reliability routing to reduce disappearing after Redirect OFF.'
-      : '';
-    return `Large source detected. Text-heavy sales-board collages may still blur on one board. For sharper text, use Tools > Image Splitter.${sizeMsg}${reliabilityModeMsg}`;
+    return largeOneBoardWarning;
   }
 
   function formatKilobytes(bytes) {
@@ -736,7 +776,7 @@ async function idbDelete(key) {
 
   async function persistUploaderState(extra = {}) {
     try {
-      const sourceBlob = (fileEl.files && fileEl.files[0]) || pickedFile || clipboardBlob || null;
+      const sourceBlob = pickedFile || clipboardBlob || (fileEl.files && fileEl.files[0]) || null;
       if (sourceBlob) {
         await idbSet(HOME_UPLOAD_SOURCE_KEY, sourceBlob);
       } else {
@@ -784,14 +824,18 @@ async function idbDelete(key) {
       const sourceBlob = await idbGet(HOME_UPLOAD_SOURCE_KEY);
       if (sourceBlob) {
         pickedFile = sourceBlob;
+        clipboardBlob = null;
         const dims = await getBlobImageDimensions(sourceBlob).catch(() => null);
+        pickedDims = dims;
         const meta = state && state.sourceMeta ? state.sourceMeta : getSourceMeta(sourceBlob);
         const dimensionText = dims && dims.width && dims.height ? ` (${dims.width} x ${dims.height})` : '';
         setStatus(`Restored ${meta?.name || 'image'}${dimensionText}. Ready to upload.`, false);
       } else if (state && state.status) {
+        pickedDims = null;
         setStatus(state.status, !!state.statusErr);
       }
       setClarityWarning(getClarityWarning(state && state.preparedMeta ? state.preparedMeta : null));
+      await updateSplitSuggestion(sourceBlob || null, pickedDims);
     } catch (err) {
       console.warn('Failed to restore Home upload state', err);
     } finally {
@@ -817,6 +861,7 @@ async function idbDelete(key) {
     resizeChk.addEventListener('change', () => {
       chrome.storage.sync.set({ quickUploadAutoResize: !!resizeChk.checked });
       void persistUploaderState();
+      void updateSplitSuggestion();
     });
   }
 
@@ -827,11 +872,16 @@ async function idbDelete(key) {
   }
 
   document.addEventListener('paste', e => {
+    const homePanel = document.getElementById('panel-home');
+    if (!homePanel || !homePanel.classList.contains('is-active')) return;
     const item = [...(e.clipboardData?.items||[])].find(i => i.type && i.type.startsWith('image/'));
     if (item){
       clipboardBlob = item.getAsFile();
+      pickedFile = null;
+      pickedDims = null;
       setStatus('Image pasted. Ready to upload.');
       void persistUploaderState();
+      void updateSplitSuggestion(clipboardBlob);
       showToast('Pasted image captured');
     }
   });
@@ -854,8 +904,11 @@ async function idbDelete(key) {
       const f = e.dataTransfer?.files?.[0];
       if (f){
         pickedFile = f; // cannot assign to fileEl.files (read-only)
+        clipboardBlob = null;
+        pickedDims = null;
         setStatus('File ready.');
         void persistUploaderState();
+        void updateSplitSuggestion(pickedFile);
         showToast('Image added');
       }
     });
@@ -864,15 +917,20 @@ async function idbDelete(key) {
   // Reflect file selection changes (first click reliability)
   fileEl.addEventListener('change', () => {
     pickedFile = (fileEl.files && fileEl.files[0]) || null;
-    if (pickedFile){ setStatus('File selected.'); void persistUploaderState(); showToast('Image selected'); }
+    clipboardBlob = null;
+    pickedDims = null;
+    if (pickedFile){ setStatus('File selected.'); void persistUploaderState(); void updateSplitSuggestion(pickedFile); showToast('Image selected'); }
+    else { hideSplitSuggestion(); }
   });
 
   if (clearBtn){
     clearBtn.addEventListener('click', async () => {
       pickedFile = null; clipboardBlob = null; lastUrl='';
+      pickedDims = null;
       if (fileEl) fileEl.value='';
       setStatus(''); setResult('');
       setClarityWarning('');
+      hideSplitSuggestion();
       clearTempPreview(0);
       btnCopy.disabled = true;
       await clearUploaderState();
@@ -880,10 +938,50 @@ async function idbDelete(key) {
     });
   }
 
+  if (splitBtn) {
+    splitBtn.addEventListener('click', async () => {
+      const file = getCurrentSourceFile();
+      if (!file) {
+        setStatus('Select or paste an image first.', true);
+        return;
+      }
+      try {
+        const dims = pickedDims || await getBlobImageDimensions(file);
+        pickedDims = dims;
+        if (!(dims.width > HOME_BOARD_WIDTH || dims.height > HOME_BOARD_HEIGHT)) {
+          hideSplitSuggestion();
+          setStatus('Image already fits one board.', false);
+          return;
+        }
+
+        setStatus('Opening Image Splitter…');
+        const routed = await routeImageToToolsSplitter(file, dims);
+        clearPendingRedirectMeta();
+        const preparedMeta = {
+          sourceWidth: dims.width,
+          sourceHeight: dims.height,
+          outputWidth: dims.width,
+          outputHeight: dims.height,
+          mode: 'routed-to-splitter',
+          downscaleRatio: 1,
+          sharpenApplied: false,
+          suggestedCols: routed.cols,
+          suggestedRows: routed.rows
+        };
+        setClarityWarning(getClarityWarning(preparedMeta));
+        setStatus(`Sent to Image Splitter (${routed.cols} x ${routed.rows}).`);
+        await persistUploaderState({ preparedMeta });
+        showToast('Sent to Image Splitter');
+      } catch (err) {
+        setStatus('Could not open Image Splitter.', true);
+      }
+    });
+  }
+
   btnUpload.addEventListener('click', async () => {
   const host = hostSel.value;
   // Prefer fresh file input; fall back to dropped/pasted
-  const file = (fileEl.files && fileEl.files[0]) || pickedFile || clipboardBlob;
+  const file = pickedFile || clipboardBlob || (fileEl.files && fileEl.files[0]);
     if (!file){ setStatus('Select or paste an image.', true); return; }
     setClarityWarning('');
     if (host === 'imgbb'){
@@ -899,35 +997,6 @@ async function idbDelete(key) {
     try {
       let uploadFile = file;
       let preparedMeta = null;
-
-      if (!doResize) {
-        const sourceDims = await getBlobImageDimensions(file);
-        const sourceWidth = sourceDims && sourceDims.width ? sourceDims.width : 0;
-        const sourceHeight = sourceDims && sourceDims.height ? sourceDims.height : 0;
-        const isLargerThanBoard = sourceWidth > HOME_BOARD_WIDTH || sourceHeight > HOME_BOARD_HEIGHT;
-
-        if (isLargerThanBoard) {
-          setStatus('Opening Image Splitter…');
-          const routed = await routeImageToToolsSplitter(file, sourceDims);
-          clearPendingRedirectMeta();
-          preparedMeta = {
-            sourceWidth,
-            sourceHeight,
-            outputWidth: sourceWidth,
-            outputHeight: sourceHeight,
-            mode: 'routed-to-splitter',
-            downscaleRatio: 1,
-            sharpenApplied: false,
-            suggestedCols: routed.cols,
-            suggestedRows: routed.rows
-          };
-          setClarityWarning(getClarityWarning(preparedMeta));
-          setStatus(`Image is ${sourceWidth} x ${sourceHeight}. ${describePreparedUpload(preparedMeta)}`);
-          await persistUploaderState({ preparedMeta });
-          showToast('Sent to Image Splitter');
-          return;
-        }
-      }
 
       if (doResize) {
         const prepared = await preparePngBlobFromFile(file, HOME_BOARD_WIDTH, HOME_BOARD_HEIGHT);
@@ -951,9 +1020,8 @@ async function idbDelete(key) {
       const url = await uploadImage(uploadFile, { host });
       queuePendingRedirectMeta(url, preparedMeta);
       lastUrl = url; setResult(url);
-      const preparedMsg = describePreparedUpload(preparedMeta);
-      try { await navigator.clipboard.writeText(url); setStatus(`Uploaded & copied. ${preparedMsg}`); btnCopy.disabled=false; }
-      catch { setStatus(`Uploaded. Use Copy button. ${preparedMsg}`, true); btnCopy.disabled=false; }
+      try { await navigator.clipboard.writeText(url); setStatus('Uploaded & copied.'); btnCopy.disabled=false; }
+      catch { setStatus('Uploaded. Use Copy button.'); btnCopy.disabled=false; }
       // Auto-set as current image
       if (autoChk && autoChk.checked){
         const mainInput = document.getElementById('img-url');
@@ -966,7 +1034,8 @@ async function idbDelete(key) {
       await persistUploaderState({ preparedMeta });
       showToast('Upload complete');
       // reset transient sources after success
-      pickedFile = null; clipboardBlob = null; if (fileEl) fileEl.value = '';
+      pickedFile = null; clipboardBlob = null; pickedDims = null; if (fileEl) fileEl.value = '';
+      hideSplitSuggestion();
     } catch(e){
       const msg = (e && e.message) ? e.message : String(e);
       setStatus('Upload failed: ' + msg, true);
@@ -1037,7 +1106,7 @@ function createRedirectMetaFromPrepared(preparedMeta) {
   const sourceHasTransparency = !!preparedMeta.sourceHasTransparency;
   const hasTransparency = !!preparedMeta.hasTransparency;
   if (!sourceWidth && !sourceHeight && !outputWidth && !outputHeight && !mode) return null;
-  const largeSource = sourceWidth > HOME_BOARD_WIDTH || sourceHeight > HOME_BOARD_HEIGHT;
+  const shouldForceProxy = !hasTransparency && mode !== 'routed-to-splitter';
   return {
     sourceWidth,
     sourceHeight,
@@ -1047,7 +1116,7 @@ function createRedirectMetaFromPrepared(preparedMeta) {
     downscaleRatio: Number(preparedMeta.downscaleRatio) || 0,
     sourceHasTransparency,
     hasTransparency,
-    forceProxy: largeSource && !sourceHasTransparency
+    forceProxy: shouldForceProxy
   };
 }
 

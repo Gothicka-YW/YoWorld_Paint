@@ -119,7 +119,7 @@ function normalizeImgMeta(rawMeta) {
     const mode = typeof rawMeta.mode === "string" ? rawMeta.mode : "";
     const sourceHasTransparency = !!rawMeta.sourceHasTransparency;
     const hasTransparency = !!rawMeta.hasTransparency;
-    const forceProxy = !!rawMeta.forceProxy && !sourceHasTransparency;
+    const forceProxy = !!rawMeta.forceProxy && !hasTransparency;
     return {
         forceProxy,
         sourceHasTransparency,

@@ -79,7 +79,7 @@
 <div id="quick-upload" style="display:flex; flex-direction:column; gap:10px;">
   <div class="qu-head">
     <h3 class="qu-title">Quick Image Uploader</h3>
-  <div class="qu-sub">Paste, drag & drop, or click to select. Resize to 390×260 is recommended for reliable board saves. If turned off, images larger than one board are sent to Image Splitter.</div>
+  <div class="qu-sub">Paste, drag & drop, or click to select. Resize to 390×260 is recommended for reliable board saves. If turned off, larger images are fit to one board, and Split Image is available as a recommendation.</div>
   </div>
   <div style="display:flex; gap:8px; align-items:center;">
     <label style="font-size:12px; font-weight:600; display:flex; flex-direction:column; gap:4px; flex:1;">
@@ -109,10 +109,14 @@
       <input type="checkbox" id="qu-autoset" checked aria-label="Auto-set as current image after upload" aria-describedby="qu-status qu-warning qu-clarity-warning" /> Auto‑set as Current Image
     </label>
   </div>
+  <div id="qu-clarity-warning" style="display:none; font-size:11px; color:#8a4b00;"></div>
   <div id="qu-status" style="font-size:12px; min-height:16px; color:#6b7280;"></div>
   <div id="qu-result" style="display:none; font-size:12px; word-break:break-all; color:#000; background:#fafafa; border:1px solid #e5e7eb; padding:6px 8px; border-radius:8px;"></div>
   <div id="qu-warning" style="display:none; font-size:11px; color:#b00020;">ImgBB key missing. Set it in Resources tab.</div>
-  <div id="qu-clarity-warning" style="display:none; font-size:11px; color:#8a4b00;"></div>
+  <div id="qu-split-suggest" style="display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:11px; color:#5f3c00; background:#fff8e6; border:1px solid #f0d8a8; border-radius:8px; padding:8px;">
+    <span id="qu-split-note">Large image detected. For sharper text and full detail across boards, use Image Splitter.</span>
+    <button id="qu-split-large" class="btn" type="button" style="flex:0 0 auto;">Split Image</button>
+  </div>
 </div>
 </section>
 <section aria-label="Tools" class="panel" id="panel-tools" role="region">
