@@ -4,6 +4,10 @@
   const input   = document.getElementById('img-url');
   const btn     = document.getElementById('btn-set');
   const toggle  = document.getElementById('enable-redirect');
+  const modeToggle = document.getElementById('prefer-direct-transparent');
+  const traceCopyBtn = document.getElementById('btn-trace-copy');
+  const traceClearBtn = document.getElementById('btn-trace-clear');
+  const traceStatusEl = document.getElementById('trace-status');
   const preview = document.querySelector('.preview');
 
   function setPreview(url) {
@@ -22,35 +26,116 @@
     else { img.remove(); }
   }
 
+  function setTraceStatus(msg, isErr) {
+    if (!traceStatusEl) return;
+    traceStatusEl.textContent = msg || '';
+    traceStatusEl.style.color = isErr ? '#b00020' : '#6b7280';
+  }
+
+  function traceMark(label, payload) {
+    try {
+      chrome.runtime.sendMessage({ type: 'ywp_trace_mark', payload: { label, ...(payload || {}) } }, () => {
+        if (chrome.runtime.lastError) {
+          // Ignore fire-and-forget message errors.
+        }
+      });
+    } catch (_) {
+      // Ignore trace failures; this should never block normal behavior.
+    }
+  }
+
+  function traceRequest(type, payload) {
+    return new Promise((resolve) => {
+      try {
+        chrome.runtime.sendMessage({ type, payload: payload || {} }, (res) => {
+          const err = chrome.runtime.lastError;
+          if (err) {
+            resolve({ ok: false, error: err.message });
+            return;
+          }
+          resolve(res || { ok: false, error: 'No response from background.' });
+        });
+      } catch (e) {
+        resolve({ ok: false, error: String(e) });
+      }
+    });
+  }
+
   function load() {
-    chrome.storage.local.get({ img: ["", false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, false] }, (o)=>{
       let url = Array.isArray(o.img) ? (o.img[0] || "") : "";
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
+      const preferDirect = Array.isArray(o.img) ? !!o.img[2] : false;
       // If no image is set, use the sticky default
       // Default fallback image
       if (!url) url = "https://i.postimg.cc/VLh6mKGY/20250924-1934-Celestial-Cartoon-Background-remix-01k5z13k9cf4jrwgtmak9dqwjr.png";
       if (input)  input.value = url;
       if (toggle) toggle.checked = enabled;
+      if (modeToggle) modeToggle.checked = preferDirect;
       setPreview(url);
+      traceMark('home-load', { enabled, preferDirect, hasUrl: !!url });
     });
   }
 
   function saveUrl() {
     const url = (input && input.value || "").trim();
-    chrome.storage.local.get({ img: ["", false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, false] }, (o)=>{
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
+      const preferDirect = Array.isArray(o.img) ? !!o.img[2] : false;
       // immediate preview
       setPreview(url);
-      chrome.storage.local.set({ img: [url, enabled] });
+      traceMark('save-url', { enabled, preferDirect, url });
+      chrome.storage.local.set({ img: [url, enabled, preferDirect] });
     });
   }
 
   function saveToggle() {
     const enabled = !!(toggle && toggle.checked);
-    chrome.storage.local.get({ img: ["", false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, false] }, (o)=>{
       const url = Array.isArray(o.img) ? (o.img[0] || "") : "";
-      chrome.storage.local.set({ img: [url, enabled] });
+      const preferDirect = Array.isArray(o.img) ? !!o.img[2] : false;
+
+      traceMark('save-toggle', { enabled, preferDirect });
+      chrome.storage.local.set({ img: [url, enabled, preferDirect] });
     });
+  }
+
+  function saveTransparencyMode() {
+    const preferDirect = !!(modeToggle && modeToggle.checked);
+    chrome.storage.local.get({ img: ["", false, false] }, (o)=>{
+      const url = Array.isArray(o.img) ? (o.img[0] || "") : "";
+      const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
+      traceMark('save-transparency-mode', { enabled, preferDirect });
+      chrome.storage.local.set({ img: [url, enabled, preferDirect] });
+    });
+  }
+
+  async function copyTrace() {
+    setTraceStatus('Collecting trace...');
+    const res = await traceRequest('ywp_trace_get');
+    if (!res || !res.ok) {
+      setTraceStatus('Trace failed: ' + ((res && res.error) || 'unknown error'), true);
+      return;
+    }
+
+    const text = JSON.stringify(res, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      setTraceStatus('Redirect trace copied. Paste it here.');
+      traceMark('trace-copied', { length: text.length });
+    } catch (e) {
+      setTraceStatus('Copy failed. Trace written to console.', true);
+      console.log('YoWorld Paint trace payload:', res);
+    }
+  }
+
+  async function clearTrace() {
+    const res = await traceRequest('ywp_trace_clear');
+    if (!res || !res.ok) {
+      setTraceStatus('Clear failed: ' + ((res && res.error) || 'unknown error'), true);
+      return;
+    }
+    setTraceStatus('Redirect trace cleared.');
   }
 
 
@@ -58,6 +143,11 @@
   if (btn)   btn.addEventListener('click', saveUrl);
   if (input) input.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); saveUrl(); }});
   if (toggle) toggle.addEventListener('change', saveToggle);
+  if (modeToggle) modeToggle.addEventListener('change', saveTransparencyMode);
+  if (traceCopyBtn) traceCopyBtn.addEventListener('click', copyTrace);
+  if (traceClearBtn) traceClearBtn.addEventListener('click', clearTrace);
+
+  window.__ywpTraceMark = traceMark;
 
   load();
 })();
@@ -132,6 +222,170 @@ async function toPngBlobFromFile(file){
   });
 }
 
+function fillTransparentRgbNearest(data, w, h, opts = {}){
+  const matteDistance = Number.isFinite(opts.matteDistance) ? opts.matteDistance : 6;
+  const matteR = Number.isFinite(opts.matteR) ? opts.matteR : 245;
+  const matteG = Number.isFinite(opts.matteG) ? opts.matteG : 245;
+  const matteB = Number.isFinite(opts.matteB) ? opts.matteB : 245;
+  const alphaFloor = Number.isFinite(opts.alphaFloor) ? opts.alphaFloor : 12;
+  const edgeAlphaMin = Number.isFinite(opts.edgeAlphaMin) ? opts.edgeAlphaMin : 12;
+
+  const n = w * h;
+  const seen = new Uint8Array(n);
+  const wasTransparent = new Uint8Array(n);
+  const dist = new Int16Array(n);
+  dist.fill(-1);
+  const queue = new Int32Array(n);
+  let head = 0;
+  let tail = 0;
+  let changed = false;
+
+  // Multi-source flood from every non-transparent pixel.
+  for (let p = 0; p < n; p++){
+    const o = p * 4;
+    const a = data[o + 3];
+    if (a === 0) {
+      wasTransparent[p] = 1;
+    } else {
+      seen[p] = 1;
+      dist[p] = 0;
+      queue[tail++] = p;
+    }
+  }
+
+  if (tail === 0) return false;
+
+  const dirs = [
+    -1,  0,
+     1,  0,
+     0, -1,
+     0,  1,
+    -1, -1,
+     1, -1,
+    -1,  1,
+     1,  1
+  ];
+
+  while (head < tail){
+    const p = queue[head++];
+    const px = p % w;
+    const py = (p / w) | 0;
+    const po = p * 4;
+
+    for (let k = 0; k < dirs.length; k += 2){
+      const nx = px + dirs[k];
+      const ny = py + dirs[k + 1];
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      const np = ny * w + nx;
+      if (seen[np]) continue;
+      seen[np] = 1;
+      dist[np] = dist[p] + 1;
+
+      const no = np * 4;
+      if (wasTransparent[np]){
+        const r = data[po];
+        const g = data[po + 1];
+        const b = data[po + 2];
+        if (data[no] !== r || data[no + 1] !== g || data[no + 2] !== b){
+          data[no] = r;
+          data[no + 1] = g;
+          data[no + 2] = b;
+          changed = true;
+        }
+      }
+
+      queue[tail++] = np;
+    }
+  }
+
+  // Deep transparent interiors can still blob dark if alpha is dropped on save.
+  // Use a light matte only far from opaque edges to keep edge halos minimal.
+  for (let p = 0; p < n; p++){
+    if (!wasTransparent[p]) continue;
+    if (dist[p] < matteDistance) continue;
+    const o = p * 4;
+    if (data[o] !== matteR || data[o + 1] !== matteG || data[o + 2] !== matteB){
+      data[o] = matteR;
+      data[o + 1] = matteG;
+      data[o + 2] = matteB;
+      changed = true;
+    }
+  }
+
+  // Some save pipelines drop or reject very-low-alpha regions on specific tiles.
+  // Nudge originally fully transparent pixels to a small alpha floor to improve
+  // persistence while remaining visually transparent.
+  if (alphaFloor > 0){
+    const a = Math.max(1, Math.min(16, alphaFloor | 0));
+    for (let p = 0; p < n; p++){
+      if (!wasTransparent[p]) continue;
+      const o = p * 4;
+      if (data[o + 3] === 0){
+        data[o + 3] = a;
+        changed = true;
+      }
+    }
+  }
+
+  // Preserve anti-aliased transparent edges through save by lifting tiny alpha values.
+  // This avoids 1..N alpha values being rounded to 0 in downstream encoders.
+  if (edgeAlphaMin > 1){
+    const minA = Math.max(2, Math.min(24, edgeAlphaMin | 0));
+    for (let p = 0; p < n; p++){
+      const o = p * 4;
+      const a = data[o + 3];
+      if (a > 0 && a < minA){
+        data[o + 3] = minA;
+        changed = true;
+      }
+    }
+  }
+
+  return changed;
+}
+
+async function stabilizeTransparentPngBlob(fileOrBlob){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const fr = new FileReader();
+    fr.onload = e => { img.src = e.target.result; };
+    fr.onerror = reject;
+    img.onload = () => {
+      const cv = document.createElement('canvas');
+      cv.width = img.width;
+      cv.height = img.height;
+      const ctx = cv.getContext('2d', { willReadFrequently: true });
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(img, 0, 0);
+
+      const id = ctx.getImageData(0, 0, cv.width, cv.height);
+      const d = id.data;
+      let hasAnyAlpha = false;
+      for (let i = 3; i < d.length; i += 4){
+        if (d[i] < 255){ hasAnyAlpha = true; break; }
+      }
+
+      if (hasAnyAlpha){
+        fillTransparentRgbNearest(d, cv.width, cv.height, {
+          matteDistance: 6,
+          matteR: 245,
+          matteG: 245,
+          matteB: 245,
+          alphaFloor: 12,
+          edgeAlphaMin: 12
+        });
+        ctx.putImageData(id, 0, 0);
+      }
+
+      cv.toBlob(b => {
+        if (!b) return reject(new Error('Canvas toBlob failed'));
+        resolve(b);
+      }, 'image/png');
+    };
+    fr.readAsDataURL(fileOrBlob);
+  });
+}
+
 
 
 // --- Quick Upload Integration ---
@@ -146,8 +400,10 @@ async function toPngBlobFromFile(file){
   const warnEl = document.getElementById('qu-warning');
   const autoChk = document.getElementById('qu-autoset');
   const resizeChk = document.getElementById('qu-autoresize');
+  const transparencyModeChk = document.getElementById('prefer-direct-transparent');
   const clearBtn = document.getElementById('qu-clear');
   const bridgeBtn = document.getElementById('btn-upload-last');
+  const traceMark = window.__ywpTraceMark || function(){ };
   if (!hostSel || !fileEl || !btnUpload) return;
 
   let lastUrl = '';
@@ -246,8 +502,29 @@ async function toPngBlobFromFile(file){
         setStatus('Uploading…');
         uploadFile = new File([resized], file.name || 'image.png', { type:'image/png' });
       }
+
+      const transparencyModeOn = !!(transparencyModeChk && transparencyModeChk.checked);
+      traceMark('quick-upload-start', {
+        host,
+        doResize,
+        transparencyModeOn,
+        sourceKind: (fileEl.files && fileEl.files[0]) ? 'file-input' : (pickedFile ? 'picked-or-drop' : (clipboardBlob ? 'clipboard' : 'unknown'))
+      });
+      if (transparencyModeOn){
+        setStatus('Stabilizing transparency…');
+        const stabilized = await stabilizeTransparentPngBlob(uploadFile);
+        uploadFile = new File([stabilized], uploadFile.name || 'image.png', { type:'image/png' });
+        setStatus('Uploading…');
+      }
+
       const { uploadImage } = await import('../../src/lib/uploader.js');
       const url = await uploadImage(uploadFile, { host });
+      traceMark('quick-upload-success', {
+        host,
+        doResize,
+        transparencyModeOn,
+        url
+      });
       lastUrl = url; setResult(url);
       try { await navigator.clipboard.writeText(url); setStatus('Uploaded & copied.'); btnCopy.disabled=false; }
       catch { setStatus('Uploaded. Use Copy button.', true); btnCopy.disabled=false; }
@@ -263,6 +540,10 @@ async function toPngBlobFromFile(file){
       pickedFile = null; clipboardBlob = null; if (fileEl) fileEl.value = '';
     } catch(e){
       const msg = (e && e.message) ? e.message : String(e);
+      traceMark('quick-upload-fail', {
+        host,
+        message: msg
+      });
       setStatus('Upload failed: ' + msg, true);
       if (/imgbb/i.test(msg)) toggleKeyWarning(true);
     }

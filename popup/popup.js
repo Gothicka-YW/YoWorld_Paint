@@ -1,5 +1,9 @@
 
 (function(){
+  const isSidePanelView = /sidepanel\.html$/i.test((window.location && window.location.pathname) || '');
+  const currentViewMode = isSidePanelView ? 'sidepanel' : 'popup';
+  try { chrome.storage.sync.set({ viewMode: currentViewMode }); } catch(_) {}
+
   const tabs = document.querySelectorAll('nav.tabs .tab');
   const panels = {
     home: document.getElementById('panel-home'),
@@ -83,14 +87,7 @@
   // View mode wiring (Popup / Side Panel)
   const viewModeSel = document.getElementById('res-view-mode');
   if (viewModeSel){
-    try {
-      chrome.storage.sync.get(['viewMode'], st => {
-        const saved = (st && (st.viewMode === 'popup' || st.viewMode === 'sidepanel')) ? st.viewMode : 'popup';
-        viewModeSel.value = saved;
-      });
-    } catch(_) {
-      viewModeSel.value = 'popup';
-    }
+    viewModeSel.value = currentViewMode;
 
     viewModeSel.addEventListener('change', async () => {
       const mode = (viewModeSel.value === 'sidepanel') ? 'sidepanel' : 'popup';
