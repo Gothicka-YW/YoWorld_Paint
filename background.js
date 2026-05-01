@@ -23,8 +23,11 @@ function logChromeLastError(context) {
 
 const TRACE_LIMIT = 500;
 const traceEvents = [];
+const DIRECT_DISABLE_GRACE_MS = 7000;
+let disableGraceTimer = null;
 let currentRoutingState = {
     enabled: false,
+    requestedEnabled: false,
     directMode: false,
     safeImgUrl: "",
     imageTargetUrl: "",
@@ -42,6 +45,13 @@ function pushTrace(event, details) {
     if (traceEvents.length > TRACE_LIMIT) {
         traceEvents.splice(0, traceEvents.length - TRACE_LIMIT);
     }
+}
+
+function cancelPendingGrace(reason) {
+    if (!disableGraceTimer) return;
+    clearTimeout(disableGraceTimer);
+    disableGraceTimer = null;
+    pushTrace("grace-disable-cancelled", { reason: reason || "state-change" });
 }
 
 if (chrome.declarativeNetRequest && chrome.declarativeNetRequest.onRuleMatchedDebug) {
@@ -75,14 +85,33 @@ if (chrome.declarativeNetRequest && chrome.declarativeNetRequest.onRuleMatchedDe
 }
 
 function updateRedirectRules(imgUrl, enableRedirect, preferDirectTransparent) {
-    const enabled = !!enableRedirect;
+    updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTransparent, { skipGrace: false });
+}
+
+function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTransparent, options = {}) {
+    const skipGrace = !!options.skipGrace;
+    const requestedEnabled = !!enableRedirect;
     const directMode = !!preferDirectTransparent;
     const safeImgUrl = (imgUrl || "").trim();
+    const hasValidUrl = !!(safeImgUrl && /^https?:\/\//i.test(safeImgUrl));
+
+    const shouldGraceDisable = !skipGrace
+        && !requestedEnabled
+        && directMode
+        && hasValidUrl
+        && currentRoutingState.enabled === true;
+
+    if (!shouldGraceDisable) {
+        cancelPendingGrace("state-change");
+    }
+
+    const enabled = shouldGraceDisable ? true : requestedEnabled;
     const legacyEndpoint = "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
     const imageTargetUrl = directMode ? safeImgUrl : legacyEndpoint;
     const compatTargetUrl = legacyEndpoint;
     currentRoutingState = {
         enabled,
+        requestedEnabled,
         directMode,
         safeImgUrl,
         imageTargetUrl,
@@ -92,12 +121,19 @@ function updateRedirectRules(imgUrl, enableRedirect, preferDirectTransparent) {
     pushTrace("rules-update-requested", {
         routing: currentRoutingState
     });
-    console.log("Updating rules. enableRedirect =", enabled, "directMode =", directMode, "imgUrl =", safeImgUrl);
+    console.log("Updating rules. requestedEnable =", requestedEnabled, "activeEnable =", enabled, "directMode =", directMode, "imgUrl =", safeImgUrl);
+
+    if (shouldGraceDisable) {
+        pushTrace("grace-disable-start", {
+            delayMs: DIRECT_DISABLE_GRACE_MS,
+            routing: currentRoutingState
+        });
+    }
 
     chrome.declarativeNetRequest.updateDynamicRules(
         {
             removeRuleIds: [1, 2, 3, 4, 5],
-            addRules: (enabled && safeImgUrl && /^https?:\/\//i.test(safeImgUrl))
+            addRules: (enabled && hasValidUrl)
                 ? [
                     {
                         id: 1,
@@ -128,7 +164,7 @@ function updateRedirectRules(imgUrl, enableRedirect, preferDirectTransparent) {
                         }
                     }
                 ]
-                : (safeImgUrl && /^https?:\/\//i.test(safeImgUrl))
+                : (hasValidUrl)
                     ? [
                         {
                             id: 3,
@@ -148,7 +184,7 @@ function updateRedirectRules(imgUrl, enableRedirect, preferDirectTransparent) {
                                 type: "allow"
                             },
                             condition: {
-                                urlFilter: "i.ibb.co/",
+                                regexFilter: "^https:\\/\\/i\\.ibb\\.co\\/",
                                 resourceTypes: ["image", "xmlhttprequest", "sub_frame", "main_frame"]
                             }
                         },
@@ -159,7 +195,7 @@ function updateRedirectRules(imgUrl, enableRedirect, preferDirectTransparent) {
                                 type: "allow"
                             },
                             condition: {
-                                urlFilter: "i.imgbb.com/",
+                                regexFilter: "^https:\\/\\/i\\.imgbb\\.com\\/",
                                 resourceTypes: ["image", "xmlhttprequest", "sub_frame", "main_frame"]
                             }
                         }
@@ -185,6 +221,34 @@ function updateRedirectRules(imgUrl, enableRedirect, preferDirectTransparent) {
                             redirectUrl: (r.action && r.action.redirect) ? (r.action.redirect.url || "") : ""
                         }))
                     });
+
+                    if (shouldGraceDisable && !disableGraceTimer) {
+                        disableGraceTimer = setTimeout(() => {
+                            disableGraceTimer = null;
+                            chrome.storage.local.get({ img: ["", false, false] }, (st) => {
+                                if (logChromeLastError("Error loading storage during grace disable")) {
+                                    return;
+                                }
+                                const arr = Array.isArray(st.img) ? st.img : ["", false, false];
+                                const latestUrl = arr[0] || safeImgUrl;
+                                const latestEnabled = !!arr[1];
+                                const latestDirect = !!arr[2];
+
+                                if (latestEnabled) {
+                                    pushTrace("grace-disable-aborted", {
+                                        reason: "reenabled",
+                                        img: [latestUrl, latestEnabled, latestDirect]
+                                    });
+                                    return;
+                                }
+
+                                pushTrace("grace-disable-commit", {
+                                    img: [latestUrl, latestEnabled, latestDirect]
+                                });
+                                updateRedirectRulesInternal(latestUrl, false, latestDirect, { skipGrace: true });
+                            });
+                        }, DIRECT_DISABLE_GRACE_MS);
+                    }
                 });
             }
         }
