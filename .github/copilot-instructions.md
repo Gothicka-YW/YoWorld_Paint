@@ -1,18 +1,16 @@
 # Copilot Instructions for YoWorld Paint
 
 ## Project Overview
-- **YoWorld Paint** is a Chrome Extension (Manifest V3) for YoWorld players to create, preview, and share custom Paint Boards and Sales Boards.
+- **YoWorld Paint** is a Chrome Extension (Manifest V3) for YoWorld players to create, preview, and share custom Paint Boards.
 - The extension is written in vanilla JS/HTML/CSS for compatibility and simplicity. No frameworks are used.
-- The UI is organized into four main tabs: Home, Sales Boards, FAQ, and Resources (see `popup/popup.html`).
+- The UI is organized into tabs including Home, Transform, Tools, FAQ, and Resources (see `popup/popup.html`).
 - The extension uses local and sync Chrome storage for state and settings, and declarativeNetRequest for redirect rules.
 
 ## Key Components & Data Flow
 - **Popup UI** (`popup/`): Main user interface, with tabbed navigation and live preview. Each tab has its own JS file under `popup/tabs/`.
-- **Sales Boards**: Users can compose a 3x2 grid of images/captions, preview, and export as PNG. See `popup/tabs/sales.js`.
 - **Uploader Logic** (`src/lib/uploader.js`): Handles image uploads to providers (Uploadcare, Catbox). Provider logic in `src/providers/`.
 - **Settings** (`src/lib/settings.js`): Reads/writes user settings (e.g., preferred upload provider, API keys) via `chrome.storage.sync`.
 - **Background Worker** (`background.js`): Listens for storage changes and updates redirect rules using `chrome.declarativeNetRequest`.
-- **Content Script** (`content/sb_capture.js`): Captures Sales Board images from YoWorld Info.
 
 ## Developer Workflows
 - **Install/Load**: See `HOW_TO_INSTALL.txt` for step-by-step Chrome extension loading.
@@ -26,7 +24,7 @@
 - **Uploader**: Always use `uploadImage` from `src/lib/uploader.js` for uploads. It handles provider fallback and timeouts.
 - **UI Updates**: Use DOM APIs directly. No frameworks or virtual DOM.
 - **Tab State**: Last opened tab is remembered via `localStorage` (`popup/popup.js`).
-- **Image Size**: Sales Boards and Home preview expect images sized 390x260 px.
+- **Image Size**: Home preview expects images sized 390x260 px.
 
 ## Integration Points
 - **External APIs**: Uploadcare and Catbox for image hosting. See `src/providers/` for API details.

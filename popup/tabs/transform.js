@@ -1,6 +1,7 @@
 (() => {
   const panel = document.getElementById('panel-transform');
   if (!panel) return;
+  const STORAGE_KEY = 'ywp-transform-state';
 
   const els = {
     presetRight: panel.querySelector('#tx-preset-right'),
@@ -27,6 +28,7 @@
   };
 
   let sourceImage = null;
+  let sourceImageDataUrl = '';
   let lastCanvas = null;
   let lastTiles = [];
 
@@ -37,7 +39,13 @@
     wireMatrixInputs();
     wireFileInputs();
     wireActions();
-    loadPreset('right');
+    if (els.autoresize) {
+      els.autoresize.addEventListener('change', () => persistState());
+    }
+    if (els.multitile) {
+      els.multitile.addEventListener('change', () => persistState());
+    }
+    restoreState();
   }
 
   function wirePresets() {
@@ -53,6 +61,7 @@
     els.matrixInputs.forEach((inp) => {
       inp.addEventListener('change', () => {
         setWarn('');
+        persistState();
       });
     });
   }
@@ -116,6 +125,7 @@
         els.presetRight.classList.remove('btn-primary');
       }
     }
+    persistState();
   }
 
   function setMatrix(vals) {
@@ -145,10 +155,12 @@
     try {
       const img = await blobToImage(file);
       sourceImage = img;
+      sourceImageDataUrl = await fileToDataUrl(file);
       const w = img.width || img.naturalWidth || 0;
       const h = img.height || img.naturalHeight || 0;
       setStatus(`Loaded ${file.name || 'image'} (${w} × ${h})`);
       clearPreview();
+      persistState();
     } catch (err) {
       console.error(err);
       setWarn('Failed to load image.');
@@ -218,6 +230,7 @@
       setStatus('Applied transform.');
       if (els.exportAllBtn) els.exportAllBtn.style.display = 'none';
     }
+    persistState();
   }
 
   function renderPreview(imageData) {
@@ -267,6 +280,7 @@
 
   function clearAll() {
     sourceImage = null;
+    sourceImageDataUrl = '';
     lastCanvas = null;
     lastTiles = [];
     if (els.fileInput) els.fileInput.value = '';
@@ -282,6 +296,7 @@
     if (els.copyBtn) els.copyBtn.disabled = true;
     setStatus('Cleared.');
     setWarn('');
+    persistState();
   }
 
   function clearPreview() {
@@ -559,5 +574,180 @@
       console.error(err);
       setWarn('Export failed.');
     }
+  }
+
+  function persistState() {
+    const baseState = {
+      matrix: getMatrix(),
+      autoresize: !!(els.autoresize && els.autoresize.checked),
+      multitile: !!(els.multitile && els.multitile.checked)
+    };
+
+    const sourceData = sourceImageDataUrl || '';
+    const previewData = safeCanvasToDataUrl(lastCanvas);
+    const tileData = Array.isArray(lastTiles)
+      ? lastTiles.map((t) => {
+          const canvas = t && t.canvas ? t.canvas : t;
+          const dataUrl = safeCanvasToDataUrl(canvas);
+          if (!dataUrl) return null;
+          return {
+            row: t && typeof t.row === 'number' ? t.row : 0,
+            col: t && typeof t.col === 'number' ? t.col : 0,
+            dataUrl
+          };
+        }).filter(Boolean)
+      : [];
+
+    // Persist the richest payload possible, then degrade gracefully if storage is full.
+    const candidates = [
+      { ...baseState, sourceImage: sourceData, preview: previewData, tiles: tileData },
+      { ...baseState, sourceImage: sourceData, preview: previewData, tiles: [] },
+      { ...baseState, sourceImage: sourceData, preview: '', tiles: [] },
+      { ...baseState, sourceImage: '', preview: '', tiles: [] }
+    ];
+
+    for (const state of candidates) {
+      if (tryPersistState(state)) return;
+    }
+  }
+
+  function safeCanvasToDataUrl(canvas) {
+    if (!canvas || typeof canvas.toDataURL !== 'function') return '';
+    try {
+      return canvas.toDataURL('image/png');
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function tryPersistState(state) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async function restoreState() {
+    let state = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      state = raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      console.warn('Failed to read transform state', err);
+    }
+
+    if (!state) {
+      loadPreset('right');
+      return;
+    }
+
+    if (Array.isArray(state.matrix) && state.matrix.length === 9) {
+      setMatrix(state.matrix);
+    } else {
+      loadPreset('right');
+    }
+
+    if (els.autoresize) els.autoresize.checked = !!state.autoresize;
+    if (els.multitile) els.multitile.checked = !!state.multitile;
+
+    if (state.sourceImage) {
+      try {
+        sourceImageDataUrl = state.sourceImage;
+        sourceImage = await dataUrlToImageSource(sourceImageDataUrl);
+        const w = sourceImage.width || sourceImage.naturalWidth || 0;
+        const h = sourceImage.height || sourceImage.naturalHeight || 0;
+        setStatus(`Restored image (${w} × ${h}) from last session.`);
+      } catch (err) {
+        console.warn('Failed to restore source image', err);
+      }
+    }
+
+    if (state.preview) {
+      try {
+        const restoredPreview = await dataUrlToCanvas(state.preview);
+        if (els.preview) {
+          els.preview.width = restoredPreview.width;
+          els.preview.height = restoredPreview.height;
+          const pctx = els.preview.getContext('2d');
+          pctx.clearRect(0, 0, els.preview.width, els.preview.height);
+          pctx.drawImage(restoredPreview, 0, 0);
+        }
+        lastCanvas = restoredPreview;
+        if (els.exportBtn) els.exportBtn.disabled = false;
+        if (els.copyBtn) els.copyBtn.disabled = false;
+      } catch (err) {
+        console.warn('Failed to restore preview', err);
+      }
+    }
+
+    if (Array.isArray(state.tiles) && state.tiles.length) {
+      try {
+        const restoredTiles = [];
+        for (const t of state.tiles) {
+          if (!t || !t.dataUrl) continue;
+          const canvas = await dataUrlToCanvas(t.dataUrl);
+          restoredTiles.push({
+            canvas,
+            row: typeof t.row === 'number' ? t.row : 0,
+            col: typeof t.col === 'number' ? t.col : 0
+          });
+        }
+        if (restoredTiles.length) {
+          lastTiles = restoredTiles;
+          if (els.exportAllBtn) {
+            els.exportAllBtn.style.display = '';
+            els.exportAllBtn.disabled = false;
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to restore tile outputs', err);
+      }
+    }
+  }
+
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function dataUrlToImageSource(dataUrl) {
+    const img = await dataUrlToImage(dataUrl);
+    if (window.createImageBitmap) {
+      try {
+        return await createImageBitmap(img);
+      } catch (_) {}
+    }
+    return img;
+  }
+
+  function dataUrlToImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Failed to load image data'));
+      img.src = dataUrl;
+    });
+  }
+
+  function dataUrlToCanvas(dataUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas);
+      };
+      img.onerror = () => reject(new Error('Failed to restore canvas data'));
+      img.src = dataUrl;
+    });
   }
 })();

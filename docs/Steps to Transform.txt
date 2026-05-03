@@ -1,0 +1,19 @@
+Steps to Transform:
+
+1. Load the preset you want.
+2. Check "Resize to 390x260" if desired. If you're using multiple boards, do not check this.
+3. Check "multi-tile output" even if it's a singular board. Otherwise it may cut off the image. May change this to a default later - it's not needed if the image is small (i.e. small pixies to rotate that fit on a smaller portion of the board)
+4. Browse or Click the Dotted box to upload your image.
+5. Click "Apply"
+6. You should see a preview.
+7. Select "Export All Tiles"
+8. Save the files (.zip will be an option in the future).
+9. Use the Home tab to upload each image to a paint board.
+
+* Even if you resize your image to a specific size, you may end up with more boards because the transform will give you each piece to match the entire image. (Does that make sense?) 
+
+For example, if I upload a banner that is 1000x409, it will give me 12 images. Some may be blank because it retains the perspective of the entire image, so if you have transparency, you may see that as well.
+
+Don't forget to try out the side panel option in the Resource Settings! It's been amazing for me while testing. 
+
+The one thing I forgot was to ensure the new tabs remember what we were working on in cases of accidental closure. I'll add that in the next update as well.

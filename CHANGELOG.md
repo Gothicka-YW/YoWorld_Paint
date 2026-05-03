@@ -1,8 +1,16 @@
-# � YoWorld Paint – Changelog
-## v3.4 — Update
+# YoWorld Paint - Changelog
+## v3.5 — Update
 **Release Date:** 2026-02-10
 
 Changes
+- Sales Boards tab and YoWorld Info capture flow removed
+  - Recommended replacement is Windows crop/snipping plus Home Quick Upload
+- Home redirect now bypasses the YoWorld Info proxy for direct ImgBB PNG links
+  - Intended to better preserve transparency for PNG uploads
+  - Non-ImgBB links and non-PNG links still use the proxy path
+- Side Panel is now the default preferred view for new or unset installs
+  - Existing users who already saved Popup keep their preference
+  - Extension action click behavior now follows the saved view mode more consistently
 - Added Side Panel view support
   - Extension can now open as a traditional popup or as a browser side panel
   - Side panel provides a full-height, flexible-width view that stays open alongside browser tabs
@@ -13,12 +21,12 @@ Changes
   - Preference is saved and automatically applied when opening the extension
   - Switching to side panel mode automatically opens the side panel view
 - Theme system now works correctly in both popup and side panel modes
-- All features (Quick Upload, Sales Boards, Transform, Tools, FAQ) fully functional in both views
+- All remaining features (Quick Upload, Transform, Tools, FAQ, Resources) fully functional in both views
 - Side panel UI uses responsive sizing with scrollable content areas
 - Added `sidePanel` permission to manifest
 - Removed "Glow Fix" feature from Home tab
   - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
-  - Investigating better approaches for handling semi-transparent images (similar to Fiddler's method)
+  - Fiddler-style injection/interception approaches are non-viable for this MV3 extension architecture
 
 Files Added
 - `popup/sidepanel.html` - Dedicated side panel interface
@@ -28,17 +36,8 @@ Notes
 - Default view mode remains "Popup" for existing users
 - All functionality is identical between popup and side panel views
 - Side panel view is optimized for wider screens and extended use
-- Working on improved solution for dither/glow image handling
+- Dither/glow handling remains an open problem for future updates
 
-Changes
-- Removed "Glow Fix" feature from Home tab
-  - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
-  - Investigating better approaches for handling semi-transparent images (similar to Fiddler's method)
-- Version bump: manifest version/name and UI title updated to 3.4
-
-Notes
-- All other features remain unchanged from v3.3
-- Working on improved solution for dither/glow image handling
 ## v3.2.1 — Update
 **Release Date:** 2025-11-08
 

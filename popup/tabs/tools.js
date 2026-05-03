@@ -2,6 +2,7 @@
   const BOARD_W = 390;
   const BOARD_H = 260;
   const STORAGE_KEY = 'ywp-tools-state';
+  const STORAGE_KEY_CHROME = 'ywp-tools-state-v2';
 
   const panel = document.getElementById('panel-tools');
   if (!panel) return;
@@ -24,8 +25,10 @@
   };
 
   let sourceImage = null;
+  let sourceImageDataUrl = '';
   let tiles = [];
   let tileEntries = [];
+  let isHydrating = true;
 
   init();
 
@@ -35,24 +38,81 @@
     wireSplitter();
     wireClear();
     wireZip();
-    restoreState();
+    wireHomeImportBridge();
+    restoreState().finally(() => {
+      isHydrating = false;
+    });
+  }
+
+  function updateTargetSizeLabel(shouldPersist = false) {
+    if (!els.cols || !els.rows || !els.size) {
+      return { cols: 1, rows: 1, w: BOARD_W, h: BOARD_H };
+    }
+    const cols = clampInt(els.cols.value, 1, 20, 3);
+    const rows = clampInt(els.rows.value, 1, 20, 2);
+    els.cols.value = cols;
+    els.rows.value = rows;
+    const w = cols * BOARD_W;
+    const h = rows * BOARD_H;
+    els.size.textContent = `Target size: ${w} × ${h} px`;
+    if (shouldPersist) persistSettings();
+    return { cols, rows, w, h };
   }
 
   function wireCalculator() {
     if (!els.cols || !els.rows || !els.size) return;
-    const update = () => {
-      const cols = clampInt(els.cols.value, 1, 20, 3);
-      const rows = clampInt(els.rows.value, 1, 20, 2);
-      els.cols.value = cols;
-      els.rows.value = rows;
-      const w = cols * BOARD_W;
-      const h = rows * BOARD_H;
-      els.size.textContent = `Target size: ${w} × ${h} px`;
-      persistSettings();
+    const update = (shouldPersist = true) => {
+      updateTargetSizeLabel(shouldPersist);
     };
-    els.cols.addEventListener('input', update);
-    els.rows.addEventListener('input', update);
-    update();
+    els.cols.addEventListener('input', () => update(true));
+    els.rows.addEventListener('input', () => update(true));
+    update(false);
+  }
+
+  function wireHomeImportBridge() {
+    window.addEventListener('ywp-tools-import-source', (event) => {
+      void importFromHome(event && event.detail ? event.detail : null);
+    });
+  }
+
+  async function importFromHome(detail) {
+    if (!detail || !detail.sourceImage) return;
+
+    try {
+      resetTiles();
+      if (els.results) {
+        els.results.textContent = 'Ready to split.';
+      }
+
+      if (typeof detail.cols === 'number' && els.cols) {
+        els.cols.value = clampInt(detail.cols, 1, 20, 3);
+      }
+      if (typeof detail.rows === 'number' && els.rows) {
+        els.rows.value = clampInt(detail.rows, 1, 20, 2);
+      }
+      if (els.scale && typeof detail.scale === 'boolean') {
+        els.scale.checked = detail.scale;
+      }
+
+      updateTargetSizeLabel(false);
+
+      sourceImageDataUrl = String(detail.sourceImage || '');
+      sourceImage = await dataUrlToImageSource(sourceImageDataUrl);
+
+      const w = sourceImage.width || sourceImage.naturalWidth || 0;
+      const h = sourceImage.height || sourceImage.naturalHeight || 0;
+      const sourceName = detail.sourceName ? String(detail.sourceName) : 'image';
+      setMeta(`Loaded ${sourceName} (${w} × ${h}) from Home.`);
+      setWarning('Image is larger than one board. Click "Split into tiles" to preserve the full image.', '#8a4b00');
+
+      if (els.split) els.split.disabled = false;
+      if (els.zip) els.zip.disabled = true;
+
+      persistSettings();
+    } catch (err) {
+      console.warn('Failed to import image from Home tab', err);
+      setWarning('Could not load image in Tools. Try selecting it directly in Image Splitter.', '#b00020');
+    }
   }
 
   function wireFileInputs() {
@@ -89,6 +149,9 @@
   function wireSplitter() {
     if (!els.split) return;
     els.split.addEventListener('click', () => splitImage());
+    if (els.scale) {
+      els.scale.addEventListener('change', () => persistSettings());
+    }
   }
 
   function wireClear() {
@@ -109,11 +172,13 @@
     setMeta('Loading image...');
     try {
       sourceImage = await blobToImage(file);
+      sourceImageDataUrl = await fileToDataUrl(file);
       const w = sourceImage.width || sourceImage.naturalWidth;
       const h = sourceImage.height || sourceImage.naturalHeight;
       setMeta(`Loaded ${file.name} (${w} × ${h})`);
       els.split.disabled = false;
       els.zip.disabled = true;
+      persistSettings();
     } catch (err) {
       console.error(err);
       setMeta('Failed to load image.');
@@ -261,6 +326,7 @@
 
   function clearAll() {
     sourceImage = null;
+    sourceImageDataUrl = '';
     resetTiles();
     if (els.fileInput) els.fileInput.value = '';
     setMeta('No image loaded.');
@@ -416,20 +482,66 @@
   }
 
   function persistSettings() {
-    const state = readState();
-    state.cols = clampInt(els.cols.value, 1, 20, 3);
-    state.rows = clampInt(els.rows.value, 1, 20, 2);
-    state.scale = !!(els.scale && els.scale.checked);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (isHydrating) return;
+    const existing = readState();
+    const state = {
+      cols: clampInt(els.cols.value, 1, 20, 3),
+      rows: clampInt(els.rows.value, 1, 20, 2),
+      scale: !!(els.scale && els.scale.checked),
+      sourceImage: sourceImageDataUrl || '',
+      hadSplit: (typeof existing.hadSplit === 'boolean' ? existing.hadSplit : false) || !!(tileEntries && tileEntries.length)
+    };
+
+    // Best effort only: if quota is exceeded, keep at least core settings.
+    const ok = tryPersistState(state);
+    persistChromeState(state);
+    if (ok) return;
+    state.sourceImage = '';
+    tryPersistState(state);
+    persistChromeState(state);
   }
 
   function persistState(entries) {
-    const state = readState();
-    state.cols = clampInt(els.cols.value, 1, 20, 3);
-    state.rows = clampInt(els.rows.value, 1, 20, 2);
-    state.scale = !!(els.scale && els.scale.checked);
-    state.tiles = entries.map(e => ({ name: e.name, dataUrl: e.canvas.toDataURL('image/png') }));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (isHydrating) return;
+    const hadSplit = Array.isArray(entries) && entries.length > 0;
+    const base = {
+      cols: clampInt(els.cols.value, 1, 20, 3),
+      rows: clampInt(els.rows.value, 1, 20, 2),
+      scale: !!(els.scale && els.scale.checked),
+      sourceImage: sourceImageDataUrl || '',
+      hadSplit
+    };
+    const tiles = entries.map(e => ({ name: e.name, dataUrl: e.canvas.toDataURL('image/png') }));
+
+    // Persist richest possible state, then gracefully degrade.
+    const candidates = [
+      { ...base, tiles },
+      { ...base, tiles: [] },
+      { ...base, sourceImage: '', tiles: [] }
+    ];
+    for (const state of candidates) {
+      const ok = tryPersistState(state);
+      persistChromeState(state);
+      if (ok) return;
+    }
+  }
+
+  function tryPersistState(state) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function persistChromeState(state) {
+    try {
+      if (!chrome?.storage?.local) return;
+      chrome.storage.local.set({ [STORAGE_KEY_CHROME]: state }, () => {
+        void chrome.runtime?.lastError;
+      });
+    } catch (_) {}
   }
 
   function readState() {
@@ -443,16 +555,42 @@
     }
   }
 
+  async function readChromeState() {
+    try {
+      if (!chrome?.storage?.local) return null;
+      return await new Promise((resolve) => {
+        chrome.storage.local.get([STORAGE_KEY_CHROME], (res) => {
+          if (chrome.runtime?.lastError) {
+            resolve(null);
+            return;
+          }
+          const value = res ? res[STORAGE_KEY_CHROME] : null;
+          resolve(value || null);
+        });
+      });
+    } catch (_) {
+      return null;
+    }
+  }
+
   async function restoreState() {
-    const state = readState();
+    const chromeState = await readChromeState();
+    const localState = readState();
+    const state = chromeState || localState;
     if (state.cols && els.cols) els.cols.value = state.cols;
     if (state.rows && els.rows) els.rows.value = state.rows;
     if (els.scale && typeof state.scale === 'boolean') els.scale.checked = state.scale;
-    if (els.cols && els.rows && els.size) {
-      const w = clampInt(els.cols.value, 1, 20, 3) * BOARD_W;
-      const h = clampInt(els.rows.value, 1, 20, 2) * BOARD_H;
-      els.size.textContent = `Target size: ${w} × ${h} px`;
+    if (state.sourceImage) {
+      try {
+        sourceImageDataUrl = state.sourceImage;
+        sourceImage = await dataUrlToImageSource(sourceImageDataUrl);
+      } catch (err) {
+        console.warn('Failed to restore source image', err);
+        sourceImage = null;
+        sourceImageDataUrl = '';
+      }
     }
+    updateTargetSizeLabel(false);
     if (Array.isArray(state.tiles) && state.tiles.length) {
       const restored = await Promise.all(state.tiles.map(async (t, idx) => {
         const canvas = await dataUrlToCanvas(t.dataUrl);
@@ -467,10 +605,52 @@
       els.zip.disabled = restored.length === 0;
       setMeta(`Restored ${restored.length} tile${restored.length === 1 ? '' : 's'} from last session.`);
     } else {
-      setMeta('No image loaded.');
-      els.split.disabled = true;
+      // If tiles were trimmed due storage limits but we still have the source image,
+      // regenerate the previous split so accidental popup close does not lose work.
+      if (sourceImage && state.hadSplit) {
+        setMeta('Rebuilding tiles from saved image...');
+        await splitImage();
+        return;
+      }
+      if (sourceImage) {
+        const w = sourceImage.width || sourceImage.naturalWidth || 0;
+        const h = sourceImage.height || sourceImage.naturalHeight || 0;
+        setMeta(`Restored image (${w} × ${h}) from last session.`);
+        els.split.disabled = false;
+      } else {
+        setMeta('No image loaded.');
+        els.split.disabled = true;
+      }
       els.zip.disabled = true;
     }
+  }
+
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function dataUrlToImageSource(dataUrl) {
+    const img = await dataUrlToImage(dataUrl);
+    if (window.createImageBitmap) {
+      try {
+        return await createImageBitmap(img);
+      } catch (_) {}
+    }
+    return img;
+  }
+
+  function dataUrlToImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Failed to load image data'));
+      img.src = dataUrl;
+    });
   }
 
   function dataUrlToCanvas(dataUrl) {

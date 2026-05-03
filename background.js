@@ -1,5 +1,7 @@
 console.log("YoWorld Art MV3 worker running (storage-connected).");
 
+const DEFAULT_VIEW_MODE = "sidepanel";
+
 function getChromeLastErrorMessage() {
     const err = chrome.runtime.lastError;
     if (!err) return null;
@@ -70,15 +72,17 @@ let currentRoutingState = {
     safeImgUrl: "",
     imageTargetUrl: "",
     compatTargetUrl: "",
+    imgMeta: null,
     claimedBoardUrl: "",
     updatedAt: new Date().toISOString()
 };
 
-function buildRoutingTargets(safeImgUrl, directMode) {
+function buildRoutingTargets(safeImgUrl, directMode, imgMeta) {
     const normalizedSafeImgUrl = (safeImgUrl || "").trim();
+    const normalizedImgMeta = normalizeImgMeta(imgMeta);
     const legacyEndpoint = "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(normalizedSafeImgUrl);
     return {
-        imageTargetUrl: directMode ? normalizedSafeImgUrl : legacyEndpoint,
+        imageTargetUrl: directMode ? buildRedirectTarget(normalizedSafeImgUrl, normalizedImgMeta) : legacyEndpoint,
         compatTargetUrl: legacyEndpoint
     };
 }
@@ -986,6 +990,10 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
     const requestedEnabled = !!enableRedirect;
     const directMode = !!preferDirectTransparent;
     const safeImgUrl = (imgUrl || "").trim();
+    const rawImgMeta = Object.prototype.hasOwnProperty.call(options, "imgMeta")
+        ? options.imgMeta
+        : currentRoutingState.imgMeta;
+    const normalizedImgMeta = normalizeImgMeta(rawImgMeta);
     const hasValidUrl = !!(safeImgUrl && /^https?:\/\//i.test(safeImgUrl));
     const imageChanged = safeImgUrl !== currentRoutingState.safeImgUrl;
 
@@ -1056,7 +1064,7 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
     }
 
     const enabled = (shouldGraceDisable || shouldPinEnabled || requestedEnabled || pinnedProtectionRules.length > 0);
-    const currentTargets = buildRoutingTargets(safeImgUrl, directMode);
+    const currentTargets = buildRoutingTargets(safeImgUrl, directMode, normalizedImgMeta);
     const imageTargetUrl = currentTargets.imageTargetUrl;
     const compatTargetUrl = currentTargets.compatTargetUrl;
     currentRoutingState = {
@@ -1070,6 +1078,7 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
         safeImgUrl,
         imageTargetUrl,
         compatTargetUrl,
+        imgMeta: normalizedImgMeta,
         claimedBoardUrl,
         updatedAt: new Date().toISOString()
     };
@@ -1238,8 +1247,124 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
     );
 }
 
+function buildRedirectTarget(imgUrl, imgMeta) {
+    const safeImgUrl = (imgUrl || "").trim();
+    const safeMeta = normalizeImgMeta(imgMeta);
+    if (safeMeta.forceProxy) {
+        if (isYoworldProxyUrl(safeImgUrl)) {
+            return safeImgUrl;
+        }
+        return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+    }
+    const unwrappedDirect = getDirectUrlFromYoworldProxy(safeImgUrl);
+    if (isDirectTransparentPngUrl(unwrappedDirect)) {
+        return unwrappedDirect;
+    }
+    if (isYoworldProxyUrl(safeImgUrl)) {
+        return safeImgUrl;
+    }
+    if (isDirectTransparentPngUrl(safeImgUrl)) {
+        return safeImgUrl;
+    }
+    return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+}
+
+function getDirectUrlFromYoworldProxy(urlString) {
+    if (!isYoworldProxyUrl(urlString)) return "";
+    try {
+        const url = new URL(urlString);
+        const nested = (url.searchParams.get("x") || "").trim();
+        if (!/^https?:\/\//i.test(nested)) return "";
+        return nested;
+    } catch (_) {
+        return "";
+    }
+}
+
+function isYoworldProxyUrl(urlString) {
+    if (!/^https?:\/\//i.test(urlString || "")) return false;
+    try {
+        const url = new URL(urlString);
+        const host = url.hostname.toLowerCase();
+        return host === "api.yoworld.info" && /\/extension\.php$/i.test(url.pathname || "");
+    } catch (_) {
+        return false;
+    }
+}
+
+function normalizeImgMeta(rawMeta) {
+    if (!rawMeta || typeof rawMeta !== "object") {
+        return { forceProxy: false, sourceHasTransparency: false, hasTransparency: false, sourceWidth: 0, sourceHeight: 0, mode: "" };
+    }
+    const sourceWidth = Number(rawMeta.sourceWidth) || 0;
+    const sourceHeight = Number(rawMeta.sourceHeight) || 0;
+    const mode = typeof rawMeta.mode === "string" ? rawMeta.mode : "";
+    const sourceHasTransparency = !!rawMeta.sourceHasTransparency;
+    const hasTransparency = !!rawMeta.hasTransparency;
+    const forceProxy = !!rawMeta.forceProxy && !sourceHasTransparency;
+    return {
+        forceProxy,
+        sourceHasTransparency,
+        hasTransparency,
+        sourceWidth,
+        sourceHeight,
+        mode
+    };
+}
+
+function isDirectTransparentPngUrl(urlString) {
+    if (!/^https?:\/\//i.test(urlString || "")) return false;
+    try {
+        const url = new URL(urlString);
+        const host = url.hostname.toLowerCase();
+        const path = url.pathname.toLowerCase();
+        const isImgBbDirectHost = host === "i.ibb.co" || host === "i.imgbb.com";
+        return isImgBbDirectHost && /\.png$/i.test(path);
+    } catch (_) {
+        return false;
+    }
+}
+
+function applyViewModeBehavior(mode) {
+    if (!chrome.sidePanel || typeof chrome.sidePanel.setPanelBehavior !== "function") {
+        return;
+    }
+
+    chrome.sidePanel.setPanelBehavior(
+        { openPanelOnActionClick: mode === "sidepanel" },
+        () => {
+            logChromeLastError("Error applying side panel behavior");
+        }
+    );
+}
+
+function loadViewMode() {
+    if (!chrome.storage?.sync) {
+        applyViewModeBehavior(DEFAULT_VIEW_MODE);
+        return;
+    }
+
+    chrome.storage.sync.get({ viewMode: DEFAULT_VIEW_MODE }, (result) => {
+        if (logChromeLastError("Error loading view mode")) {
+            applyViewModeBehavior(DEFAULT_VIEW_MODE);
+            return;
+        }
+
+        const mode = result && (result.viewMode === "popup" || result.viewMode === "sidepanel")
+            ? result.viewMode
+            : DEFAULT_VIEW_MODE;
+        applyViewModeBehavior(mode);
+
+        if (!result || (result.viewMode !== "popup" && result.viewMode !== "sidepanel")) {
+            chrome.storage.sync.set({ viewMode: DEFAULT_VIEW_MODE }, () => {
+                logChromeLastError("Error saving default view mode");
+            });
+        }
+    });
+}
+
 function loadSettings() {
-    chrome.storage.local.get({ img: ["", false, false], [PROTECTION_STATE_KEY]: null }, (e) => {
+    chrome.storage.local.get({ img: ["", false, false, null], [PROTECTION_STATE_KEY]: null }, (e) => {
         if (logChromeLastError("Error loading storage")) {
             return;
         }
@@ -1248,6 +1373,9 @@ function loadSettings() {
             const safeImgUrl = (e.img[0] || "").trim();
             const requestedEnabled = !!e.img[1];
             const directMode = !!e.img[2];
+            const imgMeta = (Array.isArray(e.img) && e.img.length > 3 && e.img[3] && typeof e.img[3] === "object")
+                ? e.img[3]
+                : null;
             const restoredProtection = getRestorableProtectionState(
                 e[PROTECTION_STATE_KEY],
                 safeImgUrl,
@@ -1279,35 +1407,26 @@ function loadSettings() {
                 ? {
                     skipGrace: true,
                     forcePinnedEnable: true,
-                    allowRestoredProtection: true
+                    allowRestoredProtection: true,
+                    imgMeta
                 }
-                : { skipGrace: false });
+                : { skipGrace: false, imgMeta });
         } else {
-            updateRedirectRules("https://i.imgur.com/j146uKh.png", false, false);
+            updateRedirectRulesInternal("https://i.imgur.com/j146uKh.png", false, false, {
+                skipGrace: true,
+                imgMeta: null
+            });
         }
-    });
-}
-
-function applyViewModeBehavior() {
-    if (!chrome.sidePanel || !chrome.sidePanel.setPanelBehavior) return;
-    chrome.storage.sync.get({ viewMode: "popup" }, (st) => {
-        if (logChromeLastError("Error loading view mode")) {
-            return;
-        }
-        const mode = (st && st.viewMode === "sidepanel") ? "sidepanel" : "popup";
-        const openOnAction = mode === "sidepanel";
-        chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: openOnAction }, () => {
-            if (logChromeLastError("Error applying view mode behavior")) {
-                return;
-            }
-            console.log("View mode behavior updated. openPanelOnActionClick =", openOnAction);
-        });
     });
 }
 
 // Run at startup
 loadSettings();
-applyViewModeBehavior();
+loadViewMode();
+
+chrome.runtime.onInstalled.addListener(() => {
+    loadViewMode();
+});
 
 // Watch for changes from popup
 chrome.storage.onChanged.addListener((changes, areaName) => {
@@ -1320,7 +1439,9 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         loadSettings();
     }
     if (areaName === "sync" && changes.viewMode) {
-        applyViewModeBehavior();
+        const next = changes.viewMode.newValue;
+        const mode = (next === "popup" || next === "sidepanel") ? next : DEFAULT_VIEW_MODE;
+        applyViewModeBehavior(mode);
     }
 });
 
