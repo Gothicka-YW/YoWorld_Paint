@@ -107,8 +107,6 @@
 
 .btn-sm{ padding:6px 10px; font-size:12px; border-radius:8px; }
 
-<<<<<<< HEAD
-=======
 /* Checkerboard background for transparency previews */
 .checker-bg{
   background-color: #ffffff;
@@ -120,8 +118,6 @@
   border-radius: 8px;
   box-shadow: inset 0 0 0 1px #ddd;
 }
-
->>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
 /* Red variant alignment */
 .btn-red{
   background: linear-gradient(#7f1212, #6e0d0d);
@@ -627,8 +623,6 @@ nav.tabs .tab.is-active{
 
 /* FAQ formatting */
 .faq h3{ font-family:"Spectral SC", serif; font-weight:600; margin:10px 0 6px; color: var(--accent); }
-<<<<<<< HEAD
-=======
 .qu-head .qu-title{
   color: var(--accent);
   font-family: 'Dancing Script', cursive !important;
@@ -652,7 +646,6 @@ nav.tabs .tab.is-active{
 .toast{ background:#111; color:#fff; font-size:12px; padding:6px 10px; border-radius:6px; box-shadow:0 4px 14px rgba(0,0,0,.3); opacity:0; animation:toast-in .25s ease forwards, toast-out .35s ease forwards 3.2s; letter-spacing:.25px; }
 @keyframes toast-in{ from{ transform:translate(-50%,6px); opacity:0;} to{ transform:translate(-50%,0); opacity:1;} }
 @keyframes toast-out{ to{ opacity:0; transform:translate(-50%,4px);} }
->>>>>>> 96b33af609ee747521d38d06199b9bf683a5ef1b
 .faq ol{ padding-left: 22px; margin: 6px 0 10px; }
 .faq ul{ padding-left: 20px; margin: 6px 0 10px; }
 .faq li{ margin: 6px 0; }
