@@ -26,7 +26,7 @@ function logChromeLastError(context) {
 const TRACE_LIMIT = 500;
 const PROTECTION_STATE_KEY = "ywpProtectionState";
 const traceEvents = [];
-const DIRECT_DISABLE_GRACE_MS = 15000;
+const DIRECT_DISABLE_GRACE_MS = 45000;
 const DIRECT_DISABLE_MAX_MS = 60000;
 const PERSISTENCE_PROBE_DELAY_MS = 1500;
 const PERSISTENCE_BLANK_MAX_BYTES = 1024;
@@ -41,6 +41,9 @@ const PINNED_RULE_START_ID = 100;
 const RESTORED_HOLD_FAST_STALE_MS = 1000;
 const RESTORED_HOLD_FAST_WINDOW_MS = 15000;
 const RESTORED_HOLD_FAST_MIN_AGE_MS = 30000;
+// Persistent board holds made erased boards reappear with the last direct image.
+// Direct mode now keeps only a short grace window after Redirect is turned off.
+const PERSISTENCE_HOLD_ENABLED = false;
 let disableGraceTimer = null;
 let graceDisablePending = false;
 let graceDisableStartedAt = 0;
@@ -110,6 +113,7 @@ function trimPinnedBoardProtections() {
 }
 
 function getPinnedProtectionSnapshots() {
+    if (!PERSISTENCE_HOLD_ENABLED) return [];
     return getPinnedProtectionEntries()
         .slice(0, PINNED_PROTECTION_LIMIT)
         .map((entry) => ({
@@ -122,6 +126,11 @@ function getPinnedProtectionSnapshots() {
 }
 
 function mergePinnedProtectionsFromSnapshot(rawState) {
+    if (!PERSISTENCE_HOLD_ENABLED) {
+        pinnedBoardProtections.clear();
+        return;
+    }
+
     const rawProtections = rawState && Array.isArray(rawState.pinnedProtections)
         ? rawState.pinnedProtections
         : [];
@@ -161,6 +170,8 @@ function removePinnedBoardProtection(boardUrl, reason) {
 }
 
 function upsertPinnedBoardProtection(boardUrl, safeImgUrl, directMode, options = {}) {
+    if (!PERSISTENCE_HOLD_ENABLED) return null;
+
     const normalizedBoardUrl = normalizePaintBoardUrl(boardUrl);
     const normalizedSafeImgUrl = String(safeImgUrl || "").trim();
     if (!normalizedBoardUrl || !normalizedSafeImgUrl || !directMode) return null;
@@ -199,6 +210,8 @@ function getPinnedProtectionRuleIds() {
 }
 
 function buildPinnedProtectionRules(excludedBoardUrls = []) {
+    if (!PERSISTENCE_HOLD_ENABLED) return [];
+
     const excludedBoardUrlSet = new Set(
         (excludedBoardUrls || [])
             .map((boardUrl) => normalizePaintBoardUrl(boardUrl))
@@ -253,8 +266,8 @@ function persistProtectionState() {
         directMode: !!currentRoutingState.directMode,
         enabled: !!currentRoutingState.enabled,
         scopedBoardUrl: normalizePaintBoardUrl(currentRoutingState.scopedBoardUrl || ""),
-        persistenceHoldActive: !!persistenceHoldActive,
-        persistenceHoldBoardUrl: normalizePaintBoardUrl(persistenceHoldBoardUrl || ""),
+        persistenceHoldActive: PERSISTENCE_HOLD_ENABLED && !!persistenceHoldActive,
+        persistenceHoldBoardUrl: PERSISTENCE_HOLD_ENABLED ? normalizePaintBoardUrl(persistenceHoldBoardUrl || "") : "",
         pinnedProtections: getPinnedProtectionSnapshots(),
         lastRedirectedPaintBoard: {
             url: normalizePaintBoardUrl(lastRedirectedPaintBoard.url || ""),
@@ -270,6 +283,7 @@ function persistProtectionState() {
 }
 
 function getRestorableProtectionState(rawState, safeImgUrl, requestedEnabled, directMode) {
+    if (!PERSISTENCE_HOLD_ENABLED) return null;
     if (!rawState || typeof rawState !== "object") return null;
     if (requestedEnabled || !directMode || !safeImgUrl) return null;
     if ((rawState.safeImgUrl || "") !== safeImgUrl) return null;
@@ -617,6 +631,8 @@ function scheduleHoldDiscoveryEvaluation(delayMs = HOLD_DISCOVERY_DEBOUNCE_MS) {
 }
 
 function trackHoldDiscoveryCandidate(req) {
+    if (!PERSISTENCE_HOLD_ENABLED) return;
+
     const protectedBoardUrl = getProtectedBoardUrl();
     if (!currentRoutingState.enabled || currentRoutingState.requestedEnabled || !protectedBoardUrl) return;
     const reqUrl = getRequestUrl((req && req.url) || "");
@@ -665,6 +681,13 @@ function trackRedirectedPaintBoard(ruleId, req) {
 }
 
 function schedulePersistenceProbe(applyUrl) {
+    if (!PERSISTENCE_HOLD_ENABLED) {
+        pushTrace("persistence-probe-skipped", {
+            reason: "persistence-hold-disabled"
+        });
+        return;
+    }
+
     if (persistenceProbeTimer) {
         clearTimeout(persistenceProbeTimer);
         persistenceProbeTimer = null;
@@ -997,6 +1020,18 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
     const hasValidUrl = !!(safeImgUrl && /^https?:\/\//i.test(safeImgUrl));
     const imageChanged = safeImgUrl !== currentRoutingState.safeImgUrl;
 
+    if (!PERSISTENCE_HOLD_ENABLED && (persistenceHoldActive || persistenceHoldBoardUrl || pinnedBoardProtections.size)) {
+        pinnedBoardProtections.clear();
+        persistenceHoldActive = false;
+        persistenceHoldBoardUrl = "";
+        persistenceHoldLastMatchedAt = 0;
+        restoredProtectionFastTrackUntil = 0;
+        restoredProtectionBoardUrl = "";
+        pushTrace("persistence-hold-cleared", {
+            reason: "disabled"
+        });
+    }
+
     if (!requestedEnabled && requestedPlacementBoardUrl) {
         requestedPlacementBoardUrl = "";
     }
@@ -1022,10 +1057,12 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
         && directMode
         && hasValidUrl
         && !imageChanged
+        && !!normalizePaintBoardUrl(lastRedirectedPaintBoard.url)
         && (currentRoutingState.enabled === true || forceGraceStart);
 
-    const shouldCarryPinnedHold = !imageChanged && persistenceHoldActive;
-    const shouldPinEnabled = !requestedEnabled
+    const shouldCarryPinnedHold = PERSISTENCE_HOLD_ENABLED && !imageChanged && persistenceHoldActive;
+    const shouldPinEnabled = PERSISTENCE_HOLD_ENABLED
+        && !requestedEnabled
         && directMode
         && hasValidUrl
         && (shouldCarryPinnedHold || forcePinnedEnable)

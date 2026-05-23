@@ -192,7 +192,7 @@ async function toPngBlobFromFile(file){
   return canvasToPngBlob(cv);
 }
 
-async function preparePngBlobFromFile(file, targetW, targetH){
+async function preparePngBlobFromFile(file, targetW, targetH, options = {}){
   const img = await loadImageSource(file);
   const srcW = img.width || img.naturalWidth || 0;
   const srcH = img.height || img.naturalHeight || 0;
@@ -232,14 +232,17 @@ async function preparePngBlobFromFile(file, targetW, targetH){
   const downscaleRatio = Math.max(srcW / targetW, srcH / targetH);
   const sharpenApplied = maybeApplyDownscaleSharpen(targetCanvas, mode, downscaleRatio);
 
-  const initialBlob = await canvasToPngBlob(targetCanvas);
-  const optimized = await maybeOptimizeBoardPng(targetCanvas, initialBlob, {
-    sourceWidth: srcW,
-    sourceHeight: srcH,
-    downscaleRatio,
-    mode
-  });
   const hasTransparency = canvasHasTransparency(targetCanvas);
+  const preserveAlphaDetail = !!options.preserveAlphaDetail;
+  const initialBlob = await canvasToPngBlob(targetCanvas);
+  const optimized = preserveAlphaDetail && (sourceHasTransparency || hasTransparency)
+    ? { blob: initialBlob, optimized: false, rgbLevels: 0, alphaLevels: 0, preservedAlphaDetail: true }
+    : await maybeOptimizeBoardPng(targetCanvas, initialBlob, {
+      sourceWidth: srcW,
+      sourceHeight: srcH,
+      downscaleRatio,
+      mode
+    });
 
   return {
     blob: optimized.blob,
@@ -257,7 +260,8 @@ async function preparePngBlobFromFile(file, targetW, targetH){
       outputBytes: optimized.blob.size || initialBlob.size || 0,
       optimizedForSave: !!optimized.optimized,
       optimizationRgbLevels: optimized.rgbLevels || 0,
-      optimizationAlphaLevels: optimized.alphaLevels || 0
+      optimizationAlphaLevels: optimized.alphaLevels || 0,
+      preservedAlphaDetail: !!optimized.preservedAlphaDetail
     }
   };
 }
@@ -641,8 +645,8 @@ function fillTransparentRgbNearest(data, w, h, opts = {}){
   const matteR = Number.isFinite(opts.matteR) ? opts.matteR : 245;
   const matteG = Number.isFinite(opts.matteG) ? opts.matteG : 245;
   const matteB = Number.isFinite(opts.matteB) ? opts.matteB : 245;
-  const alphaFloor = Number.isFinite(opts.alphaFloor) ? opts.alphaFloor : 12;
-  const edgeAlphaMin = Number.isFinite(opts.edgeAlphaMin) ? opts.edgeAlphaMin : 12;
+  const alphaFloor = Number.isFinite(opts.alphaFloor) ? opts.alphaFloor : 0;
+  const edgeAlphaMin = Number.isFinite(opts.edgeAlphaMin) ? opts.edgeAlphaMin : 0;
 
   const n = w * h;
   const seen = new Uint8Array(n);
@@ -726,9 +730,8 @@ function fillTransparentRgbNearest(data, w, h, opts = {}){
     }
   }
 
-  // Some save pipelines drop or reject very-low-alpha regions on specific tiles.
-  // Nudge originally fully transparent pixels to a small alpha floor to improve
-  // persistence while remaining visually transparent.
+  // Keep true transparency true. Raising alpha here creates a visible pale film
+  // around cutouts in Direct URL mode.
   if (alphaFloor > 0){
     const a = Math.max(1, Math.min(16, alphaFloor | 0));
     for (let p = 0; p < n; p++){
@@ -741,8 +744,8 @@ function fillTransparentRgbNearest(data, w, h, opts = {}){
     }
   }
 
-  // Preserve anti-aliased transparent edges through save by lifting tiny alpha values.
-  // This avoids 1..N alpha values being rounded to 0 in downstream encoders.
+  // Optional edge alpha lift for legacy experiments. Direct URL mode leaves glow
+  // and anti-aliased edge alpha untouched.
   if (edgeAlphaMin > 1){
     const minA = Math.max(2, Math.min(24, edgeAlphaMin | 0));
     for (let p = 0; p < n; p++){
@@ -785,8 +788,8 @@ async function stabilizeTransparentPngBlob(fileOrBlob){
           matteR: 245,
           matteG: 245,
           matteB: 245,
-          alphaFloor: 12,
-          edgeAlphaMin: 12
+          alphaFloor: 0,
+          edgeAlphaMin: 0
         });
         ctx.putImageData(id, 0, 0);
       }
@@ -1195,13 +1198,17 @@ async function stabilizeTransparentPngBlob(fileOrBlob){
       });
 
       if (doResize) {
-        const prepared = await preparePngBlobFromFile(file, HOME_BOARD_WIDTH, HOME_BOARD_HEIGHT);
+        const prepared = await preparePngBlobFromFile(file, HOME_BOARD_WIDTH, HOME_BOARD_HEIGHT, {
+          preserveAlphaDetail: transparencyModeOn
+        });
         preparedMeta = prepared.meta;
         uploadFile = new File([prepared.blob], toPngFilename(file.name), { type:'image/png' });
       } else {
         // Keep smaller images fully visible by placing them on a transparent board canvas.
         setStatus('Preparing transparent board…');
-        const prepared = await preparePngBlobFromFile(file, HOME_BOARD_WIDTH, HOME_BOARD_HEIGHT);
+        const prepared = await preparePngBlobFromFile(file, HOME_BOARD_WIDTH, HOME_BOARD_HEIGHT, {
+          preserveAlphaDetail: transparencyModeOn
+        });
         preparedMeta = prepared.meta;
         uploadFile = new File([prepared.blob], toPngFilename(file.name), { type:'image/png' });
       }
@@ -1365,6 +1372,6 @@ function takePendingRedirectMeta(nextUrl) {
 
 function extractExistingRedirectMeta(rawImgState) {
   if (!Array.isArray(rawImgState)) return null;
-  const candidate = rawImgState.length >= 3 ? rawImgState[2] : null;
+  const candidate = rawImgState.length >= 4 ? rawImgState[3] : null;
   return (candidate && typeof candidate === 'object') ? candidate : null;
 }
