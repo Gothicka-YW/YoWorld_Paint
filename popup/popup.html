@@ -76,6 +76,20 @@
 <div class="note" style="margin-top:-4px; margin-bottom:8px;">
 When enabled, image and board API requests use your direct URL to preserve alpha transparency while frame compatibility requests keep legacy endpoint routing. Keep Redirect ON until you press OK in YoWorld, then turn it OFF.
 </div>
+<div class="row switch">
+<label class="toggle">
+<input id="multi-board-mode" type="checkbox"/>
+<span aria-hidden="true" class="slider"></span>
+<span class="label">Apply to Multiple Boards</span>
+</label>
+</div>
+<div class="note" style="margin-top:-4px; margin-bottom:8px;">
+Use this when placing the same image on several boards in one session. While Redirect is ON, any board you open can receive the current image.
+</div>
+<div class="row" id="finish-applying-row" style="display:none; gap:8px; margin-top:-2px; margin-bottom:8px;">
+<button class="btn" id="btn-stop-save-assist" style="flex:1;">Finish Applying</button>
+</div>
+<div class="note" id="save-assist-status" style="min-height:14px; margin-top:-4px; margin-bottom:8px;"></div>
 <div class="row" style="display:flex; gap:8px; margin-top:-2px; margin-bottom:8px;">
 <button class="btn" id="btn-trace-copy" style="flex:1;">Copy Redirect Trace</button>
 <button class="btn" id="btn-trace-clear" style="flex:0 0 auto;">Clear Trace</button>
