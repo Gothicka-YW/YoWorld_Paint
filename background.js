@@ -272,7 +272,7 @@ function buildMultiBoardGraceRules(boardUrls, imageTargetUrl, compatTargetUrl) {
                 },
                 condition: {
                     regexFilter,
-                    resourceTypes: ["image", "xmlhttprequest"],
+                    resourceTypes: ["image"],
                     requestMethods: ["get"]
                 }
             },
@@ -287,7 +287,7 @@ function buildMultiBoardGraceRules(boardUrls, imageTargetUrl, compatTargetUrl) {
                 },
                 condition: {
                     regexFilter,
-                    resourceTypes: ["sub_frame", "main_frame"],
+                    resourceTypes: ["xmlhttprequest", "sub_frame", "main_frame"],
                     requestMethods: ["get"]
                 }
             }
@@ -321,7 +321,7 @@ function buildPinnedProtectionRules(excludedBoardUrls = []) {
                     },
                     condition: {
                         regexFilter: buildHoldRegexFilter(entry.boardUrl),
-                        resourceTypes: ["image", "xmlhttprequest"],
+                        resourceTypes: ["image"],
                         requestMethods: ["get"]
                     }
                 },
@@ -336,7 +336,7 @@ function buildPinnedProtectionRules(excludedBoardUrls = []) {
                     },
                     condition: {
                         regexFilter: buildHoldRegexFilter(entry.boardUrl),
-                        resourceTypes: ["sub_frame", "main_frame"],
+                        resourceTypes: ["xmlhttprequest", "sub_frame", "main_frame"],
                         requestMethods: ["get"]
                     }
                 }
@@ -1312,7 +1312,7 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
                     ...(shouldUseScopedCurrentRules
                         ? { regexFilter: scopedCurrentRegexFilter }
                         : { urlFilter: "paint_board" }),
-                    resourceTypes: directMode ? ["image", "xmlhttprequest"] : ["image"],
+                    resourceTypes: ["image"],
                     requestMethods: ["get"]
                 }
             },
@@ -1329,7 +1329,7 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
                     ...(shouldUseScopedCurrentRules
                         ? { regexFilter: scopedCurrentRegexFilter }
                         : { urlFilter: "paint_board" }),
-                    resourceTypes: directMode ? ["sub_frame", "main_frame"] : ["xmlhttprequest", "sub_frame", "main_frame"],
+                    resourceTypes: ["xmlhttprequest", "sub_frame", "main_frame"],
                     requestMethods: ["get"]
                 }
             },
