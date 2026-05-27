@@ -1,14 +1,11 @@
 
 // home.js — donor storage format, live preview
 (function(){
+  const AUTO_MULTI_BOARD_MODE = true;
   const input   = document.getElementById('img-url');
   const btn     = document.getElementById('btn-set');
   const toggle  = document.getElementById('enable-redirect');
   const modeToggle = document.getElementById('prefer-direct-transparent');
-  const multiBoardToggle = document.getElementById('multi-board-mode');
-  const stopSaveAssistBtn = document.getElementById('btn-stop-save-assist');
-  const finishApplyingRow = document.getElementById('finish-applying-row');
-  const saveAssistStatusEl = document.getElementById('save-assist-status');
   const traceCopyBtn = document.getElementById('btn-trace-copy');
   const traceClearBtn = document.getElementById('btn-trace-clear');
   const traceStatusEl = document.getElementById('trace-status');
@@ -71,43 +68,28 @@
   }
 
   function load() {
-    chrome.storage.local.get({ img: ["", false, false, null, false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, false, null, AUTO_MULTI_BOARD_MODE] }, (o)=>{
       let url = Array.isArray(o.img) ? (o.img[0] || "") : "";
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
       const preferDirect = Array.isArray(o.img) ? !!o.img[2] : false;
-      const multiBoardMode = Array.isArray(o.img) ? !!o.img[4] : false;
+      const multiBoardMode = AUTO_MULTI_BOARD_MODE;
       // If no image is set, use the sticky default
       // Default fallback image
       if (!url) url = "https://i.postimg.cc/VLh6mKGY/20250924-1934-Celestial-Cartoon-Background-remix-01k5z13k9cf4jrwgtmak9dqwjr.png";
       if (input)  input.value = url;
       if (toggle) toggle.checked = enabled;
       if (modeToggle) modeToggle.checked = preferDirect;
-      if (multiBoardToggle) multiBoardToggle.checked = multiBoardMode;
-      updateFinishApplyingVisibility();
       setPreview(url);
       traceMark('home-load', { enabled, preferDirect, multiBoardMode, hasUrl: !!url });
     });
   }
 
-  function setSaveAssistStatus(msg, isErr) {
-    if (!saveAssistStatusEl) return;
-    saveAssistStatusEl.textContent = msg || '';
-    saveAssistStatusEl.style.color = isErr ? '#b00020' : '#6b7280';
-  }
-
-  function updateFinishApplyingVisibility() {
-    if (!finishApplyingRow) return;
-    const show = !!(modeToggle && modeToggle.checked) && !(toggle && toggle.checked);
-    finishApplyingRow.style.display = show ? 'flex' : 'none';
-    if (!show) setSaveAssistStatus('');
-  }
-
   function saveUrl() {
     const url = (input && input.value || "").trim();
-    chrome.storage.local.get({ img: ["", false, false, null, false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, false, null, AUTO_MULTI_BOARD_MODE] }, (o)=>{
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
       const preferDirect = Array.isArray(o.img) ? !!o.img[2] : false;
-      const multiBoardMode = Array.isArray(o.img) ? !!o.img[4] : false;
+      const multiBoardMode = AUTO_MULTI_BOARD_MODE;
       const oldUrl = Array.isArray(o.img) ? (o.img[0] || '') : '';
       const pendingMeta = takePendingRedirectMeta(url);
       const existingMeta = extractExistingRedirectMeta(o.img);
@@ -115,44 +97,32 @@
       // immediate preview
       setPreview(url);
       traceMark('save-url', { enabled, preferDirect, multiBoardMode, url });
-      chrome.storage.local.set({ img: [url, enabled, preferDirect, nextMeta, multiBoardMode] });
+      chrome.storage.local.set({ img: [url, enabled, preferDirect, nextMeta, AUTO_MULTI_BOARD_MODE] });
     });
   }
 
   function saveToggle() {
     const enabled = !!(toggle && toggle.checked);
-    chrome.storage.local.get({ img: ["", false, false, null, false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, false, null, AUTO_MULTI_BOARD_MODE] }, (o)=>{
       const url = Array.isArray(o.img) ? (o.img[0] || "") : "";
       const preferDirect = Array.isArray(o.img) ? !!o.img[2] : false;
       const meta = extractExistingRedirectMeta(o.img);
-      const multiBoardMode = Array.isArray(o.img) ? !!o.img[4] : false;
+      const multiBoardMode = AUTO_MULTI_BOARD_MODE;
 
       traceMark('save-toggle', { enabled, preferDirect, multiBoardMode });
-      chrome.storage.local.set({ img: [url, enabled, preferDirect, meta, multiBoardMode] }, updateFinishApplyingVisibility);
+      chrome.storage.local.set({ img: [url, enabled, preferDirect, meta, AUTO_MULTI_BOARD_MODE] });
     });
   }
 
   function saveTransparencyMode() {
     const preferDirect = !!(modeToggle && modeToggle.checked);
-    chrome.storage.local.get({ img: ["", false, false, null, false] }, (o)=>{
+    chrome.storage.local.get({ img: ["", false, false, null, AUTO_MULTI_BOARD_MODE] }, (o)=>{
       const url = Array.isArray(o.img) ? (o.img[0] || "") : "";
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
       const meta = extractExistingRedirectMeta(o.img);
-      const multiBoardMode = Array.isArray(o.img) ? !!o.img[4] : false;
+      const multiBoardMode = AUTO_MULTI_BOARD_MODE;
       traceMark('save-transparency-mode', { enabled, preferDirect, multiBoardMode });
-      chrome.storage.local.set({ img: [url, enabled, preferDirect, meta, multiBoardMode] }, updateFinishApplyingVisibility);
-    });
-  }
-
-  function saveMultiBoardMode() {
-    const multiBoardMode = !!(multiBoardToggle && multiBoardToggle.checked);
-    chrome.storage.local.get({ img: ["", false, false, null, false] }, (o)=>{
-      const url = Array.isArray(o.img) ? (o.img[0] || "") : "";
-      const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
-      const preferDirect = Array.isArray(o.img) ? !!o.img[2] : false;
-      const meta = extractExistingRedirectMeta(o.img);
-      traceMark('save-multi-board-mode', { enabled, preferDirect, multiBoardMode });
-      chrome.storage.local.set({ img: [url, enabled, preferDirect, meta, multiBoardMode] });
+      chrome.storage.local.set({ img: [url, enabled, preferDirect, meta, AUTO_MULTI_BOARD_MODE] });
     });
   }
 
@@ -184,25 +154,10 @@
     setTraceStatus('Redirect trace cleared.');
   }
 
-  async function stopSaveAssist() {
-    setSaveAssistStatus('Finishing up...');
-    const res = await traceRequest('ywp_save_assist_stop');
-    if (!res || !res.ok) {
-      setSaveAssistStatus('Stop failed: ' + ((res && res.error) || 'unknown error'), true);
-      return;
-    }
-    setSaveAssistStatus('Done. Reopen a board to erase or edit it normally.');
-    traceMark('save-assist-stopped');
-  }
-
-
-
   if (btn)   btn.addEventListener('click', saveUrl);
   if (input) input.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); saveUrl(); }});
   if (toggle) toggle.addEventListener('change', saveToggle);
   if (modeToggle) modeToggle.addEventListener('change', saveTransparencyMode);
-  if (multiBoardToggle) multiBoardToggle.addEventListener('change', saveMultiBoardMode);
-  if (stopSaveAssistBtn) stopSaveAssistBtn.addEventListener('click', stopSaveAssist);
   if (traceCopyBtn) traceCopyBtn.addEventListener('click', copyTrace);
   if (traceClearBtn) traceClearBtn.addEventListener('click', clearTrace);
 

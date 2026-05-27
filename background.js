@@ -42,8 +42,11 @@ const RESTORED_HOLD_FAST_STALE_MS = 1000;
 const RESTORED_HOLD_FAST_WINDOW_MS = 15000;
 const RESTORED_HOLD_FAST_MIN_AGE_MS = 30000;
 // Persistent board holds made erased boards reappear with the last direct image.
-// Direct mode now keeps only a short grace window after Redirect is turned off.
+// Saves now route through the compatibility endpoint while Redirect is ON, so
+// turning Redirect OFF should immediately release boards for normal editing.
 const PERSISTENCE_HOLD_ENABLED = false;
+const DIRECT_DISABLE_GRACE_ENABLED = false;
+const MULTI_BOARD_MODE_ENABLED = true;
 const MULTI_BOARD_SESSION_LIMIT = PINNED_PROTECTION_LIMIT;
 let disableGraceTimer = null;
 let graceDisablePending = false;
@@ -73,7 +76,7 @@ let currentRoutingState = {
     persistenceHoldActive: false,
     pinnedProtectionCount: 0,
     directMode: false,
-    multiBoardMode: false,
+    multiBoardMode: MULTI_BOARD_MODE_ENABLED,
     multiBoardGraceCount: 0,
     scopedBoardUrl: "",
     safeImgUrl: "",
@@ -250,48 +253,31 @@ function getMultiBoardTouchedBoardUrls() {
     return urls.slice(0, MULTI_BOARD_SESSION_LIMIT);
 }
 
-function buildMultiBoardGraceRules(boardUrls, imageTargetUrl, compatTargetUrl) {
+function buildMultiBoardGraceRules(boardUrls, compatTargetUrl) {
     const normalizedUrls = Array.from(new Set(
         (boardUrls || [])
             .map((boardUrl) => normalizePaintBoardUrl(boardUrl))
             .filter(Boolean)
     )).slice(0, MULTI_BOARD_SESSION_LIMIT);
 
-    return normalizedUrls.flatMap((boardUrl, index) => {
+    return normalizedUrls.map((boardUrl, index) => {
         const baseRuleId = PINNED_RULE_START_ID + (index * 2);
         const regexFilter = buildHoldRegexFilter(boardUrl);
-        return [
-            {
-                id: baseRuleId,
-                priority: 3,
-                action: {
-                    type: "redirect",
-                    redirect: {
-                        url: imageTargetUrl
-                    }
-                },
-                condition: {
-                    regexFilter,
-                    resourceTypes: ["image"],
-                    requestMethods: ["get"]
+        return {
+            id: baseRuleId + 1,
+            priority: 3,
+            action: {
+                type: "redirect",
+                redirect: {
+                    url: compatTargetUrl
                 }
             },
-            {
-                id: baseRuleId + 1,
-                priority: 3,
-                action: {
-                    type: "redirect",
-                    redirect: {
-                        url: compatTargetUrl
-                    }
-                },
-                condition: {
-                    regexFilter,
-                    resourceTypes: ["xmlhttprequest", "sub_frame", "main_frame"],
-                    requestMethods: ["get"]
-                }
+            condition: {
+                regexFilter,
+                resourceTypes: ["xmlhttprequest", "sub_frame", "main_frame"],
+                requestMethods: ["get"]
             }
-        ];
+        };
     });
 }
 
@@ -932,7 +918,7 @@ function commitGraceDisable(reason, fallbackUrl) {
     graceDisableStartedAt = 0;
     const elapsedMs = startedAt ? (Date.now() - startedAt) : null;
 
-    chrome.storage.local.get({ img: ["", false, false, null, false] }, (st) => {
+    chrome.storage.local.get({ img: ["", false, false, null, true] }, (st) => {
         if (logChromeLastError("Error loading storage during grace disable")) {
             return;
         }
@@ -940,7 +926,7 @@ function commitGraceDisable(reason, fallbackUrl) {
         const latestUrl = arr[0] || fallbackUrl || "";
         const latestEnabled = !!arr[1];
         const latestDirect = !!arr[2];
-        const latestMultiBoardMode = !!arr[4];
+        const latestMultiBoardMode = MULTI_BOARD_MODE_ENABLED;
 
         if (latestEnabled) {
             pushTrace("grace-disable-aborted", {
@@ -1106,23 +1092,6 @@ function updateRedirectRules(imgUrl, enableRedirect, preferDirectTransparent) {
     updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTransparent, { skipGrace: false });
 }
 
-function stopSaveAssist(reason) {
-    const safeImgUrl = currentRoutingState.safeImgUrl || "";
-    const directMode = !!currentRoutingState.directMode;
-    const multiBoardMode = !!currentRoutingState.multiBoardMode;
-    const imgMeta = currentRoutingState.imgMeta || null;
-
-    invalidateProtectionSession(reason || "save-assist-stopped", {
-        clearTrackedBoard: true
-    });
-
-    updateRedirectRulesInternal(safeImgUrl, false, directMode, {
-        skipGrace: true,
-        imgMeta,
-        multiBoardMode
-    });
-}
-
 function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTransparent, options = {}) {
     const skipGrace = !!options.skipGrace;
     const forceGraceStart = !!options.forceGraceStart;
@@ -1132,9 +1101,7 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
     const onApplied = (options && typeof options.onApplied === "function") ? options.onApplied : null;
     const requestedEnabled = !!enableRedirect;
     const directMode = !!preferDirectTransparent;
-    const multiBoardMode = Object.prototype.hasOwnProperty.call(options, "multiBoardMode")
-        ? !!options.multiBoardMode
-        : !!currentRoutingState.multiBoardMode;
+    const multiBoardMode = MULTI_BOARD_MODE_ENABLED;
     const safeImgUrl = (imgUrl || "").trim();
     const rawImgMeta = Object.prototype.hasOwnProperty.call(options, "imgMeta")
         ? options.imgMeta
@@ -1175,13 +1142,20 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
         });
     }
 
-    const shouldGraceDisable = !skipGrace
+    const shouldGraceDisable = DIRECT_DISABLE_GRACE_ENABLED
+        && !skipGrace
         && !requestedEnabled
         && directMode
         && hasValidUrl
         && !imageChanged
         && !!normalizePaintBoardUrl(lastRedirectedPaintBoard.url)
         && (currentRoutingState.enabled === true || forceGraceStart);
+    if (!requestedEnabled && !shouldGraceDisable && multiBoardTouchedBoards.size) {
+        multiBoardTouchedBoards.clear();
+        pushTrace("multi-board-touched-cleared", {
+            reason: "redirect-disabled"
+        });
+    }
 
     const shouldCarryPinnedHold = PERSISTENCE_HOLD_ENABLED && !imageChanged && persistenceHoldActive;
     const shouldPinEnabled = PERSISTENCE_HOLD_ENABLED
@@ -1292,30 +1266,33 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
             requestMethods: ["get"]
         }
     };
+    const shouldRedirectCurrentImages = requestedEnabled || shouldPinEnabled;
     const currentProtectionRules = (hasValidUrl && shouldUseMultiBoardGraceRules)
         ? [
-            ...buildMultiBoardGraceRules(multiBoardGraceUrls, imageTargetUrl, compatTargetUrl),
+            ...buildMultiBoardGraceRules(multiBoardGraceUrls, compatTargetUrl),
             scopedAllowRule
         ]
         : (hasValidUrl && (requestedEnabled || shouldGraceDisable || shouldPinEnabled))
             ? [
-            {
-                id: 1,
-                priority: shouldUseScopedCurrentRules ? 2 : 1,
-                action: {
-                    type: "redirect",
-                    redirect: {
-                        url: imageTargetUrl
+            ...(shouldRedirectCurrentImages ? [
+                {
+                    id: 1,
+                    priority: shouldUseScopedCurrentRules ? 2 : 1,
+                    action: {
+                        type: "redirect",
+                        redirect: {
+                            url: imageTargetUrl
+                        }
+                    },
+                    condition: {
+                        ...(shouldUseScopedCurrentRules
+                            ? { regexFilter: scopedCurrentRegexFilter }
+                            : { urlFilter: "paint_board" }),
+                        resourceTypes: ["image"],
+                        requestMethods: ["get"]
                     }
-                },
-                condition: {
-                    ...(shouldUseScopedCurrentRules
-                        ? { regexFilter: scopedCurrentRegexFilter }
-                        : { urlFilter: "paint_board" }),
-                    resourceTypes: ["image"],
-                    requestMethods: ["get"]
                 }
-            },
+            ] : []),
             {
                 id: 2,
                 priority: shouldUseScopedCurrentRules ? 2 : 1,
@@ -1542,7 +1519,7 @@ function loadViewMode() {
 }
 
 function loadSettings() {
-    chrome.storage.local.get({ img: ["", false, false, null, false], [PROTECTION_STATE_KEY]: null }, (e) => {
+    chrome.storage.local.get({ img: ["", false, false, null, true], [PROTECTION_STATE_KEY]: null }, (e) => {
         if (logChromeLastError("Error loading storage")) {
             return;
         }
@@ -1554,7 +1531,7 @@ function loadSettings() {
             const imgMeta = (Array.isArray(e.img) && e.img.length > 3 && e.img[3] && typeof e.img[3] === "object")
                 ? e.img[3]
                 : null;
-            const multiBoardMode = Array.isArray(e.img) ? !!e.img[4] : false;
+            const multiBoardMode = MULTI_BOARD_MODE_ENABLED;
             const restoredProtection = getRestorableProtectionState(
                 e[PROTECTION_STATE_KEY],
                 safeImgUrl,
@@ -1595,7 +1572,7 @@ function loadSettings() {
             updateRedirectRulesInternal("https://i.imgur.com/j146uKh.png", false, false, {
                 skipGrace: true,
                 imgMeta: null,
-                multiBoardMode: false
+                multiBoardMode: MULTI_BOARD_MODE_ENABLED
             });
         }
     });
@@ -1662,9 +1639,4 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         return true;
     }
 
-    if (msg.type === "ywp_save_assist_stop") {
-        stopSaveAssist("manual-stop");
-        sendResponse({ ok: true });
-        return;
-    }
 });
