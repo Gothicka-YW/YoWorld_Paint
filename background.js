@@ -48,9 +48,11 @@ const PERSISTENCE_HOLD_ENABLED = false;
 const DIRECT_DISABLE_GRACE_ENABLED = false;
 const MULTI_BOARD_MODE_ENABLED = true;
 const MULTI_BOARD_SESSION_LIMIT = PINNED_PROTECTION_LIMIT;
+const SAVE_COMPAT_READY_DELAY_MS = 1200;
 let disableGraceTimer = null;
 let graceDisablePending = false;
 let graceDisableStartedAt = 0;
+let saveCompatRuleTimer = null;
 let persistenceProbeTimer = null;
 let persistenceRescueCount = 0;
 let persistenceHoldActive = false;
@@ -78,6 +80,7 @@ let currentRoutingState = {
     directMode: false,
     multiBoardMode: MULTI_BOARD_MODE_ENABLED,
     multiBoardGraceCount: 0,
+    saveCompatBoardCount: 0,
     scopedBoardUrl: "",
     safeImgUrl: "",
     imageTargetUrl: "",
@@ -253,6 +256,19 @@ function getMultiBoardTouchedBoardUrls() {
     return urls.slice(0, MULTI_BOARD_SESSION_LIMIT);
 }
 
+function getMultiBoardSaveReadyBoardUrls() {
+    const now = Date.now();
+    return Array.from(multiBoardTouchedBoards.values())
+        .filter((entry) => {
+            const firstSeenAt = Number(entry && entry.firstSeenAt || entry && entry.lastSeenAt || 0);
+            return firstSeenAt > 0 && (now - firstSeenAt) >= SAVE_COMPAT_READY_DELAY_MS;
+        })
+        .sort((left, right) => Number(left.firstSeenAt || 0) - Number(right.firstSeenAt || 0))
+        .map((entry) => normalizePaintBoardUrl(entry.boardUrl))
+        .filter(Boolean)
+        .slice(0, MULTI_BOARD_SESSION_LIMIT);
+}
+
 function buildMultiBoardGraceRules(boardUrls, compatTargetUrl) {
     const normalizedUrls = Array.from(new Set(
         (boardUrls || [])
@@ -279,6 +295,34 @@ function buildMultiBoardGraceRules(boardUrls, compatTargetUrl) {
             }
         };
     });
+}
+
+function scheduleSaveCompatRuleRefresh(reason) {
+    if (saveCompatRuleTimer) {
+        clearTimeout(saveCompatRuleTimer);
+        saveCompatRuleTimer = null;
+    }
+
+    if (!currentRoutingState.requestedEnabled || !currentRoutingState.directMode || !MULTI_BOARD_MODE_ENABLED) {
+        return;
+    }
+
+    saveCompatRuleTimer = setTimeout(() => {
+        saveCompatRuleTimer = null;
+        if (!currentRoutingState.requestedEnabled || !currentRoutingState.directMode || !currentRoutingState.safeImgUrl) {
+            return;
+        }
+
+        pushTrace("save-compat-rules-refresh", {
+            reason: reason || "timer",
+            readyBoards: getMultiBoardSaveReadyBoardUrls().length
+        });
+        updateRedirectRulesInternal(currentRoutingState.safeImgUrl, true, currentRoutingState.directMode, {
+            skipGrace: true,
+            preserveRequestedSession: true,
+            imgMeta: currentRoutingState.imgMeta || null
+        });
+    }, SAVE_COMPAT_READY_DELAY_MS);
 }
 
 function buildPinnedProtectionRules(excludedBoardUrls = []) {
@@ -519,6 +563,11 @@ function invalidateProtectionSession(reason, options = {}) {
     holdDiscoveryCandidates.clear();
     multiBoardTouchedBoards.clear();
 
+    if (saveCompatRuleTimer) {
+        clearTimeout(saveCompatRuleTimer);
+        saveCompatRuleTimer = null;
+    }
+
     if (persistenceProbeTimer) {
         clearTimeout(persistenceProbeTimer);
         persistenceProbeTimer = null;
@@ -758,6 +807,9 @@ function trackRedirectedPaintBoard(ruleId, req) {
             boardUrl: lastRedirectedPaintBoard.url,
             count: multiBoardTouchedBoards.size
         });
+        if (currentRoutingState.directMode) {
+            scheduleSaveCompatRuleRefresh("board-touched");
+        }
     }
 
     persistProtectionState();
@@ -1156,6 +1208,10 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
             reason: "redirect-disabled"
         });
     }
+    if (!requestedEnabled && saveCompatRuleTimer) {
+        clearTimeout(saveCompatRuleTimer);
+        saveCompatRuleTimer = null;
+    }
 
     const shouldCarryPinnedHold = PERSISTENCE_HOLD_ENABLED && !imageChanged && persistenceHoldActive;
     const shouldPinEnabled = PERSISTENCE_HOLD_ENABLED
@@ -1183,6 +1239,9 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
         : (shouldScopeGraceToBoard ? graceBoardUrl : claimedBoardUrl);
     const scopedCurrentRegexFilter = scopedCurrentBoardUrl ? buildHoldRegexFilter(scopedCurrentBoardUrl) : "";
     const shouldUseScopedCurrentRules = shouldPinEnabled || shouldScopeGraceToBoard || shouldScopeRequestedPlacementToBoard;
+    const saveCompatBoardUrls = (requestedEnabled && directMode && multiBoardMode)
+        ? getMultiBoardSaveReadyBoardUrls()
+        : [];
 
     if (shouldPinEnabled && holdBoardUrl) {
         upsertPinnedBoardProtection(holdBoardUrl, safeImgUrl, directMode, {
@@ -1226,6 +1285,7 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
         compatTargetUrl,
         imgMeta: normalizedImgMeta,
         claimedBoardUrl,
+        saveCompatBoardCount: saveCompatBoardUrls.length,
         updatedAt: new Date().toISOString()
     };
     pushTrace("rules-update-requested", {
@@ -1267,6 +1327,12 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
         }
     };
     const shouldRedirectCurrentImages = requestedEnabled || shouldPinEnabled;
+    const currentImageResourceTypes = directMode && requestedEnabled
+        ? ["image", "xmlhttprequest"]
+        : ["image"];
+    const currentCompatResourceTypes = directMode && requestedEnabled
+        ? ["sub_frame", "main_frame"]
+        : ["xmlhttprequest", "sub_frame", "main_frame"];
     const currentProtectionRules = (hasValidUrl && shouldUseMultiBoardGraceRules)
         ? [
             ...buildMultiBoardGraceRules(multiBoardGraceUrls, compatTargetUrl),
@@ -1288,7 +1354,7 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
                         ...(shouldUseScopedCurrentRules
                             ? { regexFilter: scopedCurrentRegexFilter }
                             : { urlFilter: "paint_board" }),
-                        resourceTypes: ["image"],
+                        resourceTypes: currentImageResourceTypes,
                         requestMethods: ["get"]
                     }
                 }
@@ -1306,10 +1372,11 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
                     ...(shouldUseScopedCurrentRules
                         ? { regexFilter: scopedCurrentRegexFilter }
                         : { urlFilter: "paint_board" }),
-                    resourceTypes: ["xmlhttprequest", "sub_frame", "main_frame"],
+                    resourceTypes: currentCompatResourceTypes,
                     requestMethods: ["get"]
                 }
             },
+            ...(saveCompatBoardUrls.length ? buildMultiBoardGraceRules(saveCompatBoardUrls, compatTargetUrl) : []),
             ...(shouldUseScopedCurrentRules ? [scopedAllowRule] : [])
         ]
             : [];
