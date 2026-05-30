@@ -26,8 +26,9 @@ function logChromeLastError(context) {
 const TRACE_LIMIT = 500;
 const PROTECTION_STATE_KEY = "ywpProtectionState";
 const traceEvents = [];
-const DIRECT_DISABLE_GRACE_MS = 45000;
-const DIRECT_DISABLE_MAX_MS = 60000;
+const DIRECT_DISABLE_GRACE_MS = 10000;
+const DIRECT_DISABLE_MAX_MS = 15000;
+const RECENT_TOUCH_RESTORE_MAX_AGE_MS = 5 * 60 * 1000;
 const PERSISTENCE_PROBE_DELAY_MS = 1500;
 const PERSISTENCE_BLANK_MAX_BYTES = 1024;
 const PERSISTENCE_RESCUE_MAX_ATTEMPTS = 3;
@@ -42,17 +43,14 @@ const RESTORED_HOLD_FAST_STALE_MS = 1000;
 const RESTORED_HOLD_FAST_WINDOW_MS = 15000;
 const RESTORED_HOLD_FAST_MIN_AGE_MS = 30000;
 // Persistent board holds made erased boards reappear with the last direct image.
-// Saves now route through the compatibility endpoint while Redirect is ON, so
-// turning Redirect OFF should immediately release boards for normal editing.
+// Redirect OFF keeps only a short touched-board direct finalize window.
 const PERSISTENCE_HOLD_ENABLED = false;
-const DIRECT_DISABLE_GRACE_ENABLED = false;
+const DIRECT_DISABLE_GRACE_ENABLED = true;
 const MULTI_BOARD_MODE_ENABLED = true;
 const MULTI_BOARD_SESSION_LIMIT = PINNED_PROTECTION_LIMIT;
-const SAVE_COMPAT_READY_DELAY_MS = 1200;
 let disableGraceTimer = null;
 let graceDisablePending = false;
 let graceDisableStartedAt = 0;
-let saveCompatRuleTimer = null;
 let persistenceProbeTimer = null;
 let persistenceRescueCount = 0;
 let persistenceHoldActive = false;
@@ -80,7 +78,6 @@ let currentRoutingState = {
     directMode: false,
     multiBoardMode: MULTI_BOARD_MODE_ENABLED,
     multiBoardGraceCount: 0,
-    saveCompatBoardCount: 0,
     scopedBoardUrl: "",
     safeImgUrl: "",
     imageTargetUrl: "",
@@ -256,73 +253,63 @@ function getMultiBoardTouchedBoardUrls() {
     return urls.slice(0, MULTI_BOARD_SESSION_LIMIT);
 }
 
-function getMultiBoardSaveReadyBoardUrls() {
-    const now = Date.now();
-    return Array.from(multiBoardTouchedBoards.values())
-        .filter((entry) => {
-            const firstSeenAt = Number(entry && entry.firstSeenAt || entry && entry.lastSeenAt || 0);
-            return firstSeenAt > 0 && (now - firstSeenAt) >= SAVE_COMPAT_READY_DELAY_MS;
-        })
-        .sort((left, right) => Number(left.firstSeenAt || 0) - Number(right.firstSeenAt || 0))
-        .map((entry) => normalizePaintBoardUrl(entry.boardUrl))
-        .filter(Boolean)
-        .slice(0, MULTI_BOARD_SESSION_LIMIT);
-}
-
-function buildMultiBoardGraceRules(boardUrls, compatTargetUrl) {
+function buildMultiBoardGraceRules(boardUrls, imageTargetUrl, compatTargetUrl) {
     const normalizedUrls = Array.from(new Set(
         (boardUrls || [])
             .map((boardUrl) => normalizePaintBoardUrl(boardUrl))
             .filter(Boolean)
     )).slice(0, MULTI_BOARD_SESSION_LIMIT);
 
-    return normalizedUrls.map((boardUrl, index) => {
+    return normalizedUrls.flatMap((boardUrl, index) => {
         const baseRuleId = PINNED_RULE_START_ID + (index * 2);
         const regexFilter = buildHoldRegexFilter(boardUrl);
-        return {
-            id: baseRuleId + 1,
-            priority: 3,
-            action: {
-                type: "redirect",
-                redirect: {
-                    url: compatTargetUrl
+        return [
+            {
+                id: baseRuleId,
+                priority: 3,
+                action: {
+                    type: "redirect",
+                    redirect: {
+                        url: imageTargetUrl
+                    }
+                },
+                condition: {
+                    regexFilter,
+                    resourceTypes: ["image", "xmlhttprequest"],
+                    requestMethods: ["get"]
                 }
             },
-            condition: {
-                regexFilter,
-                resourceTypes: ["xmlhttprequest", "sub_frame", "main_frame"],
-                requestMethods: ["get"]
+            {
+                id: baseRuleId + 1,
+                priority: 3,
+                action: {
+                    type: "redirect",
+                    redirect: {
+                        url: compatTargetUrl
+                    }
+                },
+                condition: {
+                    regexFilter,
+                    resourceTypes: ["sub_frame", "main_frame"],
+                    requestMethods: ["get"]
+                }
             }
-        };
+        ];
     });
 }
 
-function scheduleSaveCompatRuleRefresh(reason) {
-    if (saveCompatRuleTimer) {
-        clearTimeout(saveCompatRuleTimer);
-        saveCompatRuleTimer = null;
-    }
-
-    if (!currentRoutingState.requestedEnabled || !currentRoutingState.directMode || !MULTI_BOARD_MODE_ENABLED) {
-        return;
-    }
-
-    saveCompatRuleTimer = setTimeout(() => {
-        saveCompatRuleTimer = null;
-        if (!currentRoutingState.requestedEnabled || !currentRoutingState.directMode || !currentRoutingState.safeImgUrl) {
-            return;
-        }
-
-        pushTrace("save-compat-rules-refresh", {
-            reason: reason || "timer",
-            readyBoards: getMultiBoardSaveReadyBoardUrls().length
-        });
-        updateRedirectRulesInternal(currentRoutingState.safeImgUrl, true, currentRoutingState.directMode, {
-            skipGrace: true,
-            preserveRequestedSession: true,
-            imgMeta: currentRoutingState.imgMeta || null
-        });
-    }, SAVE_COMPAT_READY_DELAY_MS);
+function getMultiBoardTouchedBoardSnapshots() {
+    return Array.from(multiBoardTouchedBoards.values())
+        .sort((left, right) => Number(left.firstSeenAt || 0) - Number(right.firstSeenAt || 0))
+        .slice(0, MULTI_BOARD_SESSION_LIMIT)
+        .map((entry) => ({
+            boardUrl: normalizePaintBoardUrl(entry && entry.boardUrl || ""),
+            firstSeenAt: Number(entry && entry.firstSeenAt || 0),
+            lastSeenAt: Number(entry && entry.lastSeenAt || 0),
+            matchCount: Number(entry && entry.matchCount || 0),
+            resourceType: String(entry && entry.resourceType || "")
+        }))
+        .filter((entry) => entry.boardUrl);
 }
 
 function buildPinnedProtectionRules(excludedBoardUrls = []) {
@@ -391,7 +378,8 @@ function persistProtectionState() {
             ts: Number(lastRedirectedPaintBoard.ts || 0),
             ruleId: lastRedirectedPaintBoard.ruleId || null,
             resourceType: lastRedirectedPaintBoard.resourceType || ""
-        }
+        },
+        multiBoardTouchedBoards: getMultiBoardTouchedBoardSnapshots()
     };
 
     chrome.storage.local.set({ [PROTECTION_STATE_KEY]: snapshot }, () => {
@@ -429,6 +417,69 @@ function getRestorableProtectionState(rawState, safeImgUrl, requestedEnabled, di
             resourceType: (rawState.lastRedirectedPaintBoard && rawState.lastRedirectedPaintBoard.resourceType) || "xmlhttprequest"
         }
     };
+}
+
+function restoreRecentTouchedBoardState(rawState, safeImgUrl, directMode) {
+    if (!rawState || typeof rawState !== "object") return false;
+    if (!directMode || !safeImgUrl) return false;
+    if ((rawState.safeImgUrl || "") !== safeImgUrl) return false;
+
+    const savedAt = Number(rawState.savedAt || 0);
+    if (!savedAt || (Date.now() - savedAt) > RECENT_TOUCH_RESTORE_MAX_AGE_MS) {
+        return false;
+    }
+
+    const restoredEntries = [];
+    const rawEntries = Array.isArray(rawState.multiBoardTouchedBoards)
+        ? rawState.multiBoardTouchedBoards
+        : [];
+
+    for (const rawEntry of rawEntries) {
+        const boardUrl = normalizePaintBoardUrl(rawEntry && rawEntry.boardUrl || "");
+        if (!boardUrl) continue;
+        restoredEntries.push({
+            boardUrl,
+            firstSeenAt: Number(rawEntry && rawEntry.firstSeenAt || savedAt),
+            lastSeenAt: Number(rawEntry && rawEntry.lastSeenAt || savedAt),
+            matchCount: Number(rawEntry && rawEntry.matchCount || 1),
+            resourceType: String(rawEntry && rawEntry.resourceType || "xmlhttprequest")
+        });
+    }
+
+    const lastBoardUrl = normalizePaintBoardUrl(rawState.lastRedirectedPaintBoard && rawState.lastRedirectedPaintBoard.url || "");
+    if (lastBoardUrl && !restoredEntries.some((entry) => entry.boardUrl === lastBoardUrl)) {
+        restoredEntries.push({
+            boardUrl: lastBoardUrl,
+            firstSeenAt: Number(rawState.lastRedirectedPaintBoard && rawState.lastRedirectedPaintBoard.ts || savedAt),
+            lastSeenAt: Number(rawState.lastRedirectedPaintBoard && rawState.lastRedirectedPaintBoard.ts || savedAt),
+            matchCount: 1,
+            resourceType: String(rawState.lastRedirectedPaintBoard && rawState.lastRedirectedPaintBoard.resourceType || "xmlhttprequest")
+        });
+    }
+
+    if (!restoredEntries.length) return false;
+
+    multiBoardTouchedBoards = new Map(
+        restoredEntries
+            .slice(0, MULTI_BOARD_SESSION_LIMIT)
+            .map((entry) => [entry.boardUrl, entry])
+    );
+
+    const lastRaw = rawState.lastRedirectedPaintBoard || {};
+    const fallback = restoredEntries[restoredEntries.length - 1];
+    lastRedirectedPaintBoard = {
+        url: normalizePaintBoardUrl(lastRaw.url || fallback.boardUrl),
+        ts: Number(lastRaw.ts || fallback.lastSeenAt || savedAt),
+        ruleId: lastRaw.ruleId || 1,
+        resourceType: String(lastRaw.resourceType || fallback.resourceType || "xmlhttprequest")
+    };
+
+    pushTrace("recent-board-touch-restored", {
+        count: multiBoardTouchedBoards.size,
+        savedAt: new Date(savedAt).toISOString(),
+        ageMs: Date.now() - savedAt
+    });
+    return true;
 }
 
 function pushTrace(event, details) {
@@ -562,11 +613,6 @@ function invalidateProtectionSession(reason, options = {}) {
     }
     holdDiscoveryCandidates.clear();
     multiBoardTouchedBoards.clear();
-
-    if (saveCompatRuleTimer) {
-        clearTimeout(saveCompatRuleTimer);
-        saveCompatRuleTimer = null;
-    }
 
     if (persistenceProbeTimer) {
         clearTimeout(persistenceProbeTimer);
@@ -807,9 +853,6 @@ function trackRedirectedPaintBoard(ruleId, req) {
             boardUrl: lastRedirectedPaintBoard.url,
             count: multiBoardTouchedBoards.size
         });
-        if (currentRoutingState.directMode) {
-            scheduleSaveCompatRuleRefresh("board-touched");
-        }
     }
 
     persistProtectionState();
@@ -1208,11 +1251,6 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
             reason: "redirect-disabled"
         });
     }
-    if (!requestedEnabled && saveCompatRuleTimer) {
-        clearTimeout(saveCompatRuleTimer);
-        saveCompatRuleTimer = null;
-    }
-
     const shouldCarryPinnedHold = PERSISTENCE_HOLD_ENABLED && !imageChanged && persistenceHoldActive;
     const shouldPinEnabled = PERSISTENCE_HOLD_ENABLED
         && !requestedEnabled
@@ -1239,9 +1277,6 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
         : (shouldScopeGraceToBoard ? graceBoardUrl : claimedBoardUrl);
     const scopedCurrentRegexFilter = scopedCurrentBoardUrl ? buildHoldRegexFilter(scopedCurrentBoardUrl) : "";
     const shouldUseScopedCurrentRules = shouldPinEnabled || shouldScopeGraceToBoard || shouldScopeRequestedPlacementToBoard;
-    const saveCompatBoardUrls = (requestedEnabled && directMode && multiBoardMode)
-        ? getMultiBoardSaveReadyBoardUrls()
-        : [];
 
     if (shouldPinEnabled && holdBoardUrl) {
         upsertPinnedBoardProtection(holdBoardUrl, safeImgUrl, directMode, {
@@ -1285,7 +1320,6 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
         compatTargetUrl,
         imgMeta: normalizedImgMeta,
         claimedBoardUrl,
-        saveCompatBoardCount: saveCompatBoardUrls.length,
         updatedAt: new Date().toISOString()
     };
     pushTrace("rules-update-requested", {
@@ -1335,7 +1369,7 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
         : ["xmlhttprequest", "sub_frame", "main_frame"];
     const currentProtectionRules = (hasValidUrl && shouldUseMultiBoardGraceRules)
         ? [
-            ...buildMultiBoardGraceRules(multiBoardGraceUrls, compatTargetUrl),
+            ...buildMultiBoardGraceRules(multiBoardGraceUrls, imageTargetUrl, compatTargetUrl),
             scopedAllowRule
         ]
         : (hasValidUrl && (requestedEnabled || shouldGraceDisable || shouldPinEnabled))
@@ -1376,7 +1410,6 @@ function updateRedirectRulesInternal(imgUrl, enableRedirect, preferDirectTranspa
                     requestMethods: ["get"]
                 }
             },
-            ...(saveCompatBoardUrls.length ? buildMultiBoardGraceRules(saveCompatBoardUrls, compatTargetUrl) : []),
             ...(shouldUseScopedCurrentRules ? [scopedAllowRule] : [])
         ]
             : [];
@@ -1605,6 +1638,11 @@ function loadSettings() {
                 requestedEnabled,
                 directMode
             );
+            const restoredRecentTouch = restoreRecentTouchedBoardState(
+                e[PROTECTION_STATE_KEY],
+                safeImgUrl,
+                directMode
+            );
 
             if (restoredProtection) {
                 lastRedirectedPaintBoard = restoredProtection.lastRedirectedPaintBoard;
@@ -1634,7 +1672,13 @@ function loadSettings() {
                     imgMeta,
                     multiBoardMode
                 }
-                : { skipGrace: false, imgMeta, multiBoardMode });
+                : {
+                    skipGrace: false,
+                    forceGraceStart: restoredRecentTouch && !requestedEnabled && directMode,
+                    allowRestoredProtection: restoredRecentTouch && !requestedEnabled && directMode,
+                    imgMeta,
+                    multiBoardMode
+                });
         } else {
             updateRedirectRulesInternal("https://i.imgur.com/j146uKh.png", false, false, {
                 skipGrace: true,
