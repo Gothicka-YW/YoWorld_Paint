@@ -777,6 +777,7 @@ function repairTranslucentRgbFromNearestOpaque(data, w, h, opts = {}){
   const srcR = new Uint8ClampedArray(n);
   const srcG = new Uint8ClampedArray(n);
   const srcB = new Uint8ClampedArray(n);
+  const initiallyTransparent = new Uint8Array(n);
   const queue = new Int32Array(n);
   dist.fill(-1);
 
@@ -787,6 +788,7 @@ function repairTranslucentRgbFromNearestOpaque(data, w, h, opts = {}){
   for (let p = 0; p < n; p++){
     const o = p * 4;
     const a = data[o + 3];
+    if (a === 0) initiallyTransparent[p] = 1;
     if (a >= sourceAlphaMin){
       dist[p] = 0;
       srcR[p] = data[o];
@@ -808,6 +810,18 @@ function repairTranslucentRgbFromNearestOpaque(data, w, h, opts = {}){
     -1,  1,
      1,  1
   ];
+
+  function touchesTransparentNeighbor(p){
+    const px = p % w;
+    const py = (p / w) | 0;
+    for (let k = 0; k < dirs.length; k += 2){
+      const nx = px + dirs[k];
+      const ny = py + dirs[k + 1];
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      if (initiallyTransparent[ny * w + nx]) return true;
+    }
+    return false;
+  }
 
   while (head < tail){
     const p = queue[head++];
@@ -848,20 +862,21 @@ function repairTranslucentRgbFromNearestOpaque(data, w, h, opts = {}){
     const currentMax = Math.max(r, g, b);
     const sourceMax = Math.max(nr, ng, nb);
     const premultipliedLuma = sourceLuma * (a / 255);
-    const lowAlphaDarkNoise = a <= clearDarkFringeAlphaMax
+    const exteriorEdge = touchesTransparentNeighbor(p);
+    const lowAlphaDarkNoise = exteriorEdge
+      && a <= clearDarkFringeAlphaMax
       && (currentMax <= clearDarkFringeMaxRgb || currentLuma <= clearDarkFringeMaxLuma)
       && sourceMax > currentMax + 8;
     const looksPremultiplied = sourceLuma > 20
       && currentLuma <= Math.max(24, premultipliedLuma * 1.7)
       && currentLuma + 8 < sourceLuma;
-    const looksBlackened = currentMax <= 36 && sourceMax > 40;
-    const verySoftEdge = a <= softenEdgeAlphaMax && sourceMax > 24 && currentMax + 4 < sourceMax;
+    const looksBlackened = exteriorEdge && currentMax <= 48 && sourceMax > 40;
+    const verySoftEdge = exteriorEdge && a <= softenEdgeAlphaMax && sourceMax > 24 && currentMax + 4 < sourceMax;
 
     if (lowAlphaDarkNoise){
       data[o] = nr;
       data[o + 1] = ng;
       data[o + 2] = nb;
-      data[o + 3] = 0;
       changed = true;
       continue;
     }
@@ -913,10 +928,82 @@ async function stabilizeTransparentPngBlob(fileOrBlob){
           sourceAlphaMin: 160,
           targetAlphaMax: 252,
           maxDistance: 14,
-          clearDarkFringeAlphaMax: 88,
-          clearDarkFringeMaxRgb: 68,
-          clearDarkFringeMaxLuma: 56,
-          softenEdgeAlphaMax: 128
+          clearDarkFringeAlphaMax: 128,
+          clearDarkFringeMaxRgb: 92,
+          clearDarkFringeMaxLuma: 82,
+          softenEdgeAlphaMax: 144
+        });
+        ctx.putImageData(id, 0, 0);
+      }
+
+      cv.toBlob(b => {
+        if (!b) return reject(new Error('Canvas toBlob failed'));
+        resolve(b);
+      }, 'image/png');
+    };
+    fr.readAsDataURL(fileOrBlob);
+  });
+}
+
+function applyBinaryAlphaForProxy(data, w, h, opts = {}){
+  const alphaThreshold = Number.isFinite(opts.alphaThreshold) ? opts.alphaThreshold : 32;
+  let changed = false;
+
+  for (let p = 0; p < w * h; p++){
+      const o = p * 4;
+      const a = data[o + 3];
+      const nextA = a >= alphaThreshold ? 255 : 0;
+
+      if (nextA !== a){
+        data[o + 3] = nextA;
+        changed = true;
+      }
+  }
+
+  return changed;
+}
+
+async function prepareSaveCompatibleTransparentPngBlob(fileOrBlob){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const fr = new FileReader();
+    fr.onload = e => { img.src = e.target.result; };
+    fr.onerror = reject;
+    img.onload = () => {
+      const cv = document.createElement('canvas');
+      cv.width = img.width;
+      cv.height = img.height;
+      const ctx = cv.getContext('2d', { willReadFrequently: true });
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(img, 0, 0);
+
+      const id = ctx.getImageData(0, 0, cv.width, cv.height);
+      const d = id.data;
+      let hasAnyAlpha = false;
+      for (let i = 3; i < d.length; i += 4){
+        if (d[i] < 255){ hasAnyAlpha = true; break; }
+      }
+
+      if (hasAnyAlpha){
+        fillTransparentRgbNearest(d, cv.width, cv.height, {
+          matteDistance: 6,
+          matteR: 245,
+          matteG: 245,
+          matteB: 245,
+          alphaFloor: 0,
+          edgeAlphaMin: 0
+        });
+        repairTranslucentRgbFromNearestOpaque(d, cv.width, cv.height, {
+          sourceAlphaMin: 160,
+          targetAlphaMax: 252,
+          maxDistance: 14,
+          clearDarkFringeAlphaMax: 128,
+          clearDarkFringeMaxRgb: 92,
+          clearDarkFringeMaxLuma: 82,
+          softenEdgeAlphaMax: 144
+        });
+        applyBinaryAlphaForProxy(d, cv.width, cv.height, {
+          alphaThreshold: 32
         });
         ctx.putImageData(id, 0, 0);
       }
@@ -1285,6 +1372,7 @@ async function stabilizeTransparentPngBlob(fileOrBlob){
     lastUrl='';
     try {
       let uploadFile = file;
+      let saveCompatibleFile = null;
       let preparedMeta = null;
 
       if (!doResize) {
@@ -1344,6 +1432,11 @@ async function stabilizeTransparentPngBlob(fileOrBlob){
         setStatus('Stabilizing transparency…');
         const stabilized = await stabilizeTransparentPngBlob(uploadFile);
         uploadFile = new File([stabilized], toPngFilename(uploadFile.name || file.name || 'image.png'), { type:'image/png' });
+        if (preparedMeta && preparedMeta.hasTransparency) {
+          setStatus('Preparing save-compatible transparency...');
+          const saveCompatibleBlob = await prepareSaveCompatibleTransparentPngBlob(uploadFile);
+          saveCompatibleFile = new File([saveCompatibleBlob], toPngFilename(uploadFile.name || file.name || 'image.png'), { type:'image/png' });
+        }
       }
 
       if (autoChk && autoChk.checked) {
@@ -1355,12 +1448,30 @@ async function stabilizeTransparentPngBlob(fileOrBlob){
 
       const { uploadImage } = await import('../../src/lib/uploader.js');
       const url = await uploadImage(uploadFile, { host });
+      let compatSaveUrl = '';
+      if (saveCompatibleFile) {
+        try {
+          setStatus('Uploading save helper...');
+          compatSaveUrl = await uploadImage(saveCompatibleFile, { host });
+          preparedMeta = {
+            ...(preparedMeta || {}),
+            compatSaveUrl,
+            compatSaveMode: 'binary-alpha-threshold-32'
+          };
+        } catch (err) {
+          traceMark('quick-upload-save-helper-failed', {
+            host,
+            message: (err && err.message) ? err.message : String(err)
+          });
+        }
+      }
       queuePendingRedirectMeta(url, preparedMeta);
       traceMark('quick-upload-success', {
         host,
         doResize,
         transparencyModeOn,
-        url
+        url,
+        compatSaveUrl
       });
       lastUrl = url; setResult(url);
       const preparedMsg = describePreparedUpload(preparedMeta);
@@ -1452,9 +1563,13 @@ function createRedirectMetaFromPrepared(preparedMeta) {
   const mode = String(preparedMeta.mode || '');
   const sourceHasTransparency = !!preparedMeta.sourceHasTransparency;
   const hasTransparency = !!preparedMeta.hasTransparency;
+  const compatSaveUrl = /^https?:\/\//i.test(String(preparedMeta.compatSaveUrl || '').trim())
+    ? String(preparedMeta.compatSaveUrl || '').trim()
+    : '';
+  const compatSaveMode = String(preparedMeta.compatSaveMode || '');
   if (!sourceWidth && !sourceHeight && !outputWidth && !outputHeight && !mode) return null;
   const largeSource = sourceWidth > HOME_BOARD_WIDTH || sourceHeight > HOME_BOARD_HEIGHT;
-  return {
+  const meta = {
     sourceWidth,
     sourceHeight,
     outputWidth,
@@ -1465,6 +1580,11 @@ function createRedirectMetaFromPrepared(preparedMeta) {
     hasTransparency,
     forceProxy: largeSource && !sourceHasTransparency
   };
+  if (compatSaveUrl) {
+    meta.compatSaveUrl = compatSaveUrl;
+    meta.compatSaveMode = compatSaveMode || 'save-compatible';
+  }
+  return meta;
 }
 
 function queuePendingRedirectMeta(url, preparedMeta) {

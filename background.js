@@ -28,6 +28,7 @@ const PROTECTION_STATE_KEY = "ywpProtectionState";
 const traceEvents = [];
 const DIRECT_DISABLE_GRACE_MS = 30000;
 const DIRECT_DISABLE_MAX_MS = 45000;
+const FINALIZER_AUTO_RELEASE_MS = 5000;
 const RECENT_TOUCH_RESTORE_MAX_AGE_MS = 5 * 60 * 1000;
 const PERSISTENCE_PROBE_DELAY_MS = 1500;
 const PERSISTENCE_BLANK_MAX_BYTES = 1024;
@@ -65,6 +66,7 @@ let holdDiscoveryCandidates = new Map();
 let pinnedBoardProtections = new Map();
 let multiBoardTouchedBoards = new Map();
 let recentBoardFinalizers = new Map();
+let finalizerReleaseTimers = new Map();
 let requestedPlacementBoardUrl = "";
 let lastRedirectedPaintBoard = {
     url: "",
@@ -90,10 +92,18 @@ let currentRoutingState = {
     updatedAt: new Date().toISOString()
 };
 
+function buildYoworldCompatTarget(imgUrl) {
+    const normalizedUrl = (imgUrl || "").trim();
+    if (!normalizedUrl) return "";
+    if (isYoworldProxyUrl(normalizedUrl)) return normalizedUrl;
+    return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(normalizedUrl);
+}
+
 function buildRoutingTargets(safeImgUrl, directMode, imgMeta) {
     const normalizedSafeImgUrl = (safeImgUrl || "").trim();
     const normalizedImgMeta = normalizeImgMeta(imgMeta);
-    const legacyEndpoint = "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(normalizedSafeImgUrl);
+    const compatSourceUrl = normalizedImgMeta.compatSaveUrl || normalizedSafeImgUrl;
+    const legacyEndpoint = buildYoworldCompatTarget(compatSourceUrl);
     return {
         imageTargetUrl: directMode ? buildRedirectTarget(normalizedSafeImgUrl, normalizedImgMeta) : legacyEndpoint,
         compatTargetUrl: legacyEndpoint
@@ -297,6 +307,92 @@ function trimRecentBoardFinalizers() {
             .slice(0, MULTI_BOARD_SESSION_LIMIT)
             .map((entry) => [entry.boardUrl, entry])
     );
+}
+
+function clearFinalizerReleaseTimers() {
+    for (const timer of finalizerReleaseTimers.values()) {
+        clearTimeout(timer);
+    }
+    finalizerReleaseTimers.clear();
+}
+
+function getNextFinalizerBoardEntry() {
+    const recentEntry = getRecentBoardFinalizerEntries()[0] || null;
+    if (recentEntry && recentEntry.boardUrl) return recentEntry;
+
+    return Array.from(multiBoardTouchedBoards.values())
+        .sort((left, right) => Number(left.firstSeenAt || 0) - Number(right.firstSeenAt || 0))[0] || null;
+}
+
+function releaseFinalizerBoard(boardUrl, reason, applySafeImgUrl, applyImgMeta) {
+    const normalizedBoardUrl = normalizePaintBoardUrl(boardUrl);
+    if (!normalizedBoardUrl) return;
+
+    const timer = finalizerReleaseTimers.get(normalizedBoardUrl);
+    if (timer) {
+        clearTimeout(timer);
+        finalizerReleaseTimers.delete(normalizedBoardUrl);
+    }
+
+    const removedRecent = recentBoardFinalizers.delete(normalizedBoardUrl);
+    const removedTouched = multiBoardTouchedBoards.delete(normalizedBoardUrl);
+    const wasLastRedirected = normalizePaintBoardUrl(lastRedirectedPaintBoard.url || "") === normalizedBoardUrl;
+    if (!removedRecent && !removedTouched && !wasLastRedirected) return;
+
+    if (wasLastRedirected) {
+        const nextEntry = getNextFinalizerBoardEntry();
+        if (nextEntry && nextEntry.boardUrl) {
+            lastRedirectedPaintBoard = {
+                url: normalizePaintBoardUrl(nextEntry.boardUrl),
+                ts: Date.now(),
+                ruleId: null,
+                resourceType: nextEntry.resourceType || "xmlhttprequest"
+            };
+        } else {
+            clearLastRedirectedPaintBoard();
+        }
+    }
+
+    const hasRemainingFinalizers = recentBoardFinalizers.size > 0 || multiBoardTouchedBoards.size > 0;
+    pushTrace("finalizer-board-released", {
+        reason: reason || "consumed",
+        boardUrl: normalizedBoardUrl,
+        removedRecent,
+        removedTouched,
+        remainingFinalizers: recentBoardFinalizers.size,
+        remainingTouchedBoards: multiBoardTouchedBoards.size
+    });
+
+    updateRedirectRulesInternal(applySafeImgUrl || currentRoutingState.safeImgUrl, false, currentRoutingState.directMode, {
+        skipGrace: !hasRemainingFinalizers,
+        forceGraceStart: hasRemainingFinalizers,
+        allowRestoredProtection: hasRemainingFinalizers,
+        preserveRequestedSession: true,
+        imgMeta: applyImgMeta || currentRoutingState.imgMeta,
+        multiBoardMode: MULTI_BOARD_MODE_ENABLED
+    });
+}
+
+function scheduleFinalizerBoardRelease(boardUrl, ruleId) {
+    const normalizedBoardUrl = normalizePaintBoardUrl(boardUrl);
+    if (!normalizedBoardUrl || currentRoutingState.requestedEnabled || !currentRoutingState.directMode) return;
+
+    const existing = finalizerReleaseTimers.get(normalizedBoardUrl);
+    if (existing) {
+        clearTimeout(existing);
+    }
+
+    const applySafeImgUrl = currentRoutingState.safeImgUrl;
+    const applyImgMeta = currentRoutingState.imgMeta;
+    finalizerReleaseTimers.set(normalizedBoardUrl, setTimeout(() => {
+        releaseFinalizerBoard(normalizedBoardUrl, "finalizer-match", applySafeImgUrl, applyImgMeta);
+    }, FINALIZER_AUTO_RELEASE_MS));
+
+    pushTrace("finalizer-board-release-scheduled", {
+        boardUrl: normalizedBoardUrl,
+        ruleId: ruleId || null,
+        delayMs: FINALIZER_AUTO_RELEASE_MS
+    });
 }
 
 function getMultiBoardTouchedBoardUrls() {
@@ -816,6 +912,8 @@ function invalidateProtectionSession(reason, options = {}) {
         || holdDiscoveryTimer
         || holdDiscoveryCandidates.size
         || multiBoardTouchedBoards.size
+        || recentBoardFinalizers.size
+        || finalizerReleaseTimers.size
         || persistenceHoldActive
         || persistenceHoldBoardUrl
         || persistenceHoldLastMatchedAt
@@ -833,6 +931,8 @@ function invalidateProtectionSession(reason, options = {}) {
     }
     holdDiscoveryCandidates.clear();
     multiBoardTouchedBoards.clear();
+    recentBoardFinalizers.clear();
+    clearFinalizerReleaseTimers();
 
     if (persistenceProbeTimer) {
         clearTimeout(persistenceProbeTimer);
@@ -1397,7 +1497,11 @@ if (chrome.declarativeNetRequest && chrome.declarativeNetRequest.onRuleMatchedDe
                         initiator: req.initiator || ""
                     }
                 });
-                scheduleGraceDisable("activity-match", currentRoutingState.safeImgUrl);
+                if (isScopedBoardRedirectRuleId(rule.ruleId) && normalizedReqUrl) {
+                    scheduleFinalizerBoardRelease(normalizedReqUrl, rule.ruleId);
+                } else {
+                    scheduleGraceDisable("activity-match", currentRoutingState.safeImgUrl);
+                }
             }
         });
     } catch (err) {
@@ -1748,10 +1852,7 @@ function buildRedirectTarget(imgUrl, imgMeta) {
     const safeImgUrl = (imgUrl || "").trim();
     const safeMeta = normalizeImgMeta(imgMeta);
     if (safeMeta.forceProxy) {
-        if (isYoworldProxyUrl(safeImgUrl)) {
-            return safeImgUrl;
-        }
-        return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+        return buildYoworldCompatTarget(safeImgUrl);
     }
     const unwrappedDirect = getDirectUrlFromYoworldProxy(safeImgUrl);
     if (isDirectTransparentPngUrl(unwrappedDirect)) {
@@ -1763,7 +1864,7 @@ function buildRedirectTarget(imgUrl, imgMeta) {
     if (isDirectTransparentPngUrl(safeImgUrl)) {
         return safeImgUrl;
     }
-    return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+    return buildYoworldCompatTarget(safeImgUrl);
 }
 
 function getDirectUrlFromYoworldProxy(urlString) {
@@ -1791,7 +1892,7 @@ function isYoworldProxyUrl(urlString) {
 
 function normalizeImgMeta(rawMeta) {
     if (!rawMeta || typeof rawMeta !== "object") {
-        return { forceProxy: false, sourceHasTransparency: false, hasTransparency: false, sourceWidth: 0, sourceHeight: 0, mode: "" };
+        return { forceProxy: false, sourceHasTransparency: false, hasTransparency: false, sourceWidth: 0, sourceHeight: 0, mode: "", compatSaveUrl: "", compatSaveMode: "" };
     }
     const sourceWidth = Number(rawMeta.sourceWidth) || 0;
     const sourceHeight = Number(rawMeta.sourceHeight) || 0;
@@ -1799,13 +1900,19 @@ function normalizeImgMeta(rawMeta) {
     const sourceHasTransparency = !!rawMeta.sourceHasTransparency;
     const hasTransparency = !!rawMeta.hasTransparency;
     const forceProxy = !!rawMeta.forceProxy && !sourceHasTransparency;
+    const compatSaveUrl = /^https?:\/\//i.test(String(rawMeta.compatSaveUrl || "").trim())
+        ? String(rawMeta.compatSaveUrl || "").trim()
+        : "";
+    const compatSaveMode = typeof rawMeta.compatSaveMode === "string" ? rawMeta.compatSaveMode : "";
     return {
         forceProxy,
         sourceHasTransparency,
         hasTransparency,
         sourceWidth,
         sourceHeight,
-        mode
+        mode,
+        compatSaveUrl,
+        compatSaveMode
     };
 }
 
