@@ -764,6 +764,121 @@ function fillTransparentRgbNearest(data, w, h, opts = {}){
   return changed;
 }
 
+function repairTranslucentRgbFromNearestOpaque(data, w, h, opts = {}){
+  const sourceAlphaMin = Number.isFinite(opts.sourceAlphaMin) ? opts.sourceAlphaMin : 192;
+  const targetAlphaMax = Number.isFinite(opts.targetAlphaMax) ? opts.targetAlphaMax : 224;
+  const maxDistance = Number.isFinite(opts.maxDistance) ? opts.maxDistance : 10;
+  const clearDarkFringeAlphaMax = Number.isFinite(opts.clearDarkFringeAlphaMax) ? opts.clearDarkFringeAlphaMax : 72;
+  const clearDarkFringeMaxRgb = Number.isFinite(opts.clearDarkFringeMaxRgb) ? opts.clearDarkFringeMaxRgb : 56;
+  const clearDarkFringeMaxLuma = Number.isFinite(opts.clearDarkFringeMaxLuma) ? opts.clearDarkFringeMaxLuma : 48;
+  const softenEdgeAlphaMax = Number.isFinite(opts.softenEdgeAlphaMax) ? opts.softenEdgeAlphaMax : 96;
+  const n = w * h;
+  const dist = new Int16Array(n);
+  const srcR = new Uint8ClampedArray(n);
+  const srcG = new Uint8ClampedArray(n);
+  const srcB = new Uint8ClampedArray(n);
+  const queue = new Int32Array(n);
+  dist.fill(-1);
+
+  let head = 0;
+  let tail = 0;
+  let changed = false;
+
+  for (let p = 0; p < n; p++){
+    const o = p * 4;
+    const a = data[o + 3];
+    if (a >= sourceAlphaMin){
+      dist[p] = 0;
+      srcR[p] = data[o];
+      srcG[p] = data[o + 1];
+      srcB[p] = data[o + 2];
+      queue[tail++] = p;
+    }
+  }
+
+  if (tail === 0) return false;
+
+  const dirs = [
+    -1,  0,
+     1,  0,
+     0, -1,
+     0,  1,
+    -1, -1,
+     1, -1,
+    -1,  1,
+     1,  1
+  ];
+
+  while (head < tail){
+    const p = queue[head++];
+    if (dist[p] >= maxDistance) continue;
+    const px = p % w;
+    const py = (p / w) | 0;
+
+    for (let k = 0; k < dirs.length; k += 2){
+      const nx = px + dirs[k];
+      const ny = py + dirs[k + 1];
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      const np = ny * w + nx;
+      if (dist[np] >= 0) continue;
+      dist[np] = dist[p] + 1;
+      srcR[np] = srcR[p];
+      srcG[np] = srcG[p];
+      srcB[np] = srcB[p];
+      queue[tail++] = np;
+    }
+  }
+
+  for (let p = 0; p < n; p++){
+    const d = dist[p];
+    if (d <= 0 || d > maxDistance) continue;
+
+    const o = p * 4;
+    const a = data[o + 3];
+    if (a <= 0 || a >= 255 || a > targetAlphaMax) continue;
+
+    const r = data[o];
+    const g = data[o + 1];
+    const b = data[o + 2];
+    const nr = srcR[p];
+    const ng = srcG[p];
+    const nb = srcB[p];
+    const currentLuma = (r * 0.2126) + (g * 0.7152) + (b * 0.0722);
+    const sourceLuma = (nr * 0.2126) + (ng * 0.7152) + (nb * 0.0722);
+    const currentMax = Math.max(r, g, b);
+    const sourceMax = Math.max(nr, ng, nb);
+    const premultipliedLuma = sourceLuma * (a / 255);
+    const lowAlphaDarkNoise = a <= clearDarkFringeAlphaMax
+      && (currentMax <= clearDarkFringeMaxRgb || currentLuma <= clearDarkFringeMaxLuma)
+      && sourceMax > currentMax + 8;
+    const looksPremultiplied = sourceLuma > 20
+      && currentLuma <= Math.max(24, premultipliedLuma * 1.7)
+      && currentLuma + 8 < sourceLuma;
+    const looksBlackened = currentMax <= 36 && sourceMax > 40;
+    const verySoftEdge = a <= softenEdgeAlphaMax && sourceMax > 24 && currentMax + 4 < sourceMax;
+
+    if (lowAlphaDarkNoise){
+      data[o] = nr;
+      data[o + 1] = ng;
+      data[o + 2] = nb;
+      data[o + 3] = 0;
+      changed = true;
+      continue;
+    }
+
+    if (looksPremultiplied || looksBlackened || verySoftEdge){
+      if (r !== nr || g !== ng || b !== nb){
+        data[o] = nr;
+        data[o + 1] = ng;
+        data[o + 2] = nb;
+        changed = true;
+      }
+    }
+  }
+
+  return changed;
+}
+
 async function stabilizeTransparentPngBlob(fileOrBlob){
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -793,6 +908,15 @@ async function stabilizeTransparentPngBlob(fileOrBlob){
           matteB: 245,
           alphaFloor: 0,
           edgeAlphaMin: 0
+        });
+        repairTranslucentRgbFromNearestOpaque(d, cv.width, cv.height, {
+          sourceAlphaMin: 160,
+          targetAlphaMax: 252,
+          maxDistance: 14,
+          clearDarkFringeAlphaMax: 88,
+          clearDarkFringeMaxRgb: 68,
+          clearDarkFringeMaxLuma: 56,
+          softenEdgeAlphaMax: 128
         });
         ctx.putImageData(id, 0, 0);
       }
