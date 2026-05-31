@@ -177,6 +177,8 @@ const HOME_BOARD_WIDTH = 390;
 const HOME_BOARD_HEIGHT = 260;
 const HOME_LARGE_SOURCE_RATIO_WARN = 2.6;
 const HOME_SAVE_SAFE_TARGET_BYTES = 220 * 1024;
+const HOME_COMPAT_ALPHA_THRESHOLD = 48;
+const HOME_COMPAT_ALPHA_MATTE = 245;
 
 
 async function toPngBlobFromFile(file){
@@ -946,16 +948,40 @@ async function stabilizeTransparentPngBlob(fileOrBlob){
 }
 
 function applyBinaryAlphaForProxy(data, w, h, opts = {}){
-  const alphaThreshold = Number.isFinite(opts.alphaThreshold) ? opts.alphaThreshold : 32;
+  const alphaThreshold = Number.isFinite(opts.alphaThreshold) ? opts.alphaThreshold : HOME_COMPAT_ALPHA_THRESHOLD;
+  const matteR = Number.isFinite(opts.matteR) ? opts.matteR : HOME_COMPAT_ALPHA_MATTE;
+  const matteG = Number.isFinite(opts.matteG) ? opts.matteG : HOME_COMPAT_ALPHA_MATTE;
+  const matteB = Number.isFinite(opts.matteB) ? opts.matteB : HOME_COMPAT_ALPHA_MATTE;
   let changed = false;
 
   for (let p = 0; p < w * h; p++){
       const o = p * 4;
       const a = data[o + 3];
-      const nextA = a >= alphaThreshold ? 255 : 0;
+      const keep = a >= alphaThreshold;
 
-      if (nextA !== a){
-        data[o + 3] = nextA;
+      if (!keep){
+        if (a !== 0){
+          data[o + 3] = 0;
+          changed = true;
+        }
+        continue;
+      }
+
+      if (a > 0 && a < 255){
+        const blend = a / 255;
+        const nextR = Math.round(matteR + ((data[o] - matteR) * blend));
+        const nextG = Math.round(matteG + ((data[o + 1] - matteG) * blend));
+        const nextB = Math.round(matteB + ((data[o + 2] - matteB) * blend));
+        if (data[o] !== nextR || data[o + 1] !== nextG || data[o + 2] !== nextB){
+          data[o] = nextR;
+          data[o + 1] = nextG;
+          data[o + 2] = nextB;
+          changed = true;
+        }
+      }
+
+      if (a !== 255){
+        data[o + 3] = 255;
         changed = true;
       }
   }
@@ -1003,7 +1029,10 @@ async function prepareSaveCompatibleTransparentPngBlob(fileOrBlob){
           softenEdgeAlphaMax: 144
         });
         applyBinaryAlphaForProxy(d, cv.width, cv.height, {
-          alphaThreshold: 32
+          alphaThreshold: HOME_COMPAT_ALPHA_THRESHOLD,
+          matteR: HOME_COMPAT_ALPHA_MATTE,
+          matteG: HOME_COMPAT_ALPHA_MATTE,
+          matteB: HOME_COMPAT_ALPHA_MATTE
         });
         ctx.putImageData(id, 0, 0);
       }
@@ -1456,7 +1485,7 @@ async function prepareSaveCompatibleTransparentPngBlob(fileOrBlob){
           preparedMeta = {
             ...(preparedMeta || {}),
             compatSaveUrl,
-            compatSaveMode: 'binary-alpha-threshold-32'
+            compatSaveMode: `matte-alpha-threshold-${HOME_COMPAT_ALPHA_THRESHOLD}`
           };
         } catch (err) {
           traceMark('quick-upload-save-helper-failed', {
