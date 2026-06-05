@@ -178,7 +178,7 @@ const HOME_BOARD_HEIGHT = 260;
 const HOME_LARGE_SOURCE_RATIO_WARN = 2.6;
 const HOME_SAVE_SAFE_TARGET_BYTES = 220 * 1024;
 const HOME_COMPAT_ALPHA_THRESHOLD = 48;
-const HOME_COMPAT_ALPHA_MATTE = 245;
+const HOME_COMPAT_FALLBACK_MATTE = 245;
 
 
 async function toPngBlobFromFile(file){
@@ -949,12 +949,64 @@ async function stabilizeTransparentPngBlob(fileOrBlob){
 
 function applyBinaryAlphaForProxy(data, w, h, opts = {}){
   const alphaThreshold = Number.isFinite(opts.alphaThreshold) ? opts.alphaThreshold : HOME_COMPAT_ALPHA_THRESHOLD;
-  const matteR = Number.isFinite(opts.matteR) ? opts.matteR : HOME_COMPAT_ALPHA_MATTE;
-  const matteG = Number.isFinite(opts.matteG) ? opts.matteG : HOME_COMPAT_ALPHA_MATTE;
-  const matteB = Number.isFinite(opts.matteB) ? opts.matteB : HOME_COMPAT_ALPHA_MATTE;
+  const sourceAlphaMin = Number.isFinite(opts.sourceAlphaMin) ? opts.sourceAlphaMin : 160;
+  const fallbackR = Number.isFinite(opts.matteR) ? opts.matteR : HOME_COMPAT_FALLBACK_MATTE;
+  const fallbackG = Number.isFinite(opts.matteG) ? opts.matteG : HOME_COMPAT_FALLBACK_MATTE;
+  const fallbackB = Number.isFinite(opts.matteB) ? opts.matteB : HOME_COMPAT_FALLBACK_MATTE;
+  const n = w * h;
+  const dist = new Int16Array(n);
+  const srcR = new Uint8ClampedArray(n);
+  const srcG = new Uint8ClampedArray(n);
+  const srcB = new Uint8ClampedArray(n);
+  const queue = new Int32Array(n);
+  dist.fill(-1);
+
+  let head = 0;
+  let tail = 0;
   let changed = false;
 
-  for (let p = 0; p < w * h; p++){
+  for (let p = 0; p < n; p++){
+    const o = p * 4;
+    if (data[o + 3] >= sourceAlphaMin){
+      dist[p] = 0;
+      srcR[p] = data[o];
+      srcG[p] = data[o + 1];
+      srcB[p] = data[o + 2];
+      queue[tail++] = p;
+    }
+  }
+
+  const dirs = [
+    -1,  0,
+     1,  0,
+     0, -1,
+     0,  1,
+    -1, -1,
+     1, -1,
+    -1,  1,
+     1,  1
+  ];
+
+  while (head < tail){
+    const p = queue[head++];
+    const px = p % w;
+    const py = (p / w) | 0;
+
+    for (let k = 0; k < dirs.length; k += 2){
+      const nx = px + dirs[k];
+      const ny = py + dirs[k + 1];
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      const np = ny * w + nx;
+      if (dist[np] >= 0) continue;
+      dist[np] = dist[p] + 1;
+      srcR[np] = srcR[p];
+      srcG[np] = srcG[p];
+      srcB[np] = srcB[p];
+      queue[tail++] = np;
+    }
+  }
+
+  for (let p = 0; p < n; p++){
       const o = p * 4;
       const a = data[o + 3];
       const keep = a >= alphaThreshold;
@@ -969,9 +1021,12 @@ function applyBinaryAlphaForProxy(data, w, h, opts = {}){
 
       if (a > 0 && a < 255){
         const blend = a / 255;
-        const nextR = Math.round(matteR + ((data[o] - matteR) * blend));
-        const nextG = Math.round(matteG + ((data[o + 1] - matteG) * blend));
-        const nextB = Math.round(matteB + ((data[o + 2] - matteB) * blend));
+        const anchorR = dist[p] >= 0 ? srcR[p] : fallbackR;
+        const anchorG = dist[p] >= 0 ? srcG[p] : fallbackG;
+        const anchorB = dist[p] >= 0 ? srcB[p] : fallbackB;
+        const nextR = Math.round(anchorR + ((data[o] - anchorR) * blend));
+        const nextG = Math.round(anchorG + ((data[o + 1] - anchorG) * blend));
+        const nextB = Math.round(anchorB + ((data[o + 2] - anchorB) * blend));
         if (data[o] !== nextR || data[o + 1] !== nextG || data[o + 2] !== nextB){
           data[o] = nextR;
           data[o + 1] = nextG;
@@ -1030,9 +1085,9 @@ async function prepareSaveCompatibleTransparentPngBlob(fileOrBlob){
         });
         applyBinaryAlphaForProxy(d, cv.width, cv.height, {
           alphaThreshold: HOME_COMPAT_ALPHA_THRESHOLD,
-          matteR: HOME_COMPAT_ALPHA_MATTE,
-          matteG: HOME_COMPAT_ALPHA_MATTE,
-          matteB: HOME_COMPAT_ALPHA_MATTE
+          matteR: HOME_COMPAT_FALLBACK_MATTE,
+          matteG: HOME_COMPAT_FALLBACK_MATTE,
+          matteB: HOME_COMPAT_FALLBACK_MATTE
         });
         ctx.putImageData(id, 0, 0);
       }
@@ -1485,7 +1540,7 @@ async function prepareSaveCompatibleTransparentPngBlob(fileOrBlob){
           preparedMeta = {
             ...(preparedMeta || {}),
             compatSaveUrl,
-            compatSaveMode: `matte-alpha-threshold-${HOME_COMPAT_ALPHA_THRESHOLD}`
+            compatSaveMode: `adaptive-matte-alpha-threshold-${HOME_COMPAT_ALPHA_THRESHOLD}`
           };
         } catch (err) {
           traceMark('quick-upload-save-helper-failed', {
