@@ -86,17 +86,53 @@
 
   function saveUrl() {
     const url = (input && input.value || "").trim();
-    chrome.storage.local.get({ img: ["", false, false, null, AUTO_MULTI_BOARD_MODE] }, (o)=>{
+    if (!url) return;
+    // Show the selected image immediately while any save-compatible helper is prepared.
+    setPreview(url);
+    chrome.storage.local.get({ img: ["", false, false, null, AUTO_MULTI_BOARD_MODE] }, async (o)=>{
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
       const preferDirect = Array.isArray(o.img) ? !!o.img[2] : false;
       const multiBoardMode = AUTO_MULTI_BOARD_MODE;
       const oldUrl = Array.isArray(o.img) ? (o.img[0] || '') : '';
       const pendingMeta = takePendingRedirectMeta(url);
       const existingMeta = extractExistingRedirectMeta(o.img);
-      const nextMeta = pendingMeta || (url === oldUrl ? existingMeta : null);
-      // immediate preview
-      setPreview(url);
-      traceMark('save-url', { enabled, preferDirect, multiBoardMode, url });
+      let nextMeta = pendingMeta || (url === oldUrl ? existingMeta : null);
+      const needsCompatHelper = preferDirect
+        && isDirectImgBbPngUrl(url)
+        && (!nextMeta || !nextMeta.compatSaveUrl)
+        && (!nextMeta || nextMeta.sourceHasTransparency !== false);
+
+      if (needsCompatHelper) {
+        if (btn) btn.disabled = true;
+        setTraceStatus('Preparing transparent save image...');
+        traceMark('direct-url-save-helper-start', { url });
+        try {
+          nextMeta = await createDirectUrlSaveHelperMeta(url);
+          setTraceStatus('Transparent save image ready.');
+          traceMark('direct-url-save-helper-success', {
+            url,
+            compatSaveUrl: nextMeta.compatSaveUrl || '',
+            compatSaveMode: nextMeta.compatSaveMode || '',
+            hasTransparency: !!nextMeta.hasTransparency
+          });
+        } catch (err) {
+          setTraceStatus('Could not prepare the transparent save image. The direct URL was kept.', true);
+          traceMark('direct-url-save-helper-failed', {
+            url,
+            message: (err && err.message) ? err.message : String(err)
+          });
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      traceMark('save-url', {
+        enabled,
+        preferDirect,
+        multiBoardMode,
+        url,
+        compatSaveMode: nextMeta && nextMeta.compatSaveMode ? nextMeta.compatSaveMode : ''
+      });
       chrome.storage.local.set({ img: [url, enabled, preferDirect, nextMeta, AUTO_MULTI_BOARD_MODE] });
     });
   }
@@ -1636,6 +1672,60 @@ function showToast(msg){
 function toPngFilename(name) {
   const safe = String(name || 'image').replace(/\.[a-zA-Z0-9]+$/, '');
   return `${safe || 'image'}.png`;
+}
+
+function isDirectImgBbPngUrl(urlString) {
+  try {
+    const url = new URL(String(urlString || '').trim());
+    const host = url.hostname.toLowerCase();
+    return (host === 'i.ibb.co' || host === 'i.imgbb.com')
+      && /\.png$/i.test(url.pathname || '');
+  } catch (_) {
+    return false;
+  }
+}
+
+async function createDirectUrlSaveHelperMeta(urlString) {
+  const response = await fetch(urlString, { cache: 'no-store', credentials: 'omit' });
+  if (!response.ok) {
+    throw new Error(`Image download failed (${response.status})`);
+  }
+
+  const sourceBlob = await response.blob();
+  const img = await loadImageSource(sourceBlob);
+  const sourceWidth = img.width || img.naturalWidth || 0;
+  const sourceHeight = img.height || img.naturalHeight || 0;
+  if (!sourceWidth || !sourceHeight) {
+    throw new Error('Invalid direct image size');
+  }
+
+  const hasTransparency = imageHasTransparency(img, sourceWidth, sourceHeight);
+  const preparedMeta = {
+    sourceWidth,
+    sourceHeight,
+    outputWidth: sourceWidth,
+    outputHeight: sourceHeight,
+    mode: 'direct-url',
+    downscaleRatio: 1,
+    sourceHasTransparency: hasTransparency,
+    hasTransparency
+  };
+
+  if (!hasTransparency) {
+    return createRedirectMetaFromPrepared(preparedMeta);
+  }
+
+  const helperBlob = await prepareSaveCompatibleTransparentPngBlob(sourceBlob);
+  const pathName = new URL(urlString).pathname.split('/').pop() || 'image.png';
+  const helperFile = new File([helperBlob], toPngFilename(pathName), { type: 'image/png' });
+  const { uploadImage } = await import('../../src/lib/uploader.js');
+  const compatSaveUrl = await uploadImage(helperFile, { host: 'imgbb' });
+
+  return createRedirectMetaFromPrepared({
+    ...preparedMeta,
+    compatSaveUrl,
+    compatSaveMode: `adaptive-matte-alpha-threshold-${HOME_COMPAT_ALPHA_THRESHOLD}`
+  });
 }
 
 function createRedirectMetaFromPrepared(preparedMeta) {
