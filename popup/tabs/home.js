@@ -6,9 +6,6 @@
   const btn     = document.getElementById('btn-set');
   const toggle  = document.getElementById('enable-redirect');
   const modeToggle = document.getElementById('prefer-direct-transparent');
-  const traceCopyBtn = document.getElementById('btn-trace-copy');
-  const traceClearBtn = document.getElementById('btn-trace-clear');
-  const traceStatusEl = document.getElementById('trace-status');
   const preview = document.querySelector('.preview');
 
   function setPreview(url) {
@@ -32,12 +29,6 @@
     else { img.remove(); }
   }
 
-  function setTraceStatus(msg, isErr) {
-    if (!traceStatusEl) return;
-    traceStatusEl.textContent = msg || '';
-    traceStatusEl.style.color = isErr ? '#b00020' : '#6b7280';
-  }
-
   function traceMark(label, payload) {
     try {
       chrome.runtime.sendMessage({ type: 'ywp_trace_mark', payload: { label, ...(payload || {}) } }, () => {
@@ -48,23 +39,6 @@
     } catch (_) {
       // Ignore trace failures; this should never block normal behavior.
     }
-  }
-
-  function traceRequest(type, payload) {
-    return new Promise((resolve) => {
-      try {
-        chrome.runtime.sendMessage({ type, payload: payload || {} }, (res) => {
-          const err = chrome.runtime.lastError;
-          if (err) {
-            resolve({ ok: false, error: err.message });
-            return;
-          }
-          resolve(res || { ok: false, error: 'No response from background.' });
-        });
-      } catch (e) {
-        resolve({ ok: false, error: String(e) });
-      }
-    });
   }
 
   function load() {
@@ -103,12 +77,15 @@
         && (!nextMeta || nextMeta.sourceHasTransparency !== false);
 
       if (needsCompatHelper) {
-        if (btn) btn.disabled = true;
-        setTraceStatus('Preparing transparent save image...');
+        const originalBtnText = btn ? btn.textContent : '';
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Preparing...';
+        }
         traceMark('direct-url-save-helper-start', { url });
         try {
           nextMeta = await createDirectUrlSaveHelperMeta(url);
-          setTraceStatus('Transparent save image ready.');
+          showToast('Transparent save image ready');
           traceMark('direct-url-save-helper-success', {
             url,
             compatSaveUrl: nextMeta.compatSaveUrl || '',
@@ -116,13 +93,16 @@
             hasTransparency: !!nextMeta.hasTransparency
           });
         } catch (err) {
-          setTraceStatus('Could not prepare the transparent save image. The direct URL was kept.', true);
+          showToast('Could not prepare transparent save image');
           traceMark('direct-url-save-helper-failed', {
             url,
             message: (err && err.message) ? err.message : String(err)
           });
         } finally {
-          if (btn) btn.disabled = false;
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = originalBtnText;
+          }
         }
       }
 
@@ -162,40 +142,10 @@
     });
   }
 
-  async function copyTrace() {
-    setTraceStatus('Collecting trace...');
-    const res = await traceRequest('ywp_trace_get');
-    if (!res || !res.ok) {
-      setTraceStatus('Trace failed: ' + ((res && res.error) || 'unknown error'), true);
-      return;
-    }
-
-    const text = JSON.stringify(res, null, 2);
-    try {
-      await navigator.clipboard.writeText(text);
-      setTraceStatus('Redirect trace copied. Paste it here.');
-      traceMark('trace-copied', { length: text.length });
-    } catch (e) {
-      setTraceStatus('Copy failed. Trace written to console.', true);
-      console.log('YoWorld Paint trace payload:', res);
-    }
-  }
-
-  async function clearTrace() {
-    const res = await traceRequest('ywp_trace_clear');
-    if (!res || !res.ok) {
-      setTraceStatus('Clear failed: ' + ((res && res.error) || 'unknown error'), true);
-      return;
-    }
-    setTraceStatus('Redirect trace cleared.');
-  }
-
   if (btn)   btn.addEventListener('click', saveUrl);
   if (input) input.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); saveUrl(); }});
   if (toggle) toggle.addEventListener('change', saveToggle);
   if (modeToggle) modeToggle.addEventListener('change', saveTransparencyMode);
-  if (traceCopyBtn) traceCopyBtn.addEventListener('click', copyTrace);
-  if (traceClearBtn) traceClearBtn.addEventListener('click', clearTrace);
 
   window.__ywpTraceMark = traceMark;
 
@@ -1154,7 +1104,6 @@ async function prepareSaveCompatibleTransparentPngBlob(fileOrBlob){
   const resizeChk = document.getElementById('qu-autoresize');
   const transparencyModeChk = document.getElementById('prefer-direct-transparent');
   const clearBtn = document.getElementById('qu-clear');
-  const bridgeBtn = document.getElementById('btn-upload-last');
   const traceMark = window.__ywpTraceMark || function(){ };
   if (!hostSel || !fileEl || !btnUpload) return;
 
@@ -1631,30 +1580,6 @@ async function prepareSaveCompatibleTransparentPngBlob(fileOrBlob){
     });
   }
 
-  // Bridge: Upload last exported PNG from Sales
-  if (bridgeBtn){
-    try {
-      const last = localStorage.getItem('ywp:lastExportPng');
-      bridgeBtn.disabled = !last;
-    } catch(_){}
-    bridgeBtn.addEventListener('click', async () => {
-      try {
-        const dataUrl = localStorage.getItem('ywp:lastExportPng');
-        if (!dataUrl){ showToast('No recent export found'); return; }
-        // Convert dataURL to Blob
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        const file = new File([blob], 'ywp-sales-board.png', { type: 'image/png' });
-        pickedFile = file;
-        setStatus('File ready from last export.');
-        await persistUploaderState();
-        // Auto trigger Upload with auto-set if desired
-        if (autoChk) autoChk.checked = true;
-        btnUpload.click();
-        showToast('Uploading last export…');
-      } catch(e){ setStatus('Could not load last export', true); }
-    });
-  }
 })();
 
 // Toast helper

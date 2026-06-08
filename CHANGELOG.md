@@ -1,42 +1,25 @@
 # YoWorld Paint - Changelog
-## v3.5 — Update
-**Release Date:** 2026-02-10
+## v3.5 - Current Release
+**Release Date:** 2026-04-25
+**Maintenance Refresh:** 2026-06-08
 
-Changes
-- Sales Boards tab and YoWorld Info capture flow removed
-  - Recommended replacement is Windows crop/snipping plus Home Quick Upload
-- Home redirect now bypasses the YoWorld Info proxy for direct ImgBB PNG links
-  - Intended to better preserve transparency for PNG uploads
-  - Non-ImgBB links and non-PNG links still use the proxy path
-- Side Panel is now the default preferred view for new or unset installs
-  - Existing users who already saved Popup keep their preference
-  - Extension action click behavior now follows the saved view mode more consistently
-- Added Side Panel view support
-  - Extension can now open as a traditional popup or as a browser side panel
-  - Side panel provides a full-height, flexible-width view that stays open alongside browser tabs
-  - Dedicated side panel UI (`sidepanel.html`) with optimized full-space layout
-- View Mode preference in Resources tab
-  - New "Preferred View" selector above theme settings
-  - Choose between "Popup" (traditional) or "Side Panel" (new)
-  - Preference is saved and automatically applied when opening the extension
-  - Switching to side panel mode automatically opens the side panel view
-- Theme system now works correctly in both popup and side panel modes
-- All remaining features (Quick Upload, Transform, Tools, FAQ, Resources) fully functional in both views
-- Side panel UI uses responsive sizing with scrollable content areas
-- Added `sidePanel` permission to manifest
-- Removed "Glow Fix" feature from Home tab
-  - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
-  - Fiddler-style injection/interception approaches are non-viable for this MV3 extension architecture
-
-Files Added
-- `popup/sidepanel.html` - Dedicated side panel interface
-- `popup/sidepanel.css` - Side panel-specific layout styling
+Highlights
+- Added Transparency Mode (Direct URL) for better PNG transparency and edge-color preservation.
+- Added a save-compatible image preparation path for reliable paint-board persistence.
+- Redirect and save-finalizer routing no longer depend on YoWorld.info or `api.yoworld.info`.
+- Legacy stored YoWorld.info proxy URLs are migrated back to their original image URL on startup.
+- Removed the `https://api.yoworld.info/*` host permission.
+- Applying the same image to multiple boards is automatic; no separate multiboard controls are required.
+- Redirect protection is scoped to recently used paint boards so unrelated boards remain editable.
+- Redirect can be turned off, images can be cleared, and cleared boards remain empty.
+- Removed Copy Redirect Trace and Clear Trace from the Home tab release UI.
+- Removed the retired Sales Boards tab and YoWorld.info capture workflow.
+- Updated the Quick Image Uploader, Transform, Tools, FAQ, Resources, popup, and side-panel guidance.
 
 Notes
-- Default view mode remains "Popup" for existing users
-- All functionality is identical between popup and side panel views
-- Side panel view is optimized for wider screens and extended use
-- Dither/glow handling remains an open problem for future updates
+- Popup and Side Panel remain available through the saved Preferred View setting.
+- ImgBB is used only when the user uploads an image or requests save-compatible preparation.
+- The Windows crop/snipping workflow replaces the retired Sales Boards capture feature.
 
 ## v3.2.1 — Update
 **Release Date:** 2025-11-08
@@ -154,7 +137,7 @@ ToDo:
 	- Sales Boards: URL input, text input/sizing/style, export, and save .png working as expected.
 	- FAQ: In-tact section texts, unaffiliated notice, and donation properly placed and working
 	- No console or stack trace errors found 
-**NOTE**: When yoworld.info is inoperable, extension will break. There is a minimal working version which only puts images on paint boards (old school way). Consider uploading this to GitHub as well.
+**Historical note:** This older build depended on yoworld.info. The v3.5 maintenance refresh removed that runtime dependency.
 
 ## v2.1 (BETA) — In testing
 **Release Date:** 2025-08-28

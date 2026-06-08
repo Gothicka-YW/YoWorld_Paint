@@ -2,6 +2,8 @@
 
 Install from the Chrome Web Store, then pin the icon so it is always one click away.
 
+Current extension version: **v3.5**
+
 ---
 
 ## Step-by-Step (Chrome Web Store)
@@ -37,6 +39,21 @@ Install from the Chrome Web Store, then pin the icon so it is always one click a
 ## Launch
 
 Click the pinned **YoWorld Paint** icon to open the extension.
+
+You can choose Popup or Side Panel mode later from **Resources**.
+
+---
+
+## Local Unpacked Installation
+
+Use this method for the local testing build:
+
+1. Open `chrome://extensions`.
+2. Enable **Developer mode**.
+3. Click **Load unpacked**.
+4. Select the `YoWorld_Paint` folder.
+5. After code changes, click **Reload** on the extension card.
+6. Confirm the extension card and header still display version **3.5**.
 
 ---
 

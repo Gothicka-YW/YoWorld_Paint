@@ -92,21 +92,20 @@ let currentRoutingState = {
     updatedAt: new Date().toISOString()
 };
 
-function buildYoworldCompatTarget(imgUrl) {
+function buildCompatTarget(imgUrl) {
     const normalizedUrl = (imgUrl || "").trim();
     if (!normalizedUrl) return "";
-    if (isYoworldProxyUrl(normalizedUrl)) return normalizedUrl;
-    return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(normalizedUrl);
+    return getDirectUrlFromYoworldProxy(normalizedUrl) || normalizedUrl;
 }
 
 function buildRoutingTargets(safeImgUrl, directMode, imgMeta) {
     const normalizedSafeImgUrl = (safeImgUrl || "").trim();
     const normalizedImgMeta = normalizeImgMeta(imgMeta);
     const compatSourceUrl = normalizedImgMeta.compatSaveUrl || normalizedSafeImgUrl;
-    const legacyEndpoint = buildYoworldCompatTarget(compatSourceUrl);
+    const compatTarget = buildCompatTarget(compatSourceUrl);
     return {
-        imageTargetUrl: directMode ? buildRedirectTarget(normalizedSafeImgUrl, normalizedImgMeta) : legacyEndpoint,
-        compatTargetUrl: legacyEndpoint
+        imageTargetUrl: directMode ? buildRedirectTarget(normalizedSafeImgUrl, normalizedImgMeta) : compatTarget,
+        compatTargetUrl: compatTarget
     };
 }
 
@@ -274,7 +273,7 @@ function rememberRecentBoardFinalizer(boardUrl, req) {
         boardUrl: normalizedBoardUrl,
         safeImgUrl,
         imageTargetUrl: currentRoutingState.imageTargetUrl || safeImgUrl,
-        compatTargetUrl: currentRoutingState.compatTargetUrl || ("https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl)),
+        compatTargetUrl: currentRoutingState.compatTargetUrl || buildCompatTarget(safeImgUrl),
         imgMeta: currentRoutingState.imgMeta || null,
         firstSeenAt: existing && existing.safeImgUrl === safeImgUrl ? Number(existing.firstSeenAt || now) : now,
         lastSeenAt: now,
@@ -772,8 +771,8 @@ function restoreRecentBoardFinalizerState(rawState) {
         restoredEntries.push({
             boardUrl,
             safeImgUrl,
-            imageTargetUrl: String(rawEntry && rawEntry.imageTargetUrl || targets.imageTargetUrl || safeImgUrl),
-            compatTargetUrl: String(rawEntry && rawEntry.compatTargetUrl || targets.compatTargetUrl || ""),
+            imageTargetUrl: buildCompatTarget(String(rawEntry && rawEntry.imageTargetUrl || targets.imageTargetUrl || safeImgUrl)),
+            compatTargetUrl: buildCompatTarget(String(rawEntry && rawEntry.compatTargetUrl || targets.compatTargetUrl || "")),
             imgMeta: rawEntry && rawEntry.imgMeta && typeof rawEntry.imgMeta === "object" ? rawEntry.imgMeta : null,
             firstSeenAt: Number(rawEntry && rawEntry.firstSeenAt || savedAt),
             lastSeenAt: Number(rawEntry && rawEntry.lastSeenAt || savedAt),
@@ -1852,19 +1851,19 @@ function buildRedirectTarget(imgUrl, imgMeta) {
     const safeImgUrl = (imgUrl || "").trim();
     const safeMeta = normalizeImgMeta(imgMeta);
     if (safeMeta.forceProxy) {
-        return buildYoworldCompatTarget(safeImgUrl);
+        return buildCompatTarget(safeImgUrl);
     }
     const unwrappedDirect = getDirectUrlFromYoworldProxy(safeImgUrl);
     if (isDirectTransparentPngUrl(unwrappedDirect)) {
         return unwrappedDirect;
     }
     if (isYoworldProxyUrl(safeImgUrl)) {
-        return safeImgUrl;
+        return unwrappedDirect || safeImgUrl;
     }
     if (isDirectTransparentPngUrl(safeImgUrl)) {
         return safeImgUrl;
     }
-    return buildYoworldCompatTarget(safeImgUrl);
+    return buildCompatTarget(safeImgUrl);
 }
 
 function getDirectUrlFromYoworldProxy(urlString) {
@@ -1900,8 +1899,9 @@ function normalizeImgMeta(rawMeta) {
     const sourceHasTransparency = !!rawMeta.sourceHasTransparency;
     const hasTransparency = !!rawMeta.hasTransparency;
     const forceProxy = !!rawMeta.forceProxy && !sourceHasTransparency;
-    const compatSaveUrl = /^https?:\/\//i.test(String(rawMeta.compatSaveUrl || "").trim())
-        ? String(rawMeta.compatSaveUrl || "").trim()
+    const rawCompatSaveUrl = String(rawMeta.compatSaveUrl || "").trim();
+    const compatSaveUrl = /^https?:\/\//i.test(rawCompatSaveUrl)
+        ? buildCompatTarget(rawCompatSaveUrl)
         : "";
     const compatSaveMode = typeof rawMeta.compatSaveMode === "string" ? rawMeta.compatSaveMode : "";
     return {
@@ -1974,13 +1974,32 @@ function loadSettings() {
         }
         if (e.img && e.img.length) {
             mergePinnedProtectionsFromSnapshot(e[PROTECTION_STATE_KEY]);
-            const safeImgUrl = (e.img[0] || "").trim();
+            const storedImgUrl = (e.img[0] || "").trim();
+            const safeImgUrl = buildCompatTarget(storedImgUrl);
             const requestedEnabled = !!e.img[1];
             const directMode = !!e.img[2];
             const imgMeta = (Array.isArray(e.img) && e.img.length > 3 && e.img[3] && typeof e.img[3] === "object")
                 ? e.img[3]
                 : null;
             const multiBoardMode = MULTI_BOARD_MODE_ENABLED;
+            if (safeImgUrl && safeImgUrl !== storedImgUrl) {
+                const migratedImg = Array.from(e.img);
+                migratedImg[0] = safeImgUrl;
+                pushTrace("legacy-proxy-url-migrated", {
+                    from: storedImgUrl,
+                    to: safeImgUrl
+                });
+                chrome.storage.local.set({ img: migratedImg }, () => {
+                    if (logChromeLastError("Error migrating legacy proxy URL")) {
+                        updateRedirectRulesInternal(safeImgUrl, requestedEnabled, directMode, {
+                            skipGrace: true,
+                            imgMeta,
+                            multiBoardMode
+                        });
+                    }
+                });
+                return;
+            }
             const restoredProtection = getRestorableProtectionState(
                 e[PROTECTION_STATE_KEY],
                 safeImgUrl,

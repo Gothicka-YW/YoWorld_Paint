@@ -1,117 +1,100 @@
-## How to Install YoWorld Paint
+# YoWorld Paint Tutorials
 
-- Using a Chromium browser, navigate to the Chrome Web Store and search "YoWorld Paint" or "Gothicka".
-- Click "Add to Chrome".
-- Click "Add Extension" on the popup.
-- On the right side of your browser's address bar, you will see a paint palette icon, right-click it and select "Pin" so it will remain on the bar.
+## Install YoWorld Paint
 
-It is now installed.
+1. Install from the Chrome Web Store, or load this folder unpacked for local testing.
+2. Pin the YoWorld Paint icon from Chrome's Extensions menu.
+3. Open YoWorld Paint from the toolbar.
 
-## How to Set Up Quick Uploader Feature
+## Set Up Quick Image Uploader
 
-- Navigate to imgbb.com and create a free account
-- Open YoWorld Paint and go to "Resources."
-- Scroll down until you see "Uploader Settings" with a text box.
-- Click "Get your API key here"
-- This will take you to api.imgbb.com.
-- Select "Add API Key" and copy the string of letters and numbers it gives you.
-- Go back to the YoWorld Paint extension's Resources and paste the key into the Uploader Settings text box.
-- Click "Save Key".
+1. Create or log in to an ImgBB account.
+2. Open YoWorld Paint > Resources.
+3. Click Get your API key here.
+4. Copy the ImgBB API key.
+5. Paste it into Uploader Settings.
+6. Click Save Key.
 
-Now you are ready to use the Quick Uploader feature on the Home tab.
+Quick Image Uploader uses the key only when you upload an image.
 
-## How to Use Quick Uploader in Home tab
+## Upload An Image From Home
 
-- On the Home tab, scroll down to the "Quick Image Uploader" section.
-- Either click the box encased in the dotted line or press ctrl+V to paste an image.
-- Leave "Prepare as 390x260 PNG" ON for the most reliable in-game save flow.
-- You can turn it OFF when you intentionally want original-size behavior.
-- If Prepare is OFF: smaller images are kept fully visible, and larger images are sent to Tools > Image Splitter.
-- "Auto-set Image" is checked by default. This is so you can see the preview above after it is uploaded.
-- Click "Upload" and you will see the image above if successful!
-- If your source has tiny text and was designed for multiple boards, use Tools > Image Splitter so text stays readable.
+1. Open Home.
+2. In Quick Image Uploader, paste, drag/drop, or click to select an image.
+3. Leave Resize to 390 x 260 on for the most reliable one-board save.
+4. Keep Auto-set Image on if you want the uploaded image placed into the Home URL field automatically.
+5. Click Upload.
+6. Confirm the preview shows your image.
 
-Next time, I will show you how to upload images manually in case you are unable to use imgbb for whatever reason.
+If Resize is off and the image is larger than one board, YoWorld Paint sends it to Tools > Image Splitter.
 
-## How to Manually Upload Images in YoWorld Paint
+## Use Transparency Mode
 
-- Select your image host of choice: Imgur.com or Postimages.org
-- Upload your image
-- IMPORTANT: You want the "direct link" to the image.
-  - On Imgur: Right click the image and click "Copy Image Address." This is the DIRECT LINK to the image.
-  - On Postimages: Copy the URL to the "Direct Link."
-- Open YoWorld Paint's Home tab.
-- In the upper text box, paste the image address copied from Imgur/Postimages.
-- Click the buttom "Set New Image".
-- You should see the image in the preview window.
+Use Transparency Mode for PNG images with transparent or semi-transparent pixels.
 
-In the next tutorial, I will show you how to apply the image to a paint board inside YoWorld!
+1. Turn on Transparency Mode (Direct URL).
+2. Upload or set a direct ImgBB PNG.
+3. YoWorld Paint will keep the direct PNG for preview quality.
+4. If needed, YoWorld Paint will create a hidden save-compatible helper image for the final YoWorld save step.
 
-## How to Apply Images to Paint Boards in YoWorld
+The helper is built by the extension and does not depend on YoWorld.info.
 
-- After loading your image in the Home tab of the extension, navigate to YoWorld.
+## Apply An Image To A YoWorld Paint Board
 
-Follow these steps:
+1. In Home, set or upload the image.
+2. Turn on Enable Redirect.
+3. In YoWorld, open a paint board.
+4. Press OK on the paint board.
+5. Return to YoWorld Paint and turn off Enable Redirect.
+6. Reopen the same paint board in YoWorld and press OK again to lock it in.
 
-1. Turn on "Redirect" at the top of home.
-2. Go to YoWorld, open a paint board and click "OK". You should see the image applied.
-3. IMPORTANT - Go back to the extension and turn off redirect.
-4. Go back to your paint board, open it and click "OK" again - this is the step that saves it.
+If you are applying the same image to multiple boards, repeat step 4 on each board while Redirect is on. Then turn Redirect off and lock in each touched board. There are no extra multiboard controls to manage.
 
-If you ever load into yw and have multiple boards turn into 1 image - don't freak out. It means you didn't turn off "Redirect" in the home tab of the extension. All you do is go turn it off and refresh. All the boards will be normal again.
+## Manually Set An Image URL
 
-## Making Board Images with Windows Crop
+1. Upload your image to a direct image host.
+2. Copy the direct image URL.
+3. Paste the URL into the Home image field.
+4. Click Set New Image.
 
-The dedicated Sales Boards tab has been retired. The replacement workflow is to crop exactly what you want in Windows, then paste it straight into Home.
+For best transparent PNG behavior, use direct ImgBB PNG URLs. When Transparency Mode is on, YoWorld Paint can generate a save-compatible helper for direct ImgBB PNGs.
 
-If you are using windows, use this trick to create boards quickly:
+## Windows Crop Workflow
 
-- Hold shift + Ctrl + S to activate the selective screen shot mode.
-- Drag the box around the exact area you want on the board. It will copy the image to your clipboard.
-- Go to the Home tab's quick uploader, and hold Ctrl and press "V" to paste the image there. Upload as normal.
-- Keep "Prepare as 390×260 PNG" ON when you want one-board output that saves consistently.
-- With Prepare OFF, larger images are automatically routed to Tools > Image Splitter.
+The old Sales Boards tab is retired. Use a crop-and-upload workflow instead.
 
-MAC COMMAND FOR THE SAME SEEN ABOVE: Press Cmd + Ctrl + Shift + 4, then drag to select. The screenshot is copied directly to your clipboard.
+1. Press `Shift + Ctrl + S`.
+2. Drag around the exact area you want.
+3. Paste into Home > Quick Image Uploader with `Ctrl + V`.
+4. Upload and apply normally.
 
-A tutorial video can be added later to demonstrate this workflow visually.
+Mac clipboard screenshot shortcut: `Cmd + Ctrl + Shift + 4`.
 
-If you ever want to use the same images, you can find them in your free Imgbb account you created. This is quicker than saving locally on your computer.
+## Transform Tab
 
-## Using the Transform Tab
+1. Load the left-facing or right-facing preset.
+2. Choose whether to resize to 390 x 260.
+3. Use multitile output when the transformed image should cover multiple boards.
+4. Upload your source image.
+5. Click Apply.
+6. Export the tile or tiles.
+7. Upload each tile from Home and apply it to its board.
 
-1. Load the preset you want. (Left Facing or Right Facing)
-2. Check "Resize to 390x260" if desired. If you're using multiple boards, do not check this.
-3. Check "multi-tile output" even if it's a singular board. Otherwise it may cut off the image. May change this to a default later - it's not needed if the image is small (i.e. small pixies to rotate that fit on a smaller portion of the board)
-4. Browse or Click the Dotted box to upload your image.
-5. Click "Apply"
-6. You should see a preview.
-7. Select "Export All Tiles"
-8. Save the files (.zip will be an option in the future).
-9. Use the Home tab to upload each image to a paint board.
+## Tools Tab
 
-## Tools (Board Size Calculator & Image Splitter)
-
-- Board Size Calculator: Enter how many boards you'd like to use for one image. You will see "Target Size" calculate the size of the image you will need before you split the image using the tool beneath that.
-- Image Splitter: After resizing your image to the appropriate size give, upload the image using the "Click or Drop / Paste Image" box and select "Split into tiles".
-  - You can download the images or copy directly from the extension if you do not need to save them.
-
-## FAQ Tab
-
-- Details of how to upload using this extension, using both the quick uploader & manual uploading.
-- A couple of tips. Will expand this!
+- Board Size Calculator: enter board columns and rows to get target pixel dimensions.
+- Image Splitter: upload, paste, or drop an image, then split into 390 x 260 board tiles.
+- Download tiles individually or as a ZIP.
 
 ## Resources Tab
 
-- Details AI Generators you can use
-- Image Editor Links
-- Image Hosts Links
-- *UPLOADER SETTINGS*
-  - This is where you go to set up the Quick Uploader found in the Home tab.
-- View Mode: Use the extension as either a Pop Up or Side Panel
-- Theme Selection: Make it perty!
+- Save or test the ImgBB API key.
+- Choose Popup or Side Panel view mode.
+- Choose a theme.
 
-## Buy Me a Coffee
+## Troubleshooting
 
-- Link to donations for Gothicka
-
+- If an image disappears after testing, make sure you completed the Redirect OFF lock-in step.
+- If a transparent image has edge artifacts, reload the unpacked extension and upload again to generate a fresh helper.
+- If a board feels stuck, turn Redirect off, wait a few seconds, refresh YoWorld, then clear or replace the board.
+- If Quick Upload fails, test your ImgBB key in Resources.

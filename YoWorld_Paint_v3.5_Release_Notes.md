@@ -1,40 +1,54 @@
-# YoWorld Paint v3.5 — Release Notes
+# YoWorld Paint v3.5 Release Notes
 
 Release date: 2026-04-25
 
-Highlights (includes v3.4 + v3.5 updates)
-v3.5 specific changes
-- Removed experimental "Glow Fix" feature from Home tab
-  - The old workaround is no longer needed
-  - Glow/dithering preservation is no longer an active issue for the current Home upload path
-  - Direct ImgBB PNG handling now preserves transparency and image quality much more reliably in-game
-  - Version bump: manifest version/name and UI title updated to 3.5
-- Added side panel manifest support and permission (`side_panel` + `sidePanel`)
+Current maintenance refresh: 2026-06-08
 
-- New Tools tab
-  - Board Size Calculator (boards wide/high -> target pixels)
-  - Image Splitter with scale toggle (fit to grid) or natural tiling
-  - Drag/drop/paste input; checkerboard thumbs to see transparency
-  - Download tiles individually or as a ZIP (store, no compression)
-  - Clear button and saved state so tiles persist after closing the popup
-- Home preview now shows a checkerboard under images to reveal transparent regions
-- Create Boards tab retired; renamed to Transform with a note to use Sales Boards for captures or Tools for splitting/warping
-- Popup widened to 540px and keeps the themed look from 3.2.1
-- Added Side Panel view support
-  - Extension can open as a traditional popup or in Chrome Side Panel
-  - Side panel uses a dedicated full-height UI with responsive layout
-- Added View Mode preference in Resources tab
-  - Choose Popup or Side Panel in "Preferred View"
-  - Preference is saved and applied for future use
-- Theme support works across both popup and side panel views
+## Highlights
 
+- Transparency Mode now uses direct PNG loading plus a save-compatible helper image.
+- Redirect/save routing no longer depends on YoWorld.info or `api.yoworld.info`.
+- Legacy stored YoWorld.info proxy URLs are migrated back to their original image URL on startup.
+- Automatic multiboard handling is enabled without extra Home tab controls.
+- Copy Redirect Trace and Clear Trace were removed from the Home tab release UI.
+- Side Panel support remains available.
+- Sales Boards and the YoWorld Info capture workflow remain retired.
 
+## Home
 
-How to update
-1) In chrome://extensions, turn on Developer mode.
-2) Click "Update" if already loaded, or "Load unpacked" and select the YoWorld_Paint folder.
-3) Confirm the popup header shows v3.5 and extension details show version 3.5.
+- Quick Image Uploader supports paste, drag/drop, and file input.
+- ImgBB remains the supported upload host.
+- Transparent direct PNGs can generate a hidden helper image for YoWorld's final save step.
+- Home preview uses a checkerboard to make transparent areas visible.
+- Oversized images are routed to Image Splitter when Resize is off.
 
-Notes
-- No analytics or tracking. Uploads only go to ImgBB when you choose to upload; other state lives in Chrome storage.
-- ZIP export uses a hand-rolled store archive (no compression) to avoid MV3 restrictions.
+## Tools
+
+- Board Size Calculator calculates target pixel dimensions from board counts.
+- Image Splitter creates 390 x 260 board tiles.
+- Tiles can be downloaded individually or as a ZIP.
+- Checkerboard previews show transparency.
+
+## Transform
+
+- Left/right perspective presets remain available.
+- Optional 390 x 260 resize.
+- Optional multitile output for board sets.
+
+## Permissions
+
+- Removed `https://api.yoworld.info/*`.
+- Current host permissions cover YoWorld, ImgBB direct images, ImgBB API uploads, Facebook/fbcdn image sources, and standard YoWorld domains.
+
+## How To Update A Local Unpacked Build
+
+1. Open `chrome://extensions`.
+2. Enable Developer mode.
+3. Click Update, or remove/reload the unpacked `YoWorld_Paint` folder.
+4. Confirm the extension still shows version `3.5`.
+
+## Notes
+
+- No analytics or tracking.
+- Uploads go to ImgBB only when the user chooses to upload.
+- Paint-board redirect rules are temporary workflow rules, not a background browsing monitor.
