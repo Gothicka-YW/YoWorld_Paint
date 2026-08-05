@@ -34,7 +34,8 @@
     "https://api.yoworld.info/*",
     "https://yoworld.com/*",
     "https://yoworld.info/*",
-    "https://api.imgbb.com/*"
+    "https://api.imgbb.com/*",
+    "https://i.ibb.co/*"
   ],
   "content_scripts": [
     {
