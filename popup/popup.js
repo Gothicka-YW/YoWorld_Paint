@@ -96,7 +96,6 @@
           const win = await chrome.windows.getCurrent();
           if (win && typeof win.id === 'number') {
             await chrome.sidePanel.open({ windowId: win.id });
-            // Close only when this page is running as the small popup.
             if (window.innerWidth < 650) window.close();
           }
         } catch(err) {
@@ -131,33 +130,46 @@
 
     const direct = document.createElement('option');
     direct.value = 'direct';
-    direct.textContent = 'Direct Image — experimental quality test';
+    direct.textContent = 'Direct Image — correct appearance, does not persist';
 
-    select.append(proxy, direct);
+    const directHeaders = document.createElement('option');
+    directHeaders.value = 'direct-headers';
+    directHeaders.textContent = 'Direct Image + compatibility headers — test 2';
+
+    select.append(proxy, direct, directHeaders);
 
     const note = document.createElement('div');
     note.id = 'transport-mode-note';
     note.className = 'note';
     note.style.margin = '0';
 
+    function normalizeMode(value){
+      if (value === 'direct') return 'direct';
+      if (value === 'direct-headers') return 'direct-headers';
+      return 'proxy';
+    }
+
     function updateNote(mode){
       if (mode === 'direct'){
-        note.textContent = 'Direct Image bypasses YoWorld.info and preserves the hosted file, but saving and reopening must be tested before release.';
+        note.textContent = 'Direct Image preserves the hosted PNG appearance, but testing confirmed that the board disappears after redirect is disabled and the board is saved.';
+        note.style.color = '#b00020';
+      } else if (mode === 'direct-headers'){
+        note.textContent = 'Test 2 keeps the exact ImgBB image bytes and adds only cross-origin compatibility headers. Use an i.ibb.co direct image URL.';
         note.style.color = '#9a6700';
       } else {
-        note.textContent = 'Compatibility Proxy keeps the known v3.4 save behavior but may flatten partial transparency and depends on YoWorld.info.';
+        note.textContent = 'Compatibility Proxy keeps the known v3.4 save behavior but flattens partial transparency and depends on YoWorld.info.';
         note.style.color = '';
       }
     }
 
     chrome.storage.local.get({ transportMode: 'proxy' }, data => {
-      const mode = data.transportMode === 'direct' ? 'direct' : 'proxy';
+      const mode = normalizeMode(data.transportMode);
       select.value = mode;
       updateNote(mode);
     });
 
     select.addEventListener('change', () => {
-      const mode = select.value === 'direct' ? 'direct' : 'proxy';
+      const mode = normalizeMode(select.value);
       updateNote(mode);
       chrome.storage.local.set({ transportMode: mode });
     });
