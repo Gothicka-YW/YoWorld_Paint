@@ -1,77 +1,114 @@
-# YoWorld Paint v3.5 Maintenance Summary
+# YoWorld Paint Extension Cleanup Summary
 
-Last updated: 2026-06-08
+**Date:** March 5, 2026  
+**Purpose:** Remove legacy/unused code from the extension codebase
 
-This document describes the current extension structure after legacy cleanup and the v3.5 transparency/routing maintenance work.
+---
 
-## Active User-Facing Tabs
+## ✅ Completed Fixes
 
-- Home
-  - Redirect controls.
-  - Transparency Mode.
-  - Image preview and direct URL input.
-  - Quick Image Uploader.
-- Transform
-  - Perspective presets and tile export.
-- Tools
-  - Board Size Calculator and Image Splitter.
-- FAQ
-  - Current upload and board-save guidance.
-- Resources
-  - ImgBB API key, view mode, themes, and useful links.
+### 1. **Fixed CSS Merge Conflicts**
+- **File:** `popup/popup.css`
+- **Issue:** Unresolved merge conflict markers from previous version
+- **Action:** Removed conflict markers, kept tool-card styles (required for Tools tab)
 
-## Retired Features
+### 2. **Removed Unused Options UI**
+- **File:** `manifest.json`
+- **Issue:** Referenced unused `options/` folder
+- **Action:** Removed `options_ui` entry from manifest
 
-- Sales Boards tab.
-- YoWorld Info capture workflow.
-- Create Boards tab.
-- Glow Fix experiment.
-- Copy Redirect Trace and Clear Trace Home controls.
-- Manual Apply to Multiple Boards / Finish Applying controls.
+### 3. **Fixed Theme CSS Merge Conflicts** (Previous session)
+- **File:** `popup/popup.css`
+- **Issue:** Merge conflict preventing Pastel Breeze theme from loading  
+- **Action:** Removed conflict markers around additional theme definitions
 
-## Current Routing
+---
 
-- The service worker uses Chrome Declarative Net Request rules.
-- Direct transparent ImgBB PNGs are used for high-quality preview routing.
-- Transparent images can receive a hidden save-compatible helper.
-- Multiboard handling is automatic.
-- Routing no longer depends on YoWorld.info or `api.yoworld.info`.
-- Old stored proxy URLs are migrated back to their original image URL.
+## 📋 Files to Delete Manually
 
-## Required Files
+### **✅ Completed Deletions:**
 
-- `background.js`
-  - Redirect rules, board tracking, finalization, migration, and internal diagnostics.
-- `popup/popup.html`
-  - Popup UI.
-- `popup/sidepanel.html`
-  - Side Panel UI.
-- `popup/popup.js`
-  - Navigation, themes, and shared UI behavior.
-- `popup/tabs/home.js`
-  - Home workflow, uploads, transparent helper generation, and preview behavior.
-- `popup/tabs/transform.js`
-  - Perspective transformation.
-- `popup/tabs/tools.js`
-  - Calculator, splitter, and ZIP export.
-- `popup/tabs/resources.js`
-  - ImgBB API key management.
-- `src/`
-  - Active uploader and settings modules. Do not remove.
+1. **`popup/tabs/sales.js`** (927 lines) ✓ DELETED
+   - Old sales board implementation
+   - **NOT loaded in `popup.html`**
+   - Current implementation: `sales-boards.js` (which IS loaded)
 
-## Release Checks
+2. **`content/yw_direct_upload.js`** ✓ DELETED
+   - Already marked as deprecated in file comments
+   - Not referenced in `manifest.json`
 
-1. Reload the unpacked extension.
-2. Confirm popup and Side Panel headers display v3.5.
-3. Test Quick Image Uploader.
-4. Test a transparent PNG through the Redirect ON/OFF lock-in workflow.
-5. Test replacing and erasing a board.
-6. Test the same image on multiple boards.
-7. Test refresh and extension restart persistence.
-8. Confirm active redirect rules do not contain `api.yoworld.info`.
-9. Confirm the Home tab does not display trace controls.
+3. **`options/` folder (Entire directory)** ✓ DELETED
+   - `options/options.html`
+   - `options/options.js` (Vue boilerplate, not functional)
+   - `options/options.css`
+   - **Already removed from manifest.json**
 
-## Notes
+4. **`backup_extension/` folder** ✓ DELETED
+   - Development backup, not needed in production
 
-- Historical changelog entries may mention retired features because they document older releases.
-- Current behavior is defined by the v3.5 section of the changelog, README, release notes, and current in-app FAQ.
+---
+
+## 🔒 Files to Keep (Required)
+
+### **`src/` folder - DO NOT DELETE**
+- ⚠️ **Required for Quick Upload feature**
+- Contains active uploader implementation:
+  - `src/lib/uploader.js` - Image upload logic
+  - `src/lib/settings.js` - Settings management
+  - `src/providers/` - Upload providers (ImgBB, etc.)
+- Removing this folder breaks the Quick Upload functionality on the Home tab
+
+---
+
+## 🔍 Current Active Files
+
+### **Loaded in `popup.html`:**
+- `popup/popup.js` - Main popup logic, themes, tab switching
+- `popup/tabs/home.js` - Home tab with Quick Upload
+- `popup/tabs/sales-boards.js` - Sales Boards tab (3×2 from yoworld.info)
+- `popup/tabs/tools.js` - Tools tab (calculator, splitter)
+- `popup/tabs/transform.js` - Transform tab (pre-warp, perspective)
+- `popup/tabs/faq.js` - FAQ tab
+- `popup/tabs/resources.js` - Resources tab
+
+### **Referenced in `manifest.json`:**
+- `background.js` - Service worker for redirect rules
+- `content/sb_capture.js` - Content script for yoworld.info
+
+---
+
+## ✅ Cleanup Complete
+
+All recommended files have been deleted. The extension codebase is now clean and optimized.
+
+**Next Steps:**
+
+1. **Test the extension** to verify functionality:
+   - Reload extension in Chrome (`chrome://extensions`)
+   - Test all tabs: Home, Sales Boards, Transform, Tools, FAQ, Resources
+   - Verify themes work correctly
+   - Test Quick Upload functionality (uses `src/` folder)
+
+2. **Verify no errors** in Chrome DevTools console
+
+---
+
+## 📊 Space Saved
+
+- **`sales.js`:** ~927 lines
+- **`options/` folder:** ~500+ lines (Vue bundle)
+- **`backup_extension/`:** Variable (depends on backup content)
+
+**Total estimated cleanup:** ~1,500+ lines of unused code
+
+**Note:** `src/` folder (~2,000 lines) is **NOT** removed as it's required for Quick Upload
+
+---
+
+## ✨ Result
+
+After cleanup, the extension will:
+- ✅ Load faster (fewer files)
+- ✅ Be easier to maintain (no dead code)
+- ✅ Have clearer structure (only active code present)
+- ✅ Function identically (no features removed)

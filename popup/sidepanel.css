@@ -41,9 +41,8 @@ body.sidepanel-ui .preview-card {
 }
 
 body.sidepanel-ui .preview {
-  width: min(390px, 100%);
-  height: auto;
-  aspect-ratio: 3 / 2;
+  width: 390px;
+  height: 260px;
 }
 
 body.sidepanel-ui .sales-preview.dynamic {
@@ -53,14 +52,14 @@ body.sidepanel-ui .sales-preview.dynamic {
   margin-right: auto;
 }
 
-body.sidepanel-ui #tx-preview {
-  width: min(390px, 100%);
-  height: auto;
+body.sidepanel-ui #tx-preview,
+body.sidepanel-ui #skew-preview {
   max-width: 100%;
 }
 
 body.sidepanel-ui .content-pad,
 body.sidepanel-ui #panel-home,
+body.sidepanel-ui #panel-sales-boards,
 body.sidepanel-ui #panel-transform,
 body.sidepanel-ui #panel-tools,
 body.sidepanel-ui #panel-faq,
