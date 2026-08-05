@@ -15,6 +15,15 @@ jobs:
       - name: Check out test branch
         uses: actions/checkout@v4
 
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          node --check background.js
+          node --check popup/popup.js
+          node --check popup/tabs/home.js
+          node --check src/lib/indexed-png.js
+          node --check src/lib/uploader.js
+
       - name: Prepare extension folder
         shell: bash
         run: |
