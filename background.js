@@ -1,4 +1,9 @@
-console.log("YoWorld Art MV3 worker running (storage-connected).");
+console.log("YoWorld Paint MV3 worker running.");
+
+const REDIRECT_RULE_ID = 1;
+const DEFAULT_TRANSPORT_MODE = "proxy";
+const DEFAULT_VIEW_MODE = "sidepanel";
+const VIEW_DEFAULT_MIGRATION_KEY = "ywpSidePanelDefaultV1";
 
 function getChromeLastErrorMessage() {
     const err = chrome.runtime.lastError;
@@ -21,25 +26,63 @@ function logChromeLastError(context) {
     return true;
 }
 
-function updateRedirectRules(imgUrl, enableRedirect) {
+function normalizeTransportMode(value) {
+    return value === "direct" ? "direct" : DEFAULT_TRANSPORT_MODE;
+}
+
+function normalizeViewMode(value) {
+    return value === "popup" ? "popup" : DEFAULT_VIEW_MODE;
+}
+
+function normalizeHttpUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    try {
+        const parsed = new URL(raw);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+        return parsed.href;
+    } catch (_) {
+        return "";
+    }
+}
+
+function buildTargetUrl(imgUrl, transportMode) {
+    const safeImgUrl = normalizeHttpUrl(imgUrl);
+    if (!safeImgUrl) return "";
+
+    if (normalizeTransportMode(transportMode) === "direct") {
+        // Experimental path: redirect straight to the hosted image without
+        // resizing, re-encoding, alpha repair, quantization, or a second image.
+        return safeImgUrl;
+    }
+
+    // Proven v3.4 compatibility path. Retained as the control while the direct
+    // route is tested for save and reopen persistence.
+    return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
+}
+
+function updateRedirectRules(imgUrl, enableRedirect, transportMode) {
     const enabled = !!enableRedirect;
-    const safeImgUrl = (imgUrl || "").trim();
-    const targetUrl = "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
-    console.log("Updating rules. enableRedirect =", enabled, "imgUrl =", safeImgUrl);
+    const mode = normalizeTransportMode(transportMode);
+    const targetUrl = buildTargetUrl(imgUrl, mode);
+
+    console.log("Updating paint-board rule.", {
+        enabled,
+        transportMode: mode,
+        hasImage: !!targetUrl
+    });
 
     chrome.declarativeNetRequest.updateDynamicRules(
         {
-            removeRuleIds: [1],
-            addRules: (enabled && safeImgUrl && /^https?:\/\//i.test(targetUrl))
+            removeRuleIds: [REDIRECT_RULE_ID],
+            addRules: (enabled && targetUrl)
                 ? [
                     {
-                        id: 1,
+                        id: REDIRECT_RULE_ID,
                         priority: 1,
                         action: {
                             type: "redirect",
-                            redirect: {
-                                url: targetUrl
-                            }
+                            redirect: { url: targetUrl }
                         },
                         condition: {
                             urlFilter: "paint_board",
@@ -50,36 +93,92 @@ function updateRedirectRules(imgUrl, enableRedirect) {
                 : []
         },
         () => {
-            if (logChromeLastError("Error updating rules")) {
-                return;
-            } else {
-                console.log("Rules updated successfully.");
-                chrome.declarativeNetRequest.getDynamicRules((rules) => {
-                    console.log("Active rules:", rules);
-                });
-            }
+            if (logChromeLastError("Error updating paint-board rule")) return;
+            console.log("Paint-board rule updated successfully.");
         }
     );
 }
 
-function loadSettings() {
-    chrome.storage.local.get({ img: ["", false] }, (e) => {
-        if (logChromeLastError("Error loading storage")) {
-            return;
+function loadImageSettings() {
+    chrome.storage.local.get(
+        {
+            img: ["", false],
+            transportMode: DEFAULT_TRANSPORT_MODE
+        },
+        (settings) => {
+            if (logChromeLastError("Error loading image settings")) return;
+            const img = Array.isArray(settings.img) ? settings.img : ["", false];
+            updateRedirectRules(img[0], img[1], settings.transportMode);
         }
-        if (e.img && e.img.length) {
-            updateRedirectRules(e.img[0], e.img[1]);
-        } else {
-            updateRedirectRules("https://i.imgur.com/j146uKh.png", false);
-        }
-    });
+    );
 }
 
-// Run at startup
-loadSettings();
+async function applyViewMode(value) {
+    const mode = normalizeViewMode(value);
+    try {
+        if (mode === "popup") {
+            await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+            await chrome.action.setPopup({ popup: "popup/popup.html" });
+        } else {
+            // A toolbar popup overrides the side-panel action, so clear it when
+            // Side Panel mode is active.
+            await chrome.action.setPopup({ popup: "" });
+            await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+        }
+        console.log("Applied view mode:", mode);
+    } catch (error) {
+        console.error("Unable to apply view mode:", error);
+    }
+}
 
-// Watch for changes from popup
-chrome.storage.onChanged.addListener((changes) => {
-    console.log("Storage changed:", changes);
-    loadSettings();
+function loadViewSettings({ migrateToSidePanel = false } = {}) {
+    chrome.storage.sync.get(
+        {
+            viewMode: null,
+            [VIEW_DEFAULT_MIGRATION_KEY]: false
+        },
+        (settings) => {
+            if (logChromeLastError("Error loading view settings")) return;
+
+            if (migrateToSidePanel && !settings[VIEW_DEFAULT_MIGRATION_KEY]) {
+                chrome.storage.sync.set(
+                    {
+                        viewMode: DEFAULT_VIEW_MODE,
+                        [VIEW_DEFAULT_MIGRATION_KEY]: true
+                    },
+                    () => {
+                        if (logChromeLastError("Error saving Side Panel default")) return;
+                        applyViewMode(DEFAULT_VIEW_MODE);
+                    }
+                );
+                return;
+            }
+
+            applyViewMode(normalizeViewMode(settings.viewMode));
+        }
+    );
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+    loadViewSettings({ migrateToSidePanel: true });
+    loadImageSettings();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+    loadViewSettings();
+    loadImageSettings();
+});
+
+// Initialize whenever the service worker starts.
+loadViewSettings();
+loadImageSettings();
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "local" && (changes.img || changes.transportMode)) {
+        loadImageSettings();
+    }
+
+    if (areaName === "sync" && changes.viewMode) {
+        applyViewMode(changes.viewMode.newValue);
+    }
 });
