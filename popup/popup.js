@@ -12,23 +12,19 @@
 
   const LAST_TAB_KEY='ywp:lastTab';
   function activate(name){
-    // tabs
     tabs.forEach(t => {
       const on = t.dataset.tab === name;
       t.classList.toggle('is-active', on);
       t.setAttribute('aria-selected', on ? 'true' : 'false');
     });
-    // panels
     Object.entries(panels).forEach(([k, el])=>{
-      el.classList.toggle('is-active', k === name);
+      if (el) el.classList.toggle('is-active', k === name);
     });
-    // body flag for FAQ (prevents any future bleed)
-  document.body.classList.toggle('faq-active', name === 'faq');
+    document.body.classList.toggle('faq-active', name === 'faq');
     try{ localStorage.setItem(LAST_TAB_KEY, name); }catch(e){}
   }
 
   tabs.forEach(t => t.addEventListener('click', () => activate(t.dataset.tab)));
-  // default
   let start='home';
   try{ start = localStorage.getItem(LAST_TAB_KEY) || 'home'; }catch(e){}
   if (!panels[start]) start='home';
@@ -61,7 +57,6 @@
     }
     return normalized;
   }
-  // load theme
   try {
     chrome.storage.sync.get(['theme'], st => {
       const raw = st && st.theme ? String(st.theme) : localStorage.getItem(THEME_KEY);
@@ -80,33 +75,94 @@
     });
   }
 
-  // View mode wiring (Popup / Side Panel)
+  // View mode wiring. New and migrated installs default to Side Panel.
   const viewModeSel = document.getElementById('res-view-mode');
   if (viewModeSel){
     try {
       chrome.storage.sync.get(['viewMode'], st => {
-        const saved = (st && (st.viewMode === 'popup' || st.viewMode === 'sidepanel')) ? st.viewMode : 'popup';
+        const saved = (st && (st.viewMode === 'popup' || st.viewMode === 'sidepanel')) ? st.viewMode : 'sidepanel';
         viewModeSel.value = saved;
       });
     } catch(_) {
-      viewModeSel.value = 'popup';
+      viewModeSel.value = 'sidepanel';
     }
 
     viewModeSel.addEventListener('change', async () => {
-      const mode = (viewModeSel.value === 'sidepanel') ? 'sidepanel' : 'popup';
-      try { chrome.storage.sync.set({ viewMode: mode }); } catch(_) {}
+      const mode = (viewModeSel.value === 'popup') ? 'popup' : 'sidepanel';
+      try { await chrome.storage.sync.set({ viewMode: mode }); } catch(_) {}
 
       if (mode === 'sidepanel' && chrome.sidePanel && chrome.windows){
         try {
           const win = await chrome.windows.getCurrent();
           if (win && typeof win.id === 'number') {
             await chrome.sidePanel.open({ windowId: win.id });
-            window.close();
+            // Close only when this page is running as the small popup.
+            if (window.innerWidth < 650) window.close();
           }
         } catch(err) {
           console.error('Unable to open side panel:', err);
         }
       }
     });
+  }
+
+  // Home transport selector. Added at runtime so popup and side-panel pages
+  // share one implementation without duplicating large HTML documents.
+  const redirectToggle = document.getElementById('enable-redirect');
+  const redirectRow = redirectToggle && redirectToggle.closest('.row.switch');
+  if (redirectRow && !document.getElementById('transport-mode')){
+    const card = document.createElement('div');
+    card.className = 'transport-mode-card';
+    card.style.cssText = 'display:flex; flex-direction:column; gap:6px; margin:2px 0 10px; padding:8px 10px; border:1px solid var(--frame-border); border-radius:10px; background:var(--panel-bg);';
+
+    const label = document.createElement('label');
+    label.htmlFor = 'transport-mode';
+    label.textContent = 'Board Image Route';
+    label.style.cssText = 'font-size:12px; font-weight:700;';
+
+    const select = document.createElement('select');
+    select.id = 'transport-mode';
+    select.className = 'input';
+    select.setAttribute('aria-describedby', 'transport-mode-note');
+
+    const proxy = document.createElement('option');
+    proxy.value = 'proxy';
+    proxy.textContent = 'Compatibility Proxy — reliable v3.4 control';
+
+    const direct = document.createElement('option');
+    direct.value = 'direct';
+    direct.textContent = 'Direct Image — experimental quality test';
+
+    select.append(proxy, direct);
+
+    const note = document.createElement('div');
+    note.id = 'transport-mode-note';
+    note.className = 'note';
+    note.style.margin = '0';
+
+    function updateNote(mode){
+      if (mode === 'direct'){
+        note.textContent = 'Direct Image bypasses YoWorld.info and preserves the hosted file, but saving and reopening must be tested before release.';
+        note.style.color = '#9a6700';
+      } else {
+        note.textContent = 'Compatibility Proxy keeps the known v3.4 save behavior but may flatten partial transparency and depends on YoWorld.info.';
+        note.style.color = '';
+      }
+    }
+
+    chrome.storage.local.get({ transportMode: 'proxy' }, data => {
+      const mode = data.transportMode === 'direct' ? 'direct' : 'proxy';
+      select.value = mode;
+      updateNote(mode);
+    });
+
+    select.addEventListener('change', () => {
+      const mode = select.value === 'direct' ? 'direct' : 'proxy';
+      updateNote(mode);
+      chrome.storage.local.set({ transportMode: mode });
+    });
+
+    card.append(label, select, note);
+    redirectRow.insertAdjacentElement('afterend', card);
   }
 })();
