@@ -1,0 +1,46 @@
+name: Package test build
+
+on:
+  push:
+    branches:
+      - agent/current-model-improvements
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out test branch
+        uses: actions/checkout@v4
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          node --check background.js
+          node --check popup/popup.js
+          node --check popup/tabs/home.js
+          node --check src/lib/indexed-png.js
+          node --check src/lib/uploader.js
+
+      - name: Check for unresolved merge conflicts
+        shell: bash
+        run: |
+          ! grep -RInE '^(<<<<<<<|=======|>>>>>>>)' .
+
+      - name: Prepare extension folder
+        shell: bash
+        run: |
+          mkdir -p package/YoWorld_Paint_Current_Model_Test
+          rsync -a ./ package/YoWorld_Paint_Current_Model_Test/ \
+            --exclude '.git/' \
+            --exclude 'package/'
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YoWorld_Paint_Current_Model_Test
+          path: package/YoWorld_Paint_Current_Model_Test
+          if-no-files-found: error
+          retention-days: 14
