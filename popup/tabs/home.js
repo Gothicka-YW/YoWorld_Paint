@@ -150,6 +150,49 @@ async function toPngBlobFromFile(file){
   const bridgeBtn = document.getElementById('btn-upload-last');
   if (!hostSel || !fileEl || !btnUpload) return;
 
+  // Keep the compatibility control in the uploader itself so it is visible in
+  // both popup and side-panel views without relying on another script.
+  let compatibleChk = document.getElementById('qu-yoworld-compatible');
+  if (!compatibleChk){
+    const card = document.createElement('div');
+    card.id = 'qu-yoworld-compatible-card';
+    card.style.cssText = 'display:flex; flex-direction:column; gap:5px; padding:8px 10px; border:1px solid var(--frame-border); border-radius:10px; background:color-mix(in srgb, var(--accent) 7%, var(--panel-bg));';
+
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex; align-items:center; gap:7px; font-size:12px; font-weight:700;';
+
+    compatibleChk = document.createElement('input');
+    compatibleChk.type = 'checkbox';
+    compatibleChk.id = 'qu-yoworld-compatible';
+    compatibleChk.checked = true;
+    compatibleChk.setAttribute('aria-describedby', 'qu-yoworld-note qu-status');
+
+    const text = document.createElement('span');
+    text.textContent = 'Convert to YoWorld-compatible PNG-8';
+    label.append(compatibleChk, text);
+
+    const note = document.createElement('div');
+    note.id = 'qu-yoworld-note';
+    note.className = 'note';
+    note.style.cssText = 'margin:0; font-size:11px;';
+    note.textContent = 'Recommended for paint boards: indexed PNG-8 with multi-level transparency and no dithering. Auto-resize is used only when checked.';
+
+    card.append(label, note);
+    const quickUpload = document.getElementById('quick-upload');
+    const header = quickUpload && quickUpload.querySelector('.qu-head');
+    if (header) header.insertAdjacentElement('afterend', card);
+    else if (quickUpload) quickUpload.prepend(card);
+  }
+
+  chrome.storage.sync.get({ quickUploadYoWorldCompatible: true }, data => {
+    if (compatibleChk) compatibleChk.checked = data.quickUploadYoWorldCompatible !== false;
+  });
+  if (compatibleChk){
+    compatibleChk.addEventListener('change', () => {
+      chrome.storage.sync.set({ quickUploadYoWorldCompatible: !!compatibleChk.checked });
+    });
+  }
+
   let lastUrl = '';
   let clipboardBlob = null;
   let pickedFile = null; // single source for chosen/dropped file
@@ -233,30 +276,66 @@ async function toPngBlobFromFile(file){
       const { imgbbKey } = await chrome.storage.sync.get(['imgbbKey']);
       if (!imgbbKey){ setStatus('ImgBB key missing.', true); toggleKeyWarning(true); return; }
     }
-    const doResize = !resizeChk || resizeChk.checked;
+    const doResize = !!(resizeChk && resizeChk.checked);
+    const doCompatible = !!(compatibleChk && compatibleChk.checked);
     btnUpload.disabled = true;
     btnCopy.disabled = true;
-    setStatus(doResize ? 'Resizing…' : 'Uploading…');
+    setStatus(doCompatible ? 'Creating YoWorld-compatible PNG-8…' : (doResize ? 'Resizing…' : 'Uploading…'));
     setResult('');
     lastUrl='';
     try {
       let uploadFile = file;
-      if (doResize){
+      let compatibleSummary = '';
+
+      if (doCompatible){
+        const { prepareYoWorldIndexedPng } = await import('../../src/lib/indexed-png.js');
+        const prepared = await prepareYoWorldIndexedPng(file, {
+          width: 390,
+          height: 260,
+          maxColors: 256,
+          allowResize: doResize
+        });
+        const originalName = file.name || 'image.png';
+        const stem = originalName.replace(/\.[^.]+$/, '') || 'image';
+        uploadFile = new File([prepared.blob], `${stem}-yoworld.png`, { type:'image/png' });
+        compatibleSummary = `${prepared.paletteSize} colors, ${prepared.alphaLevels} alpha levels, no dithering`;
+        setStatus(`Uploading PNG-8 (${prepared.paletteSize} colors, ${prepared.alphaLevels} alpha levels)…`);
+      } else if (doResize){
         const resized = await resizeExactPngFromFile(file, 390, 260);
         setStatus('Uploading…');
         uploadFile = new File([resized], file.name || 'image.png', { type:'image/png' });
       }
+
       const { uploadImage } = await import('../../src/lib/uploader.js');
       const url = await uploadImage(uploadFile, { host });
       lastUrl = url; setResult(url);
-      try { await navigator.clipboard.writeText(url); setStatus('Uploaded & copied.'); btnCopy.disabled=false; }
-      catch { setStatus('Uploaded. Use Copy button.', true); btnCopy.disabled=false; }
+
+      if (doCompatible){
+        // The compatible indexed file must bypass YoWorld.info, which would
+        // flatten its preserved alpha levels again.
+        await chrome.storage.local.set({ transportMode: 'direct' });
+        const routeSelect = document.getElementById('transport-mode');
+        if (routeSelect){
+          routeSelect.value = 'direct';
+          routeSelect.dispatchEvent(new Event('change', {bubbles:true}));
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(url);
+        setStatus(doCompatible ? `Uploaded & copied. ${compatibleSummary}.` : 'Uploaded & copied.');
+        btnCopy.disabled=false;
+      }
+      catch {
+        setStatus(doCompatible ? `Uploaded. ${compatibleSummary}. Use Copy button.` : 'Uploaded. Use Copy button.', true);
+        btnCopy.disabled=false;
+      }
       // Auto-set as current image
       if (autoChk && autoChk.checked){
         const mainInput = document.getElementById('img-url');
         if (mainInput){ mainInput.value = url; mainInput.dispatchEvent(new Event('input', {bubbles:true})); }
         const btn = document.getElementById('btn-set'); if (btn) btn.click();
-        if (!doResize) showToast('Warning: Original size may stretch in YoWorld');
+        if (!doCompatible && !doResize) showToast('Warning: Original size may stretch in YoWorld');
       }
       showToast('Upload complete');
       // reset transient sources after success
