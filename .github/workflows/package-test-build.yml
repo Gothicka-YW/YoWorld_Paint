@@ -24,6 +24,11 @@ jobs:
           node --check src/lib/indexed-png.js
           node --check src/lib/uploader.js
 
+      - name: Check for unresolved merge conflicts
+        shell: bash
+        run: |
+          ! grep -RInE '^(<<<<<<<|=======|>>>>>>>)' .
+
       - name: Prepare extension folder
         shell: bash
         run: |
