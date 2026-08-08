@@ -286,6 +286,7 @@ async function toPngBlobFromFile(file){
     try {
       let uploadFile = file;
       let compatibleSummary = '';
+      let outputMayStretch = false;
 
       if (doCompatible){
         const { prepareYoWorldIndexedPng } = await import('../../src/lib/indexed-png.js');
@@ -293,13 +294,15 @@ async function toPngBlobFromFile(file){
           width: 390,
           height: 260,
           maxColors: 256,
-          allowResize: doResize
+          allowResize: doResize,
+          preserveOriginalSize: !doResize
         });
         const originalName = file.name || 'image.png';
         const stem = originalName.replace(/\.[^.]+$/, '') || 'image';
         uploadFile = new File([prepared.blob], `${stem}-yoworld.png`, { type:'image/png' });
-        compatibleSummary = `${prepared.paletteSize} colors, ${prepared.alphaLevels} alpha levels, no dithering`;
-        setStatus(`Uploading PNG-8 (${prepared.paletteSize} colors, ${prepared.alphaLevels} alpha levels)…`);
+        outputMayStretch = prepared.width !== 390 || prepared.height !== 260;
+        compatibleSummary = `${prepared.width}×${prepared.height}, ${prepared.paletteSize} colors, ${prepared.alphaLevels} alpha levels, no dithering`;
+        setStatus(`Uploading PNG-8 (${prepared.width}×${prepared.height}, ${prepared.paletteSize} colors, ${prepared.alphaLevels} alpha levels)…`);
       } else if (doResize){
         const resized = await resizeExactPngFromFile(file, 390, 260);
         setStatus('Uploading…');
@@ -335,7 +338,7 @@ async function toPngBlobFromFile(file){
         const mainInput = document.getElementById('img-url');
         if (mainInput){ mainInput.value = url; mainInput.dispatchEvent(new Event('input', {bubbles:true})); }
         const btn = document.getElementById('btn-set'); if (btn) btn.click();
-        if (!doCompatible && !doResize) showToast('Warning: Original size may stretch in YoWorld');
+        if ((!doCompatible && !doResize) || outputMayStretch) showToast('Warning: Original size may stretch in YoWorld');
       }
       showToast('Upload complete');
       // reset transient sources after success
