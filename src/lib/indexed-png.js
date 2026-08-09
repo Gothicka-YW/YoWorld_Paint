@@ -357,12 +357,15 @@ async function loadImageBitmap(file) {
 export async function prepareYoWorldIndexedPng(file, options = {}) {
   if (!(file instanceof Blob)) throw new TypeError('Select an image file first.');
 
-  const width = options.width || DEFAULT_WIDTH;
-  const height = options.height || DEFAULT_HEIGHT;
+  const requestedWidth = options.width || DEFAULT_WIDTH;
+  const requestedHeight = options.height || DEFAULT_HEIGHT;
   const allowResize = options.allowResize === true;
+  const preserveOriginalSize = options.preserveOriginalSize === true && !allowResize;
   const image = await loadImageBitmap(file);
   const sourceWidth = image.width;
   const sourceHeight = image.height;
+  const width = preserveOriginalSize ? sourceWidth : requestedWidth;
+  const height = preserveOriginalSize ? sourceHeight : requestedHeight;
   const needsResize = sourceWidth !== width || sourceHeight !== height;
 
   try {
