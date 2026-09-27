@@ -1,16 +1,17 @@
 {
+  "update_url": "https://clients2.google.com/service/update2/crx",
   "name": "YoWorld Paint",
-  "description": "YoWorld Paint is for creating paint and sales boards within YoWorld.",
-  "version": "3.4",
-  "version_name": "v3.4",
+  "description": "Fan-made YoWorld tool to create, preview, transform, split, upload, and export custom Paint Boards and Sales Boards.",
+  "version": "3.5.11",
+  "version_name": "v3.5.11",
   "manifest_version": 3,
+  "minimum_chrome_version": "116",
   "icons": {
     "48": "icons/icon_48.png",
     "128": "icons/icon_128.png"
   },
   "action": {
-    "default_title": "YoWorld Paint",
-    "default_popup": "popup/popup.html"
+    "default_title": "Open YoWorld Paint side panel"
   },
   "side_panel": {
     "default_path": "popup/sidepanel.html"
@@ -23,7 +24,6 @@
     "scripting",
     "declarativeNetRequest",
     "declarativeNetRequestWithHostAccess",
-    "declarativeNetRequestFeedback",
     "activeTab",
     "sidePanel"
   ],
@@ -33,20 +33,10 @@
     "https://*.yoworld.com/*",
     "https://api.yoworld.info/*",
     "https://yoworld.com/*",
-    "https://yoworld.info/*",
-    "https://api.imgbb.com/*",
-    "https://i.ibb.co/*"
+    "https://api.imgbb.com/*"
   ],
-  "content_scripts": [
-    {
-      "matches": [
-        "https://yoworld.info/*",
-        "https://*.yoworld.info/*"
-      ],
-      "js": [
-        "content/sb_capture.js"
-      ],
-      "run_at": "document_idle"
-    }
+  "optional_host_permissions": [
+    "<all_urls>",
+    "https://picrd.com/*"
   ]
 }

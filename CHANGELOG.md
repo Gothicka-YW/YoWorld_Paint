@@ -1,4 +1,75 @@
-# � YoWorld Paint – Changelog
+# YoWorld Paint - Changelog
+## v3.5.11 — Sales Boards Side Panel Permission Fix
+**Release Date:** 2026-09-27
+
+Fixes and changes
+- Fixes Sales Boards Preview and Export failing in Side Panel mode with Chrome's “Either the '<all_urls>' or 'activeTab' permission is required” error.
+- Uses one optional Sales Boards access prompt, requested only when the user uses the feature and never during installation.
+- Requests access before selector and preview actions so the permission prompt remains connected to the user's button click.
+- Replaces the raw Chrome permission error with clear instructions when access is declined.
+- Restores the public product name and header to **YoWorld Paint v3.5.11**.
+- Updates Resources with the Chrome Web Store listing, YoWorld Info template, and packaged Privacy Policy.
+- Updates every packaged Privacy Policy copy and replaces the tab-tutorial placeholders with current instructions.
+- Removes the helper sentence directly beneath the Enable Redirect toggle.
+- Updates the packaged Chrome Web Store description and the manifest's short description.
+- Refreshes the Side Panel document after an extension update or developer reload so Chrome does not leave an empty panel shell visible.
+
+## v3.5.10 — Image Quality and Simple Transparency Control
+**Release Date:** 2026-09-27
+
+Fixes and changes
+- Preserves soft transparency by default so glow, snow, translucent art, and antialiased edges retain more detail.
+- Replaces the multi-mode design with one simple optional Clean faint transparency checkbox.
+- Keeps the v3.5.9 hard cleanup available for images with unwanted haze or hidden background color.
+- Saves the cleanup preference for future Quick Uploads.
+- Keeps 390×260 aspect-preserving resizing, Picrd default hosting, and optional ImgBB hosting.
+
+## v3.5.9 — YoWorld Transparency Cleanup
+**Release Date:** 2026-09-27
+
+Fixes and changes
+- Detects partial alpha in images prepared by the default Game-ready upload path.
+- Converts partial transparency to a YoWorld-safe binary edge at a 50% alpha threshold.
+- Clears hidden RGB color from pixels that become transparent, preventing faint colored haze from becoming solid in-game.
+- Preserves exact-size PNG bytes when their transparency is already safe.
+- Keeps Picrd as the default host and ImgBB as an optional host.
+
+## v3.5.8 — Picrd Default Uploader
+**Release Date:** 2026-09-27
+
+Fixes and changes
+- Makes Picrd the default Quick Upload host; it is free and requires no API key.
+- Keeps ImgBB available as an optional host and preserves existing ImgBB API-key settings.
+- Requests Picrd access only when the user uploads, avoiding a new required host permission during extension update.
+- Preserves uploaded PNG files exactly through Picrd and keeps non-ImgBB images on the established YoWorld image route.
+- Displays ImgBB previews through the compatibility cache instead of the currently unreliable direct CDN request.
+- Adds an always-visible reminder and toggle messages to keep Redirect enabled until the first YoWorld Save/OK completes.
+
+## v3.5.7 — ImgBB Black-Image Recovery
+**Release Date:** 2026-09-27
+
+Fixes
+- Detects direct ImgBB CDN links before creating the paint-board redirect rule.
+- Routes ImgBB images through the wsrv.nl image cache because the existing YoWorld server-side fetch currently returns a solid-black fallback PNG for ImgBB sources.
+- Keeps non-ImgBB image hosts on the existing YoWorld image route.
+- Adds no new Chrome host permission, avoiding an update-time site-access prompt.
+- Retains Side Panel as the default with the optional Popup preference.
+
+## v3.5.2 — Popup Recovery
+**Release Date:** 2026-09-11
+
+Fixes
+- Restored reliable toolbar opening for both Popup and Side Panel preferences.
+- Added a safe popup fallback when Side Panel setup fails or is unavailable.
+- Applies the saved view preference on install, browser startup, and preference changes.
+- Removed the required yoworld.info page access added by the previous store update; Sales Boards now uses temporary active-tab access and asks for optional site access only when needed.
+- Removed the unused `declarativeNetRequestFeedback` permission.
+- Removed the obsolete duplicate Tools panel at startup so the live Tools tab has a single unambiguous panel.
+- Hardened tab activation against incomplete or stale markup.
+
+Store update note
+- The preceding published update added required site access. Chrome can disable an existing extension when an update adds a permission warning until the user accepts it. This build avoids making yoworld.info access mandatory at update time.
+
 ## v3.4 — Update
 **Release Date:** 2026-02-10
 
@@ -18,7 +89,7 @@ Changes
 - Added `sidePanel` permission to manifest
 - Removed "Glow Fix" feature from Home tab
   - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
-  - Investigating better approaches for handling semi-transparent images (similar to Fiddler's method)
+  - Fiddler-style injection/interception approaches are non-viable for this MV3 extension architecture
 
 Files Added
 - `popup/sidepanel.html` - Dedicated side panel interface
@@ -28,17 +99,8 @@ Notes
 - Default view mode remains "Popup" for existing users
 - All functionality is identical between popup and side panel views
 - Side panel view is optimized for wider screens and extended use
-- Working on improved solution for dither/glow image handling
+- Dither/glow handling remains an open problem for future updates
 
-Changes
-- Removed "Glow Fix" feature from Home tab
-  - Feature was experimental and did not reliably preserve dither/glow effects when images were uploaded to YoWorld
-  - Investigating better approaches for handling semi-transparent images (similar to Fiddler's method)
-- Version bump: manifest version/name and UI title updated to 3.4
-
-Notes
-- All other features remain unchanged from v3.3
-- Working on improved solution for dither/glow image handling
 ## v3.2.1 — Update
 **Release Date:** 2025-11-08
 

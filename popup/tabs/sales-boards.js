@@ -13,13 +13,23 @@
 
   let lastDataUrl = '';
 
+  const SALES_BOARD_ORIGINS = ['<all_urls>'];
+
   function setStatus(msg, isErr){ if (statusEl){ statusEl.textContent = msg || ''; statusEl.style.color = isErr ? '#7e1212' : '#6b7280'; } }
   function setPreview(url){ if (!previewEl) return; previewEl.style.backgroundImage = url ? `url("${url}")` : 'none'; previewEl.style.backgroundSize='contain'; previewEl.style.backgroundPosition='center'; previewEl.style.backgroundRepeat='no-repeat'; }
 
   async function getActiveTab(){ const [tab] = await chrome.tabs.query({active:true, currentWindow:true}); return tab; }
 
+  async function requestSalesBoardAccess(){
+    // Side-panel button clicks do not create Chrome's temporary activeTab grant.
+    // One optional grant covers both the yoworld.info helper and screenshots.
+    return chrome.permissions.request({ origins: SALES_BOARD_ORIGINS });
+  }
+
   function isYoWorldInfo(url){ return /^https?:\/\/(?:[^.]+\.)?yoworld\.info\//i.test(url||''); }
   async function sendToActiveTab(msg){
+    const granted = await requestSalesBoardAccess();
+    if (!granted) throw new Error('Allow Sales Boards access when Chrome asks.');
     const tab = await getActiveTab();
     if (!tab) throw new Error('No active tab');
     if (!isYoWorldInfo(tab.url)) throw new Error('Open yoworld.info/template and try again.');
@@ -82,8 +92,12 @@
   }
 
   async function doPreview(){
-    setStatus('Preparing…'); setPreview(''); lastDataUrl='';
+    setStatus('Preparing… Chrome may ask once for Sales Boards access.'); setPreview(''); lastDataUrl='';
     try{
+      // Keep this as the first awaited call in the click handler. Chrome only
+      // allows optional permission prompts during a direct user gesture.
+      const captureGranted = await requestSalesBoardAccess();
+      if (!captureGranted) throw new Error('Allow Sales Boards access when Chrome asks.');
       const prep = await sendToActiveTab({ type:'YWP_SB_PREPARE_RECT' });
       if (!prep || !prep.ok) throw new Error(prep?.error || 'Could not determine 3×2 area. Pick selector on yoworld.info first.');
       if (prep.tooTall) setStatus('Tip: Maximize your window so the 3×2 grid fits on screen.', false);
@@ -109,13 +123,7 @@
       if (r && r.ok) setStatus('Selector saved.');
       else setStatus('Pick canceled or failed.', true);
     } catch(e){
-      // Try injecting once more, then report
-      try{
-        const tab = await getActiveTab();
-        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/sb_capture.js'] });
-        const r2 = await chrome.tabs.sendMessage(tab.id, { type:'YWP_SB_PICK' });
-        if (r2 && r2.ok) setStatus('Selector saved.'); else setStatus('Pick canceled or failed.', true);
-      }catch(_){ setStatus('Not on yoworld.info?', true); }
+      setStatus(e.message || 'Open yoworld.info/template and try again.', true);
     }
   });
   if (btnReset) btnReset.addEventListener('click', async ()=>{

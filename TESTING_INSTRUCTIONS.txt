@@ -1,0 +1,55 @@
+YoWorld Paint v3.5.11
+
+IMPORTANT: Chrome extensions are installed separately in each Chrome profile.
+This test must be loaded in the same profile where you use YoWorld.
+
+Installation:
+
+1. Extract this ZIP to its own folder.
+2. Open the normal Chrome profile where you use YoWorld.
+3. Go to chrome://extensions and turn on Developer mode.
+4. Temporarily disable every older YoWorld Paint copy in that profile so there is only one active test copy.
+5. Choose Load unpacked and select the extracted v3.5.11 folder.
+6. Pin "YoWorld Paint" from Chrome's Extensions menu.
+7. Close any YoWorld Paint side panel that is already open.
+8. Click the test extension's toolbar icon once.
+
+Sales Boards permission test:
+
+1. Open https://yoworld.info/template and leave that tab active.
+2. Open Sales Boards in the extension side panel.
+3. Click Pick Card Selector and approve the one-time Sales Boards access request if Chrome asks.
+4. Pick the first card for the 3×2 board.
+5. Click Preview (3×2).
+6. Confirm the preview appears without a second permission prompt and the old "Either the '<all_urls>' or 'activeTab' permission is required" error does not return.
+7. Click Export (Crop) and confirm the 390×260 PNG downloads.
+
+Expected result:
+
+Sales Boards works directly from the side panel. Chrome requests one optional Sales Boards permission the first time the feature is used and remembers the choice after it is approved.
+
+Picrd quality and save test:
+
+1. In Quick Image Uploader, leave "Game-ready 390×260 (no stretching)" checked.
+2. Confirm Host is "Picrd (free, no API key)."
+3. Leave "Clean faint transparency" OFF for an image with glow, translucent art, or soft edges.
+4. Upload the transparent PNG and keep Auto-set as Current Image checked.
+5. Approve Picrd upload access if Chrome asks the first time.
+6. Confirm the extension preview retains the artwork's soft details.
+7. Enable Redirect.
+8. Keep Redirect ON while you open the Paint Board and press Save/OK the first time.
+9. Wait for the save to finish, then turn Redirect OFF.
+10. Open the saved board and press OK.
+
+Expected result:
+
+Soft details should be preserved when the cleanup checkbox is off. For a separate image with unwanted faint background color, enable Clean faint transparency and confirm the haze is removed. The image should remain after Redirect is turned off following the first completed save. ImgBB should still remain selectable in the Host menu.
+
+Default-view test:
+
+1. Open Resources, the last tab.
+2. Under Default View, select Popup.
+3. Close the side panel and click the toolbar icon. The popup should open.
+4. In the popup, open Resources and select Side Panel (recommended).
+5. The side panel should open, and future toolbar clicks should use it.
+

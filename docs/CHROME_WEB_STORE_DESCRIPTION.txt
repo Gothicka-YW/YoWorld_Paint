@@ -1,0 +1,13 @@
+YoWorld Paint is a fan-made Chrome extension that helps YoWorld players create beautiful custom Paint Boards and Sales Boards faster. Design, preview, transform, split, and upload your board images with built-in tools made specifically for YoWorld workflows.
+
+Create polished 390×260 boards in minutes with:
+
+Quick Image Uploader (paste, drag/drop, or file select)
+Transform + pre-warp utilities
+Image splitter and board size calculator
+Live preview and easy export flow
+Popup or Side Panel view mode
+
+Perfect for players who want cleaner boards, faster setup, and less manual editing.
+
+⚠️ Fan-made tool. Not affiliated with YoWorld or Big Viking Games (BVG).

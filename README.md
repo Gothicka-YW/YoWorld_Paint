@@ -1,8 +1,29 @@
-# YoWorld Paint v3.4 🎨
+# YoWorld Paint v3.5.11 🎨
 
 YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, and share custom Paint Boards and Sales Boards—faster and cleaner than doing it by hand.
 
 > ⚠️ Community fan tool. Not affiliated with YoWorld or Big Viking Games (BVG).
+
+## 🚀 What's new in 3.5.11
+
+- Fixes the Sales Boards screenshot permission error in persistent Side Panel mode.
+- Uses one optional permission prompt when Sales Boards is first used, not during installation.
+- Shows a helpful message if the optional permission is declined.
+- Updates Resources, the Privacy Policy, and the packaged tab tutorials.
+
+## 🚀 What's new in 3.5.10
+
+- Preserves soft details by default for glow-heavy, translucent artwork.
+- Adds one optional Clean faint transparency checkbox for images with unwanted haze.
+- Remembers the cleanup preference for future uploads.
+- Keeps the existing aspect-preserving 390×260 resize behavior.
+
+## 🚀 What's new in 3.5.9
+
+- Cleans partial transparency in Game-ready uploads before they reach YoWorld.
+- Prevents faint colored glow/background pixels from becoming solid shapes in-game.
+- Keeps crisp opaque artwork and fully transparent areas intact.
+- Picrd remains the default uploader; ImgBB remains optional.
 
 ---
 
@@ -83,7 +104,9 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 - Quick Image Uploader (popup → Home)
   - Paste, drag & drop, or click to select
-  - Auto‑resize to 390×260 and upload to ImgBB
+  - Optional game-ready 390×260 resize without stretching
+  - Picrd is the default free host; ImgBB remains optional
+  - Optional faint-transparency cleanup for difficult images
   - Auto‑copy URL + optional auto‑apply to the current image
   - Home preview shows checkerboard behind images to reveal transparent areas
 
@@ -104,7 +127,7 @@ The extension icon should appear in your toolbar.
 
 ---
 
-## 🔧 Setup (ImgBB)
+## 🔧 Optional ImgBB Setup
 
 - Get an ImgBB API key (Resources tab has a button linking to api.imgbb.com)
 - Open the Resources tab → paste your key → Save Key
@@ -130,20 +153,39 @@ The extension icon should appear in your toolbar.
 ## 🔒 Permissions
 
 Minimal and explicit:
-- storage (remember settings and board data)
-- declarativeNetRequest (+WithHostAccess +Feedback) for redirect rules
-- activeTab (to assist when applying on yoworld.com)
-- Host permissions: YoWorld domains, imgbb.com API
+- `storage` - Saves user settings and state (theme, selected view mode, uploader preferences, redirect state, board/tool data)
+- `scripting` - Injects helper logic when needed for capture/selection flows on supported pages
+- `declarativeNetRequest` - Applies redirect rules used by the paint-board workflow
+- `declarativeNetRequestWithHostAccess` - Allows redirect rules to operate on approved host patterns
+- `activeTab` - Allows tab-scoped actions when you explicitly use extension features
+- `sidePanel` - Enables opening and running YoWorld Paint in Chrome Side Panel mode
+- Host permissions:
+  - `https://*.facebook.com/*`
+  - `https://*.fbcdn.net/*`
+  - `https://*.yoworld.com/*`
+  - `https://api.yoworld.info/*`
+  - `https://yoworld.com/*`
+  - `https://api.imgbb.com/*`
+- Optional host permissions, requested only when the related feature is used:
+  - `<all_urls>` (one-time access for the yoworld.info selector and Chrome's side-panel screenshot API)
+  - `https://picrd.com/*` (requested on the first Picrd Quick Upload)
 
 ---
 
 ## 🔒 Privacy
 
 - No analytics or tracking
-- No data sent anywhere except:
-  - ImgBB (only when you upload via Quick Uploader)
-  - YoWorld domains (when applying/previewing boards)
-- Settings are stored in Chrome storage (local + sync for your API key)
+- No sale of personal data
+- No background collection of browsing history
+- Data is only sent to external services when required by user actions:
+  - Picrd (default Quick Upload host, only when you upload an image)
+  - ImgBB API (only when you select ImgBB and upload an image)
+  - YoWorld/YoWorld Info pages (only while using capture/redirect features)
+- Settings/state are stored in Chrome extension storage:
+  - `chrome.storage.sync` (preferences such as theme, view mode, API key)
+  - `chrome.storage.local` (runtime/state values needed for extension behavior)
+- [Live Privacy Policy](https://gothicka-yw.github.io/YoWorld_Paint/privacy-policy.html)
+- See `PRIVACY_POLICY.md` for the repository copy and complete permission details
 
 ---
 
@@ -160,7 +202,7 @@ Minimal and explicit:
 - File picker opens twice or instantly closes
   - Fixed in v3.0; if it persists, reload the extension and try again
 - Upload succeeds but image looks black
-  - Use ImgBB (Catbox removed due to CORS tainting)
+  - Use Picrd, the default Quick Upload host in v3.5.8 and later. ImgBB remains available, with its preview routed through a compatibility image cache.
 - “ImgBB key missing” warning
   - Set your API key in Resources → Save Key
 

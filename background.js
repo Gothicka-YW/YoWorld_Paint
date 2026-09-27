@@ -1,10 +1,14 @@
-console.log("YoWorld Paint MV3 worker running.");
+console.log("YoWorld Art MV3 worker running (storage-connected).");
 
-const REDIRECT_RULE_ID = 1;
-const COMPAT_HEADER_RULE_ID = 2;
-const DEFAULT_TRANSPORT_MODE = "proxy";
+const SIDE_PANEL_PAGE = "popup/sidepanel.html";
+const SIDE_PANEL_REVISION = "ui-recovery-1";
+const DEFAULT_SIDE_PANEL = `${SIDE_PANEL_PAGE}?build=${encodeURIComponent(
+    `${chrome.runtime.getManifest().version}-${SIDE_PANEL_REVISION}`
+)}`;
+const DEFAULT_POPUP = "popup/popup.html";
 const DEFAULT_VIEW_MODE = "sidepanel";
-const VIEW_DEFAULT_MIGRATION_KEY = "ywpSidePanelDefaultV1";
+const YOWORLD_IMAGE_PROXY = "https://api.yoworld.info/extension.php?x=";
+const IMGBB_RELAY = "https://wsrv.nl/?url=";
 
 function getChromeLastErrorMessage() {
     const err = chrome.runtime.lastError;
@@ -27,221 +31,146 @@ function logChromeLastError(context) {
     return true;
 }
 
-function normalizeTransportMode(value) {
-    if (value === "direct") return "direct";
-    if (value === "direct-headers") return "direct-headers";
-    return DEFAULT_TRANSPORT_MODE;
-}
-
-function normalizeViewMode(value) {
-    return value === "popup" ? "popup" : DEFAULT_VIEW_MODE;
-}
-
-function normalizeHttpUrl(value) {
-    const raw = String(value || "").trim();
-    if (!raw) return "";
+function buildPaintBoardUrl(imgUrl) {
+    const safeImgUrl = (imgUrl || "").trim();
     try {
-        const parsed = new URL(raw);
-        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
-        return parsed.href;
-    } catch (_) {
-        return "";
-    }
-}
+        const parsed = new URL(safeImgUrl);
+        const isImgBbCdn = parsed.protocol === "https:" &&
+            (parsed.hostname === "i.ibb.co" || parsed.hostname === "image.ibb.co");
 
-function buildTargetUrl(imgUrl, transportMode) {
-    const safeImgUrl = normalizeHttpUrl(imgUrl);
-    if (!safeImgUrl) return "";
-
-    const mode = normalizeTransportMode(transportMode);
-    if (mode === "direct" || mode === "direct-headers") {
-        // Experimental paths: redirect straight to the hosted image without
-        // resizing, re-encoding, alpha repair, quantization, or a second image.
-        return safeImgUrl;
-    }
-
-    // Proven v3.4 compatibility path. Retained as the control while direct
-    // routes are tested for save and reopen persistence.
-    return "https://api.yoworld.info/extension.php?x=" + encodeURIComponent(safeImgUrl);
-}
-
-function isImgBbDeliveryUrl(value) {
-    try {
-        const hostname = new URL(value).hostname.toLowerCase();
-        return hostname === "i.ibb.co" || hostname.endsWith(".i.ibb.co");
-    } catch (_) {
-        return false;
-    }
-}
-
-function buildDynamicRules(enabled, targetUrl, transportMode) {
-    if (!enabled || !targetUrl) return [];
-
-    const mode = normalizeTransportMode(transportMode);
-    const rules = [
-        {
-            id: REDIRECT_RULE_ID,
-            priority: 2,
-            action: {
-                type: "redirect",
-                redirect: { url: targetUrl }
-            },
-            condition: {
-                urlFilter: "paint_board",
-                resourceTypes: ["image", "xmlhttprequest", "sub_frame", "main_frame"]
-            }
+        if (isImgBbCdn) {
+            // api.yoworld.info currently receives a solid-black fallback when
+            // it fetches ImgBB's CDN server-to-server. wsrv.nl can retrieve
+            // and cache the same public image, so redirect ImgBB files there
+            // directly and avoid the failing server-side hop.
+            const relaySource = parsed.host + parsed.pathname + parsed.search;
+            return IMGBB_RELAY + encodeURIComponent(relaySource) + "&output=png";
         }
-    ];
-
-    // The first direct test displayed the correct RGBA image but did not
-    // persist after redirect was disabled. This second test keeps the exact
-    // image body and changes only cross-origin compatibility response headers.
-    // It is intentionally limited to ImgBB delivery URLs for which the
-    // extension has explicit host permission.
-    if (mode === "direct-headers" && isImgBbDeliveryUrl(targetUrl)) {
-        rules.push({
-            id: COMPAT_HEADER_RULE_ID,
-            priority: 1,
-            action: {
-                type: "modifyHeaders",
-                responseHeaders: [
-                    {
-                        header: "Access-Control-Allow-Origin",
-                        operation: "set",
-                        value: "*"
-                    },
-                    {
-                        header: "Cross-Origin-Resource-Policy",
-                        operation: "set",
-                        value: "cross-origin"
-                    },
-                    {
-                        header: "Timing-Allow-Origin",
-                        operation: "set",
-                        value: "*"
-                    },
-                    {
-                        header: "Content-Disposition",
-                        operation: "set",
-                        value: "inline"
-                    }
-                ]
-            },
-            condition: {
-                requestDomains: ["i.ibb.co"],
-                initiatorDomains: ["yoworld.com"],
-                resourceTypes: ["image", "xmlhttprequest"]
-            }
-        });
+    } catch (_) {
+        // Invalid input is handled by updateRedirectRules below.
     }
-
-    return rules;
+    return YOWORLD_IMAGE_PROXY + encodeURIComponent(safeImgUrl);
 }
 
-function updateRedirectRules(imgUrl, enableRedirect, transportMode) {
+function updateRedirectRules(imgUrl, enableRedirect) {
     const enabled = !!enableRedirect;
-    const mode = normalizeTransportMode(transportMode);
-    const targetUrl = buildTargetUrl(imgUrl, mode);
-    const addRules = buildDynamicRules(enabled, targetUrl, mode);
-
-    console.log("Updating paint-board rules.", {
-        enabled,
-        transportMode: mode,
-        hasImage: !!targetUrl,
-        ruleCount: addRules.length
-    });
+    const safeImgUrl = (imgUrl || "").trim();
+    const targetUrl = buildPaintBoardUrl(safeImgUrl);
+    console.log("Updating rules. enableRedirect =", enabled, "imgUrl =", safeImgUrl);
 
     chrome.declarativeNetRequest.updateDynamicRules(
         {
-            removeRuleIds: [REDIRECT_RULE_ID, COMPAT_HEADER_RULE_ID],
-            addRules
+            removeRuleIds: [1],
+            addRules: (enabled && safeImgUrl && /^https?:\/\//i.test(targetUrl))
+                ? [
+                    {
+                        id: 1,
+                        priority: 1,
+                        action: {
+                            type: "redirect",
+                            redirect: {
+                                url: targetUrl
+                            }
+                        },
+                        condition: {
+                            urlFilter: "paint_board",
+                            resourceTypes: ["image", "xmlhttprequest", "sub_frame", "main_frame"]
+                        }
+                    }
+                ]
+                : []
         },
         () => {
-            if (logChromeLastError("Error updating paint-board rules")) return;
-            console.log("Paint-board rules updated successfully.");
+            if (logChromeLastError("Error updating rules")) {
+                return;
+            } else {
+                console.log("Rules updated successfully.");
+                chrome.declarativeNetRequest.getDynamicRules((rules) => {
+                    console.log("Active rules:", rules);
+                });
+            }
         }
     );
 }
 
-function loadImageSettings() {
-    chrome.storage.local.get(
-        {
-            img: ["", false],
-            transportMode: DEFAULT_TRANSPORT_MODE
-        },
-        (settings) => {
-            if (logChromeLastError("Error loading image settings")) return;
-            const img = Array.isArray(settings.img) ? settings.img : ["", false];
-            updateRedirectRules(img[0], img[1], settings.transportMode);
+function loadSettings() {
+    chrome.storage.local.get({ img: ["", false] }, (e) => {
+        if (logChromeLastError("Error loading storage")) {
+            return;
         }
-    );
-}
-
-async function applyViewMode(value) {
-    const mode = normalizeViewMode(value);
-    try {
-        if (mode === "popup") {
-            await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
-            await chrome.action.setPopup({ popup: "popup/popup.html" });
+        if (e.img && e.img.length) {
+            updateRedirectRules(e.img[0], e.img[1]);
         } else {
-            // A toolbar popup overrides the side-panel action, so clear it when
-            // Side Panel mode is active.
+            updateRedirectRules("https://i.imgur.com/j146uKh.png", false);
+        }
+    });
+}
+
+function normalizeViewMode(mode) {
+    return mode === "popup" ? "popup" : DEFAULT_VIEW_MODE;
+}
+
+async function applyViewMode(mode) {
+    const normalized = normalizeViewMode(mode);
+    try {
+        if (chrome.sidePanel) {
+            await chrome.sidePanel.setOptions({
+                path: DEFAULT_SIDE_PANEL,
+                enabled: true
+            });
+        }
+
+        if (normalized === "popup") {
+            // Disable Chrome's panel action before assigning the popup so the
+            // toolbar never has two competing default behaviors.
+            await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+            await chrome.action.setPopup({ popup: DEFAULT_POPUP });
+            await chrome.action.setTitle({ title: "Open YoWorld Paint popup" });
+        } else {
+            // Clear the popup before assigning the side-panel action for the
+            // same reason. Side Panel is the default for new users.
             await chrome.action.setPopup({ popup: "" });
             await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+            await chrome.action.setTitle({ title: "Open YoWorld Paint side panel" });
         }
-        console.log("Applied view mode:", mode);
+
+        await chrome.action.enable();
+        console.log("Default view applied:", normalized);
     } catch (error) {
-        console.error("Unable to apply view mode:", error);
-    }
-}
-
-function loadViewSettings({ migrateToSidePanel = false } = {}) {
-    chrome.storage.sync.get(
-        {
-            viewMode: null,
-            [VIEW_DEFAULT_MIGRATION_KEY]: false
-        },
-        (settings) => {
-            if (logChromeLastError("Error loading view settings")) return;
-
-            if (migrateToSidePanel && !settings[VIEW_DEFAULT_MIGRATION_KEY]) {
-                chrome.storage.sync.set(
-                    {
-                        viewMode: DEFAULT_VIEW_MODE,
-                        [VIEW_DEFAULT_MIGRATION_KEY]: true
-                    },
-                    () => {
-                        if (logChromeLastError("Error saving Side Panel default")) return;
-                        applyViewMode(DEFAULT_VIEW_MODE);
-                    }
-                );
-                return;
-            }
-
-            applyViewMode(normalizeViewMode(settings.viewMode));
+        console.error("Unable to apply default view:", error);
+        // Restore the product default if a partially applied preference fails.
+        try {
+            await chrome.action.setPopup({ popup: "" });
+            await chrome.sidePanel.setOptions({ path: DEFAULT_SIDE_PANEL, enabled: true });
+            await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+            await chrome.action.setTitle({ title: "Open YoWorld Paint side panel" });
+            await chrome.action.enable();
+        } catch (fallbackError) {
+            console.error("Unable to restore side-panel fallback:", fallbackError);
         }
-    );
+    }
 }
 
-chrome.runtime.onInstalled.addListener(() => {
-    loadViewSettings({ migrateToSidePanel: true });
-    loadImageSettings();
-});
+function loadViewMode() {
+    chrome.storage.sync.get({ viewMode: DEFAULT_VIEW_MODE }, (settings) => {
+        if (logChromeLastError("Error loading default view")) return;
+        applyViewMode(settings.viewMode);
+    });
+}
 
-chrome.runtime.onStartup.addListener(() => {
-    loadViewSettings();
-    loadImageSettings();
-});
+// Run at startup
+loadSettings();
+loadViewMode();
 
-// Initialize whenever the service worker starts.
-loadViewSettings();
-loadImageSettings();
+chrome.runtime.onInstalled.addListener(loadViewMode);
+chrome.runtime.onStartup.addListener(loadViewMode);
 
+// Watch for changes from popup
 chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === "local" && (changes.img || changes.transportMode)) {
-        loadImageSettings();
+    console.log("Storage changed:", areaName, changes);
+    if (areaName === "local" && changes.img) {
+        loadSettings();
     }
-
     if (areaName === "sync" && changes.viewMode) {
         applyViewMode(changes.viewMode.newValue);
     }
