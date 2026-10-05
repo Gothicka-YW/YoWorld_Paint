@@ -1,4 +1,4 @@
-# YoWorld Paint v3.5.11 — Release Notes
+# YoWorld Paint v3.5.12 — Release Notes
 
 Release date: 2026-10-05
 

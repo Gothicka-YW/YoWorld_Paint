@@ -1,4 +1,4 @@
-# YoWorld Paint v3.5.11 Tab Tutorials
+# YoWorld Paint v3.5.12 Tab Tutorials
 
 These tutorials cover the current Side Panel and Popup interfaces. Side Panel is the recommended default, but the controls work the same way in both views.
 

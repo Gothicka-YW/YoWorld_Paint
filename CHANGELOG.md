@@ -1,5 +1,5 @@
 # YoWorld Paint - Changelog
-## v3.5.11 — Current Store Update
+## v3.5.12 — Sales Boards Removal
 **Updated:** 2026-10-05
 
 Fixes and changes
@@ -7,7 +7,7 @@ Fixes and changes
 - Removes the unused Sales Boards capture and selector scripts.
 - Removes the related `scripting`, `activeTab`, and `<all_urls>` permissions.
 - Keeps Home, Transform, Tools, FAQ, Resources, upload, and Paint Board apply workflows unchanged.
-- Restores the public product name and header to **YoWorld Paint v3.5.11**.
+- Updates the public product name and header to **YoWorld Paint v3.5.12** for Chrome Web Store submission.
 - Updates Resources with the Chrome Web Store listing and packaged Privacy Policy.
 - Updates every packaged Privacy Policy copy and replaces the tab-tutorial placeholders with current instructions.
 - Removes the helper sentence directly beneath the Enable Redirect toggle.
