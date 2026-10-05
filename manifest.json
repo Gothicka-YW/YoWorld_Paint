@@ -1,7 +1,7 @@
 {
   "update_url": "https://clients2.google.com/service/update2/crx",
   "name": "YoWorld Paint",
-  "description": "Fan-made YoWorld tool to create, preview, transform, split, upload, and export custom Paint Boards and Sales Boards.",
+  "description": "Fan-made YoWorld tool to create, preview, transform, split, upload, and export custom Paint Boards.",
   "version": "3.5.11",
   "version_name": "v3.5.11",
   "manifest_version": 3,
@@ -21,10 +21,8 @@
   },
   "permissions": [
     "storage",
-    "scripting",
     "declarativeNetRequest",
     "declarativeNetRequestWithHostAccess",
-    "activeTab",
     "sidePanel"
   ],
   "host_permissions": [
@@ -36,7 +34,6 @@
     "https://api.imgbb.com/*"
   ],
   "optional_host_permissions": [
-    "<all_urls>",
     "https://picrd.com/*"
   ]
 }

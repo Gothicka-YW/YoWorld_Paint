@@ -20,24 +20,6 @@ Troubleshooting:
 - If ImgBB reports a missing key, save and test the key in Resources.
 - If the saved board loses its image, repeat the first save while Redirect remains enabled.
 
-## Sales Boards Tab
-
-Use Sales Boards to capture six item cards from YoWorld Info as a 3×2 board.
-
-1. Open [YoWorld Info's template page](https://yoworld.info/template), enable its template preview, and size the page so three cards appear per row.
-2. Click **Pick Card Selector**. The first time, Chrome may request one-time Sales Boards website access; approve it to allow selection and visible-tab capture.
-3. Click the first item card in the desired six-item group.
-4. Click **Preview (3×2)** and confirm the 390×260 preview.
-5. Click **Export (Crop)** to download the board.
-6. Use **Restore List** to return to the saved scroll position, or **Reset Selectors** before choosing a different layout.
-7. Upload the exported PNG from Home.
-
-Troubleshooting:
-
-- Keep `yoworld.info/template` as the active tab while picking or previewing.
-- Reload the YoWorld Info page if the selector helper cannot be reached.
-- If fewer than six cards are found, adjust the page to three cards per row and pick the first card again.
-
 ## Transform Tab
 
 Use Transform to make a slanted in-game screenshot appear front-facing.
@@ -70,14 +52,13 @@ FAQ contains the short in-extension instructions for Quick Upload, manual hostin
 
 Resources contains current YoWorld Paint links and saved preferences.
 
-- **Useful Links:** Open the Chrome Web Store listing, YoWorld Info Sales Board template, Privacy Policy, image generators, editors, and hosts.
+- **Useful Links:** Open the Chrome Web Store listing, Privacy Policy, image generators, editors, and hosts.
 - **Uploader Settings:** Save and test an optional ImgBB API key. Picrd remains the default and needs no API key.
 - **Default View:** Choose Side Panel or Popup for future toolbar clicks.
 - **Theme:** Choose the interface color theme; Chrome sync stores the selection.
 
 ## Privacy and Permissions
 
-- Sales Boards asks once for optional website access because Chrome requires it for visible-tab capture from a persistent Side Panel.
-- The capture runs only after a Sales Boards action and is processed locally for preview/export.
 - Picrd access is requested only when a Picrd upload starts.
+- The extension does not inject content scripts or capture the active tab.
 - See the packaged `PRIVACY_POLICY.md` or the Privacy Policy link in Resources for the full policy.

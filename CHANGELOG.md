@@ -1,14 +1,14 @@
 # YoWorld Paint - Changelog
-## v3.5.11 — Sales Boards Side Panel Permission Fix
-**Release Date:** 2026-09-27
+## v3.5.11 — Current Store Update
+**Updated:** 2026-10-05
 
 Fixes and changes
-- Fixes Sales Boards Preview and Export failing in Side Panel mode with Chrome's “Either the '<all_urls>' or 'activeTab' permission is required” error.
-- Uses one optional Sales Boards access prompt, requested only when the user uses the feature and never during installation.
-- Requests access before selector and preview actions so the permission prompt remains connected to the user's button click.
-- Replaces the raw Chrome permission error with clear instructions when access is declined.
+- Removes the broken Sales Boards tab after YoWorld Info changed its template creator.
+- Removes the unused Sales Boards capture and selector scripts.
+- Removes the related `scripting`, `activeTab`, and `<all_urls>` permissions.
+- Keeps Home, Transform, Tools, FAQ, Resources, upload, and Paint Board apply workflows unchanged.
 - Restores the public product name and header to **YoWorld Paint v3.5.11**.
-- Updates Resources with the Chrome Web Store listing, YoWorld Info template, and packaged Privacy Policy.
+- Updates Resources with the Chrome Web Store listing and packaged Privacy Policy.
 - Updates every packaged Privacy Policy copy and replaces the tab-tutorial placeholders with current instructions.
 - Removes the helper sentence directly beneath the Enable Redirect toggle.
 - Updates the packaged Chrome Web Store description and the manifest's short description.

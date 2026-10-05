@@ -98,9 +98,9 @@
   <main class="wrap">
     <article class="card">
       <h1>YoWorld Paint Privacy Policy</h1>
-      <p class="muted">Last updated: 2026-09-27</p>
+      <p class="muted">Last updated: 2026-10-05</p>
 
-      <p>YoWorld Paint is a Chrome extension fan tool for creating and applying paint/sales board images. This policy explains what data is processed, why permissions are used, and what is not collected.</p>
+      <p>YoWorld Paint is a Chrome extension fan tool for creating and applying Paint Board images. This policy explains what data is processed, why permissions are used, and what is not collected.</p>
 
       <h2>Summary</h2>
       <ul>
@@ -115,7 +115,6 @@
       <ul>
         <li>Image links you enter or generate</li>
         <li>Images you choose to paste, drop, or upload</li>
-        <li>The visible portion of the active tab when you explicitly create a Sales Boards preview; this screenshot is processed locally and is not uploaded by the capture feature</li>
         <li>User preferences/settings (theme, view mode, uploader settings, API key)</li>
         <li>Temporary state needed for board generation, preview, tools, and redirect workflows</li>
       </ul>
@@ -132,7 +131,7 @@
         <li>Picrd API (<code>https://picrd.com/*</code>): Default Quick Upload host; receives only images the user explicitly uploads and returns an unlisted direct link</li>
         <li>ImgBB API (<code>https://api.imgbb.com/*</code>): Used only when the user selects ImgBB and uploads an image via Quick Upload</li>
         <li>wsrv.nl image cache (<code>https://wsrv.nl/*</code>): Used only for public ImgBB image links during an enabled paint-board redirect, to avoid an incompatible server-to-server ImgBB fetch</li>
-        <li>YoWorld / YoWorld Info domains: Used for page integration, capture, and redirect-related functionality</li>
+        <li>YoWorld / YoWorld Info domains: Used only for the Paint Board apply and redirect workflow</li>
       </ul>
       <p>The extension does not continuously transmit browsing activity.</p>
 
@@ -140,10 +139,8 @@
       <p>The extension requests the following permissions in <code>manifest.json</code>:</p>
       <ul>
         <li><code>storage</code>: Save settings and feature state.</li>
-        <li><code>scripting</code>: Run extension scripts on supported pages when required by user actions.</li>
         <li><code>declarativeNetRequest</code>: Manage redirect rules used by paint-board workflow behavior.</li>
         <li><code>declarativeNetRequestWithHostAccess</code>: Allow declarative network rules on approved hosts.</li>
-        <li><code>activeTab</code>: Perform tab-scoped actions after user interaction.</li>
         <li><code>sidePanel</code>: Enable Side Panel mode.</li>
       </ul>
 
@@ -159,12 +156,11 @@
 
       <p>Optional host permissions, requested only when the related feature is used:</p>
       <ul>
-        <li><code>&lt;all_urls&gt;</code> (requested once when the user first uses Sales Boards; Chrome requires it for the yoworld.info selector and visible-tab capture from a persistent Side Panel)</li>
         <li><code>https://picrd.com/*</code> (requested on the first Picrd Quick Upload)</li>
       </ul>
 
       <h2>Content Script Scope</h2>
-      <p>The extension does not run an always-on content script and does not inspect browsing activity in the background. When you first use Sales Boards, Chrome may ask once for website access. This optional grant lets the extension run its packaged selector helper on the active yoworld.info tab and use Chrome's visible-tab screenshot API from the persistent Side Panel. Capture happens only after you press a Sales Boards button. The screenshot is processed locally to create the preview/export and is not collected or transmitted by the capture feature. Chrome may also ask once for access to picrd.com when you start a Picrd upload.</p>
+      <p>The extension does not inject content scripts or inspect browsing activity. Chrome may ask once for access to picrd.com when you start a Picrd upload.</p>
 
       <h2>Data Retention</h2>
       <p>Data remains in Chrome extension storage until:</p>

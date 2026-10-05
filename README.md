@@ -1,14 +1,14 @@
 # YoWorld Paint v3.5.11 🎨
 
-YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, and share custom Paint Boards and Sales Boards—faster and cleaner than doing it by hand.
+YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, transform, split, upload, and share custom Paint Boards—faster and cleaner than doing it by hand.
 
 > ⚠️ Community fan tool. Not affiliated with YoWorld or Big Viking Games (BVG).
 
 ## 🚀 What's new in 3.5.11
 
-- Fixes the Sales Boards screenshot permission error in persistent Side Panel mode.
-- Uses one optional permission prompt when Sales Boards is first used, not during installation.
-- Shows a helpful message if the optional permission is declined.
+- Removes the broken Sales Boards tab after YoWorld Info changed its template creator.
+- Removes the related capture scripts and the `scripting`, `activeTab`, and `<all_urls>` permissions.
+- Keeps Home, Transform, Tools, FAQ, Resources, uploading, and Paint Board apply behavior unchanged.
 - Updates Resources, the Privacy Policy, and the packaged tab tutorials.
 
 ## 🚀 What's new in 3.5.10
@@ -87,15 +87,6 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 ## ✨ Features
 
-- Sales Boards (popup → Sales Boards)
-  - Multiple layouts (classic 3×2, banner/hero/strips/mosaic/list variants)
-  - Two‑line captions with intelligent wrapping and font fitting
-  - Image Fit: Contain or Cover (per‑board setting)
-  - Live preview exactly matches exported canvas
-  - Export to 390×260 PNG
-  - Picker now reliably selects the full card, even with manual text/captions
-  - Selector logic is robust and works for all grid layouts
-
 - Tools (popup → Tools)
   - Board Size Calculator to get the target resize for your grid
   - Image Splitter: drag/drop/paste, optional scaling to grid or natural tiling
@@ -142,22 +133,14 @@ The extension icon should appear in your toolbar.
   - Use the Quick Image Uploader to paste/drag/click → Upload → Auto‑set
   - Toggle “Enable Redirect” when you’re ready to apply on YoWorld
 
-- Sales Boards
-  - Pick a layout and Image Fit
-  - Paste up to 6 direct image links (or paste images directly)
-  - Type captions; adjust font and size
-  - Export PNG when satisfied
-
 ---
 
 ## 🔒 Permissions
 
 Minimal and explicit:
 - `storage` - Saves user settings and state (theme, selected view mode, uploader preferences, redirect state, board/tool data)
-- `scripting` - Injects helper logic when needed for capture/selection flows on supported pages
 - `declarativeNetRequest` - Applies redirect rules used by the paint-board workflow
 - `declarativeNetRequestWithHostAccess` - Allows redirect rules to operate on approved host patterns
-- `activeTab` - Allows tab-scoped actions when you explicitly use extension features
 - `sidePanel` - Enables opening and running YoWorld Paint in Chrome Side Panel mode
 - Host permissions:
   - `https://*.facebook.com/*`
@@ -167,7 +150,6 @@ Minimal and explicit:
   - `https://yoworld.com/*`
   - `https://api.imgbb.com/*`
 - Optional host permissions, requested only when the related feature is used:
-  - `<all_urls>` (one-time access for the yoworld.info selector and Chrome's side-panel screenshot API)
   - `https://picrd.com/*` (requested on the first Picrd Quick Upload)
 
 ---
@@ -180,7 +162,7 @@ Minimal and explicit:
 - Data is only sent to external services when required by user actions:
   - Picrd (default Quick Upload host, only when you upload an image)
   - ImgBB API (only when you select ImgBB and upload an image)
-  - YoWorld/YoWorld Info pages (only while using capture/redirect features)
+  - YoWorld/YoWorld Info services (only while using the Paint Board apply/redirect workflow)
 - Settings/state are stored in Chrome extension storage:
   - `chrome.storage.sync` (preferences such as theme, view mode, API key)
   - `chrome.storage.local` (runtime/state values needed for extension behavior)

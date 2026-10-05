@@ -1,6 +1,6 @@
 # YoWorld Paint v3.5.11 — Release Notes
 
-Release date: 2026-09-27
+Release date: 2026-10-05
 
 ## Highlights since v3.4
 
@@ -8,8 +8,8 @@ Release date: 2026-09-27
 - Added Picrd as the default free Quick Upload host; ImgBB remains available as an optional host.
 - Improved 390×260 resizing and transparency handling to retain more image detail while avoiding unwanted in-game haze.
 - Fixed black-image behavior affecting some ImgBB-hosted images.
-- Fixed Sales Boards preview/export permissions when the extension runs in a persistent Side Panel.
-- Added a one-time, feature-triggered Sales Boards permission request instead of requesting broad site access during installation.
+- Removed the broken Sales Boards tab after YoWorld Info changed its template creator.
+- Removed the related `scripting`, `activeTab`, and broad optional website-access permissions.
 - Added refreshed Resources links, tutorials, Chrome Web Store copy, and a complete privacy policy.
 - Added Side Panel recovery so Chrome refreshes an invalidated panel page after an extension update or developer reload.
 
@@ -17,7 +17,7 @@ Release date: 2026-09-27
 
 - No analytics, advertising SDKs, or sale of personal data.
 - Images are sent to Picrd or ImgBB only when the user explicitly starts an upload.
-- Sales Board screenshots are processed locally and are not uploaded by the capture feature.
+- The extension does not inject content scripts or capture the active tab.
 - Live policy: https://gothicka-yw.github.io/YoWorld_Paint/privacy-policy.html
 
 YoWorld Paint is a community fan tool and is not affiliated with YoWorld or Big Viking Games.

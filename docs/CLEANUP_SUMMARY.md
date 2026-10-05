@@ -31,7 +31,7 @@
 1. **`popup/tabs/sales.js`** (927 lines) ✓ DELETED
    - Old sales board implementation
    - **NOT loaded in `popup.html`**
-   - Current implementation: `sales-boards.js` (which IS loaded)
+   - The replacement Sales Boards feature was later removed after the upstream YoWorld Info workflow changed
 
 2. **`content/yw_direct_upload.js`** ✓ DELETED
    - Already marked as deprecated in file comments
@@ -65,7 +65,6 @@
 ### **Loaded in `popup.html`:**
 - `popup/popup.js` - Main popup logic, themes, tab switching
 - `popup/tabs/home.js` - Home tab with Quick Upload
-- `popup/tabs/sales-boards.js` - Sales Boards tab (3×2 from yoworld.info)
 - `popup/tabs/tools.js` - Tools tab (calculator, splitter)
 - `popup/tabs/transform.js` - Transform tab (pre-warp, perspective)
 - `popup/tabs/faq.js` - FAQ tab
@@ -73,7 +72,6 @@
 
 ### **Referenced in `manifest.json`:**
 - `background.js` - Service worker for redirect rules
-- `content/sb_capture.js` - Content script for yoworld.info
 
 ---
 
@@ -85,7 +83,7 @@ All recommended files have been deleted. The extension codebase is now clean and
 
 1. **Test the extension** to verify functionality:
    - Reload extension in Chrome (`chrome://extensions`)
-   - Test all tabs: Home, Sales Boards, Transform, Tools, FAQ, Resources
+   - Test all tabs: Home, Transform, Tools, FAQ, Resources
    - Verify themes work correctly
    - Test Quick Upload functionality (uses `src/` folder)
 

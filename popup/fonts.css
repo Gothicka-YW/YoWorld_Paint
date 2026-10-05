@@ -5,7 +5,7 @@
   font-style: normal;
   font-display: swap;
 }
-/* Local packaged fonts for Sales Boards (MV3-safe) */
+/* Local packaged fonts for the extension interface (MV3-safe) */
 @font-face {
   font-family: "Pacifico";
   /* Use TTF only to avoid decode issues with corrupt woff2 */

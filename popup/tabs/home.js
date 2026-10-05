@@ -204,7 +204,6 @@ async function toPngBlobFromFile(file){
   const resizeChk = document.getElementById('qu-autoresize');
   const cleanAlphaChk = document.getElementById('qu-clean-alpha');
   const clearBtn = document.getElementById('qu-clear');
-  const bridgeBtn = document.getElementById('btn-upload-last');
   if (!hostSel || !fileEl || !btnUpload) return;
 
   let lastUrl = '';
@@ -354,29 +353,6 @@ async function toPngBlobFromFile(file){
     });
   }
 
-  // Bridge: Upload last exported PNG from Sales
-  if (bridgeBtn){
-    try {
-      const last = localStorage.getItem('ywp:lastExportPng');
-      bridgeBtn.disabled = !last;
-    } catch(_){}
-    bridgeBtn.addEventListener('click', async () => {
-      try {
-        const dataUrl = localStorage.getItem('ywp:lastExportPng');
-        if (!dataUrl){ showToast('No recent export found'); return; }
-        // Convert dataURL to Blob
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        const file = new File([blob], 'ywp-sales-board.png', { type: 'image/png' });
-        pickedFile = file;
-        setStatus('File ready from last export.');
-        // Auto trigger Upload with auto-set if desired
-        if (autoChk) autoChk.checked = true;
-        btnUpload.click();
-        showToast('Uploading last export…');
-      } catch(e){ setStatus('Could not load last export', true); }
-    });
-  }
 })();
 
 // Toast helper

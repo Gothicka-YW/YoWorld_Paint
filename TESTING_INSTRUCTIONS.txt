@@ -14,19 +14,16 @@ Installation:
 7. Close any YoWorld Paint side panel that is already open.
 8. Click the test extension's toolbar icon once.
 
-Sales Boards permission test:
+Navigation and permission test:
 
-1. Open https://yoworld.info/template and leave that tab active.
-2. Open Sales Boards in the extension side panel.
-3. Click Pick Card Selector and approve the one-time Sales Boards access request if Chrome asks.
-4. Pick the first card for the 3×2 board.
-5. Click Preview (3×2).
-6. Confirm the preview appears without a second permission prompt and the old "Either the '<all_urls>' or 'activeTab' permission is required" error does not return.
-7. Click Export (Crop) and confirm the 390×260 PNG downloads.
+1. Open the extension in the Side Panel.
+2. Confirm the tabs are Home, Transform, Tools, FAQ, and Resources.
+3. Confirm there is no Sales Boards tab.
+4. Open chrome://extensions, select YoWorld Paint Details, and confirm Chrome does not request access to all websites.
 
 Expected result:
 
-Sales Boards works directly from the side panel. Chrome requests one optional Sales Boards permission the first time the feature is used and remembers the choice after it is approved.
+The current Paint Board tools load normally and the removed Sales Boards feature does not request scripting, active-tab, or all-sites access.
 
 Picrd quality and save test:
 
