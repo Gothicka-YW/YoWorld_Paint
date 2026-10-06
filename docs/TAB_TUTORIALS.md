@@ -1,4 +1,4 @@
-# YoWorld Paint v3.5.12 Tab Tutorials
+# YoWorld Paint v3.5.13 Tab Tutorials
 
 These tutorials cover the current Side Panel and Popup interfaces. Side Panel is the recommended default, but the controls work the same way in both views.
 
@@ -19,6 +19,7 @@ Troubleshooting:
 - If Picrd asks for permission, approve it once and retry the upload.
 - If ImgBB reports a missing key, save and test the key in Resources.
 - If the saved board loses its image, repeat the first save while Redirect remains enabled.
+- Paint Board preview and application use an independent compatibility relay and do not depend on YoWorld Info.
 
 ## Transform Tab
 

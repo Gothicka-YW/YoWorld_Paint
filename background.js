@@ -7,8 +7,7 @@ const DEFAULT_SIDE_PANEL = `${SIDE_PANEL_PAGE}?build=${encodeURIComponent(
 )}`;
 const DEFAULT_POPUP = "popup/popup.html";
 const DEFAULT_VIEW_MODE = "sidepanel";
-const YOWORLD_IMAGE_PROXY = "https://api.yoworld.info/extension.php?x=";
-const IMGBB_RELAY = "https://wsrv.nl/?url=";
+const IMAGE_RELAY = "https://wsrv.nl/?url=";
 
 function getChromeLastErrorMessage() {
     const err = chrome.runtime.lastError;
@@ -35,21 +34,18 @@ function buildPaintBoardUrl(imgUrl) {
     const safeImgUrl = (imgUrl || "").trim();
     try {
         const parsed = new URL(safeImgUrl);
-        const isImgBbCdn = parsed.protocol === "https:" &&
-            (parsed.hostname === "i.ibb.co" || parsed.hostname === "image.ibb.co");
+        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return "";
+        if (parsed.hostname === "wsrv.nl") return safeImgUrl;
 
-        if (isImgBbCdn) {
-            // api.yoworld.info currently receives a solid-black fallback when
-            // it fetches ImgBB's CDN server-to-server. wsrv.nl can retrieve
-            // and cache the same public image, so redirect ImgBB files there
-            // directly and avoid the failing server-side hop.
-            const relaySource = parsed.host + parsed.pathname + parsed.search;
-            return IMGBB_RELAY + encodeURIComponent(relaySource) + "&output=png";
-        }
+        // The former compatibility endpoint is no longer available. Route
+        // every supported host through the same independent
+        // image relay so Picrd, ImgBB, Postimages, and pasted direct links all
+        // reach YoWorld as a browser-loadable PNG.
+        const relaySource = parsed.host + parsed.pathname + parsed.search;
+        return IMAGE_RELAY + encodeURIComponent(relaySource) + "&output=png";
     } catch (_) {
-        // Invalid input is handled by updateRedirectRules below.
+        return "";
     }
-    return YOWORLD_IMAGE_PROXY + encodeURIComponent(safeImgUrl);
 }
 
 function updateRedirectRules(imgUrl, enableRedirect) {

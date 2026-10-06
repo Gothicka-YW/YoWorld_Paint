@@ -1,5 +1,5 @@
 YoWorld Paint Privacy Policy
-Last updated: 2026-10-05
+Last updated: 2026-10-06
 
 YoWorld Paint is a Chrome extension fan tool for creating and applying Paint Board images. This policy explains what data is processed, why permissions are used, and what is not collected.
 
@@ -28,9 +28,9 @@ Data is sent externally only when necessary for user-initiated features:
 	- Default Quick Upload host; receives only images the user explicitly uploads and returns an unlisted direct link
 - ImgBB API (https://api.imgbb.com/*)
 	- Used only when the user selects ImgBB and uploads an image via Quick Upload
-- wsrv.nl image cache (https://wsrv.nl/*)
-  - Used only for public ImgBB image links during an enabled paint-board redirect, to avoid an incompatible server-to-server ImgBB fetch
-- YoWorld / YoWorld Info domains
+- wsrv.nl image relay (https://wsrv.nl/*)
+  - Receives the public image link selected by the user during preview and an enabled Paint Board redirect, then returns a compatible PNG
+- YoWorld domains
 	- Used only for the Paint Board apply and redirect workflow
 
 The extension does not continuously transmit browsing activity.
@@ -50,7 +50,6 @@ Host permissions:
 - https://*.facebook.com/*
 - https://*.fbcdn.net/*
 - https://*.yoworld.com/*
-- https://api.yoworld.info/*
 - https://yoworld.com/*
 - https://api.imgbb.com/*
 

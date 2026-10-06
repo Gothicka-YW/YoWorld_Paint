@@ -1,4 +1,15 @@
 # YoWorld Paint - Changelog
+## v3.5.13 — Paint Board Apply Proxy Fix
+**Updated:** 2026-10-06
+
+Fixes and changes
+- Restores Paint Board image application after the previous compatibility endpoint stopped resolving.
+- Removes all runtime, manifest-permission, privacy-policy, and user-instruction dependency on YoWorld Info.
+- Routes Picrd, ImgBB, Postimages, and other public direct-image links through the existing `wsrv.nl` compatibility relay.
+- Uses the same compatible relay URL for the Home preview and the in-game redirect so the preview matches what YoWorld receives.
+- Keeps Picrd as the default uploader and ImgBB as the optional API-key uploader.
+- Keeps Side Panel as the recommended default while retaining the Popup preference.
+
 ## v3.5.12 — Sales Boards Removal
 **Updated:** 2026-10-05
 

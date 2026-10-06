@@ -1,12 +1,19 @@
-# YoWorld Paint v3.5.12 🎨
+# YoWorld Paint v3.5.13 🎨
 
 YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, transform, split, upload, and share custom Paint Boards—faster and cleaner than doing it by hand.
 
 > ⚠️ Community fan tool. Not affiliated with YoWorld or Big Viking Games (BVG).
 
+## 🚀 What's new in 3.5.13
+
+- Restores Paint Board image application after the retired compatibility endpoint stopped resolving.
+- Removes all runtime and permission dependency on YoWorld Info.
+- Routes user-selected public image links through the existing `wsrv.nl` compatibility relay for both preview and Paint Board application.
+- Keeps Picrd as the default upload host and ImgBB as an optional host.
+
 ## 🚀 What's new in 3.5.12
 
-- Removes the broken Sales Boards tab after YoWorld Info changed its template creator.
+- Removes the broken Sales Boards tab after its upstream template creator changed.
 - Removes the related capture scripts and the `scripting`, `activeTab`, and `<all_urls>` permissions.
 - Keeps Home, Transform, Tools, FAQ, Resources, uploading, and Paint Board apply behavior unchanged.
 - Updates Resources, the Privacy Policy, and the packaged tab tutorials.
@@ -44,21 +51,6 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
   - Tiles and tool state persist across popup reopen
 - Home tab preview now shows a checkerboard behind your image to reveal transparent regions
 - Popup widened to 540px and keeps the themed look from 3.2.1
-
-## 🚀 What’s new in 3.2
-
-- New Sales Boards capture (3×2 from YoWorld Info)
-  - Pick a card on yoworld.info and capture 6 items starting at your pick
-  - Tight crop (top) with safe bottom padding for captions
-  - Preview and Export to 390×260 PNG
-  - Buttons: Pick, Reset, Preview, Export, Restore
-- Reliability
-  - Fixes for “Receiving end does not exist” via on‑demand injection
-  - Selector picking works on templates and mid‑list (uses picked index)
-- UI polish
-  - Smaller centered tabs, internal red scrollbar
-  - Footer shown only in Resources, with tighter spacing
-  - Added inline “How to Use” expanders on Sales Boards and Create Boards; removed duplicate FAQ bullets
 
 ## 🚀 What’s new in 3.1
 
@@ -146,7 +138,6 @@ Minimal and explicit:
   - `https://*.facebook.com/*`
   - `https://*.fbcdn.net/*`
   - `https://*.yoworld.com/*`
-  - `https://api.yoworld.info/*`
   - `https://yoworld.com/*`
   - `https://api.imgbb.com/*`
 - Optional host permissions, requested only when the related feature is used:
@@ -162,7 +153,8 @@ Minimal and explicit:
 - Data is only sent to external services when required by user actions:
   - Picrd (default Quick Upload host, only when you upload an image)
   - ImgBB API (only when you select ImgBB and upload an image)
-  - YoWorld/YoWorld Info services (only while using the Paint Board apply/redirect workflow)
+  - YoWorld services (only while using the Paint Board apply/redirect workflow)
+  - wsrv.nl image relay (only for previewing and applying the public image link selected by the user)
 - Settings/state are stored in Chrome extension storage:
   - `chrome.storage.sync` (preferences such as theme, view mode, API key)
   - `chrome.storage.local` (runtime/state values needed for extension behavior)

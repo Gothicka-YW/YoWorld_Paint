@@ -19,37 +19,11 @@ There are two ways to upload - manually how we used to do things or let the exte
 - How to set up quick upload
 
 ### Outro (2:30-2:45)
-"That is the full Home tab flow. In the next video, we will make a sales board from YoWorld Info."
+"That is the full Home tab flow. Next up is Transform for perspective fixes and cleanup."
 
 ---
 
-## Video 2: Sales Boards Tab - Build a 3x2 Board from YoWorld Info
-
-### Title
-YoWorld Paint Sales Boards Tutorial | Capture, Preview, Export
-
-### Hook (0:00-0:10)
-"Let us build a clean 3x2 sales board from yoworld.info using the Sales Boards tab."
-
-### Script (0:10-3:00)
-"Open the Sales Boards tab, then click the YoWorld Info link to open yoworld.info/template."
-
-"Back in the extension, click Pick Card Selector, then click the first card image you want in your board."
-
-"Use Reset Selectors if you picked the wrong area."
-
-"Click Preview 3x2 to generate your board. You can click Restore List if you need to reload your last captured sequence."
-
-"When it looks right, click Export Crop to save the final 390 by 260 board image."
-
-"Then upload that image in the Home tab using Quick Upload or manual link paste."
-
-### Outro (3:00-3:15)
-"That is the full Sales Boards workflow. Next up is Transform for perspective fixes and cleanup."
-
----
-
-## Video 3: Transform Tab - Perspective Fix and Export
+## Video 2: Transform Tab - Perspective Fix and Export
 
 ### Title
 YoWorld Paint Transform Tutorial | Perspective Fix for Better Boards
@@ -75,7 +49,7 @@ YoWorld Paint Transform Tutorial | Perspective Fix for Better Boards
 
 ---
 
-## Video 4: Tools Tab - Calculator + Splitter
+## Video 3: Tools Tab - Calculator + Splitter
 
 ### Title
 YoWorld Paint Tools Tutorial | Board Size Calculator and Image Splitter
@@ -101,7 +75,7 @@ YoWorld Paint Tools Tutorial | Board Size Calculator and Image Splitter
 
 ---
 
-## Video 5: FAQ Tab - Best Practices and Common Fixes
+## Video 4: FAQ Tab - Best Practices and Common Fixes
 
 ### Title
 YoWorld Paint FAQ Tutorial | Avoid Common Upload Mistakes
@@ -123,7 +97,7 @@ YoWorld Paint FAQ Tutorial | Avoid Common Upload Mistakes
 
 ---
 
-## Video 6: Resources Tab - Settings, Themes, and View Mode
+## Video 5: Resources Tab - Settings, Themes, and View Mode
 
 ### Title
 YoWorld Paint Resources Tutorial | API Key, Themes, and Side Panel Mode
@@ -145,7 +119,7 @@ YoWorld Paint Resources Tutorial | API Key, Themes, and Side Panel Mode
 
 ---
 
-## Video 7: Tips and Tricks - Shortcuts, Snipping, and Clipboard Workflow
+## Video 6: Tips and Tricks - Shortcuts, Snipping, and Clipboard Workflow
 
 ### Title
 YoWorld Paint Tips and Tricks | Speed Up Your Workflow (Windows + Mac)
@@ -176,7 +150,7 @@ YoWorld Paint Tips and Tricks | Speed Up Your Workflow (Windows + Mac)
 
 "Mac: Command + T for new tab, Command + W to close tab, Control + Tab to switch tabs in many browsers."
 
-"Tip four: keep source and extension side by side. Use browser split view or side panel mode while you reference yoworld.info or generator output."
+"Tip four: keep source and extension side by side. Use browser split view or side panel mode while you reference generator output or another image source."
 
 "Tip five: use consistent naming when exporting boards and tiles so you can find files quickly later."
 

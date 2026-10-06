@@ -98,7 +98,7 @@
   <main class="wrap">
     <article class="card">
       <h1>YoWorld Paint Privacy Policy</h1>
-      <p class="muted">Last updated: 2026-10-05</p>
+      <p class="muted">Last updated: 2026-10-06</p>
 
       <p>YoWorld Paint is a Chrome extension fan tool for creating and applying Paint Board images. This policy explains what data is processed, why permissions are used, and what is not collected.</p>
 
@@ -130,8 +130,8 @@
       <ul>
         <li>Picrd API (<code>https://picrd.com/*</code>): Default Quick Upload host; receives only images the user explicitly uploads and returns an unlisted direct link</li>
         <li>ImgBB API (<code>https://api.imgbb.com/*</code>): Used only when the user selects ImgBB and uploads an image via Quick Upload</li>
-        <li>wsrv.nl image cache (<code>https://wsrv.nl/*</code>): Used only for public ImgBB image links during an enabled paint-board redirect, to avoid an incompatible server-to-server ImgBB fetch</li>
-        <li>YoWorld / YoWorld Info domains: Used only for the Paint Board apply and redirect workflow</li>
+        <li>wsrv.nl image relay (<code>https://wsrv.nl/*</code>): Receives the public image link selected by the user during preview and an enabled Paint Board redirect, then returns a compatible PNG</li>
+        <li>YoWorld domains: Used only for the Paint Board apply and redirect workflow</li>
       </ul>
       <p>The extension does not continuously transmit browsing activity.</p>
 
@@ -149,7 +149,6 @@
         <li><code>https://*.facebook.com/*</code></li>
         <li><code>https://*.fbcdn.net/*</code></li>
         <li><code>https://*.yoworld.com/*</code></li>
-        <li><code>https://api.yoworld.info/*</code></li>
         <li><code>https://yoworld.com/*</code></li>
         <li><code>https://api.imgbb.com/*</code></li>
       </ul>

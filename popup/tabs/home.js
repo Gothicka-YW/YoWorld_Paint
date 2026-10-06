@@ -4,12 +4,12 @@ function getCompatibleImageUrl(url) {
   const value = String(url || '').trim();
   try {
     const parsed = new URL(value);
-    if (parsed.protocol === 'https:' && (parsed.hostname === 'i.ibb.co' || parsed.hostname === 'image.ibb.co')) {
-      const relaySource = parsed.host + parsed.pathname + parsed.search;
-      return 'https://wsrv.nl/?url=' + encodeURIComponent(relaySource) + '&output=png';
-    }
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
+    if (parsed.hostname === 'wsrv.nl') return value;
+    const relaySource = parsed.host + parsed.pathname + parsed.search;
+    return 'https://wsrv.nl/?url=' + encodeURIComponent(relaySource) + '&output=png';
   } catch (_) {}
-  return value;
+  return '';
 }
 
 (function(){
