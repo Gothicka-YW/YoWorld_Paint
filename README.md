@@ -1,8 +1,18 @@
-# YoWorld Paint v3.5.13 🎨
+# YoWorld Paint v3.5.14 🎨
 
 YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, transform, split, upload, and share custom Paint Boards—faster and cleaner than doing it by hand.
 
 > ⚠️ Community fan tool. Not affiliated with YoWorld or Big Viking Games (BVG).
+
+## 🚀 What's new in 3.5.14
+
+- Fixes Paint Board images disappearing after Redirect is turned off and the board is saved again.
+- Prepares uploads locally as save-safe 390×260 PNGs before sending them to the selected image host.
+- Preserves full-color PNG data whenever it fits the save target, then uses adaptive perceptual compression only when necessary.
+- Bundles the UPNG encoder locally for cleaner gradients and substantially better color retention at small file sizes.
+- Sends Picrd, ImgBB, and Postimages direct-image links to YoWorld without an additional image relay or re-encoding step.
+- Limits the Paint Board redirect to image-loading GET requests so YoWorld save requests remain untouched.
+- Keeps all YoWorld Paint functionality independent of YoWorld Info and adds no new permissions or compression service.
 
 ## 🚀 What's new in 3.5.13
 
@@ -87,7 +97,8 @@ YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you c
 
 - Quick Image Uploader (popup → Home)
   - Paste, drag & drop, or click to select
-  - Optional game-ready 390×260 resize without stretching
+  - Optional game-ready 390×260 preparation without stretching
+  - Local adaptive compression for reliable saving with the best available color quality
   - Picrd is the default free host; ImgBB remains optional
   - Optional faint-transparency cleanup for difficult images
   - Auto‑copy URL + optional auto‑apply to the current image
@@ -154,7 +165,7 @@ Minimal and explicit:
   - Picrd (default Quick Upload host, only when you upload an image)
   - ImgBB API (only when you select ImgBB and upload an image)
   - YoWorld services (only while using the Paint Board apply/redirect workflow)
-  - wsrv.nl image relay (only for previewing and applying the public image link selected by the user)
+  - wsrv.nl image relay (only when a manually entered public image link uses an unsupported direct-image host)
 - Settings/state are stored in Chrome extension storage:
   - `chrome.storage.sync` (preferences such as theme, view mode, API key)
   - `chrome.storage.local` (runtime/state values needed for extension behavior)
@@ -167,6 +178,7 @@ Minimal and explicit:
 
 - Manifest V3
 - Vanilla HTML/CSS/JS (no frameworks)
+- Locally bundled UPNG encoder for perceptual PNG optimization; no remote compression code or service
 - Local packaged fonts (MV3‑safe): Pacifico, Staatliches, Passion One, Dancing Script
 
 ---

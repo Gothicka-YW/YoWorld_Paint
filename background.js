@@ -7,6 +7,7 @@ const DEFAULT_SIDE_PANEL = `${SIDE_PANEL_PAGE}?build=${encodeURIComponent(
 )}`;
 const DEFAULT_POPUP = "popup/popup.html";
 const DEFAULT_VIEW_MODE = "sidepanel";
+const DEFAULT_IMAGE_URL = "https://i.postimg.cc/VLh6mKGY/20250924-1934-Celestial-Cartoon-Background-remix-01k5z13k9cf4jrwgtmak9dqwjr.png";
 const IMAGE_RELAY = "https://wsrv.nl/?url=";
 
 function getChromeLastErrorMessage() {
@@ -32,15 +33,28 @@ function logChromeLastError(context) {
 
 function buildPaintBoardUrl(imgUrl) {
     const safeImgUrl = (imgUrl || "").trim();
+
     try {
         const parsed = new URL(safeImgUrl);
         if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return "";
         if (parsed.hostname === "wsrv.nl") return safeImgUrl;
 
-        // The former compatibility endpoint is no longer available. Route
-        // every supported host through the same independent
-        // image relay so Picrd, ImgBB, Postimages, and pasted direct links all
-        // reach YoWorld as a browser-loadable PNG.
+        // Quick Upload prepares a compact indexed PNG before sending it to the
+        // selected host. Keep those exact bytes intact: routing the image
+        // through another image service can decode and re-encode it into a
+        // much larger true-colour PNG that YoWorld may refuse to persist.
+        const directImageHosts = new Set([
+            "i.picrd.com",
+            "i.ibb.co",
+            "image.ibb.co",
+            "i.postimg.cc"
+        ]);
+        if (directImageHosts.has(parsed.hostname) || parsed.hostname.endsWith(".postimg.cc")) {
+            return parsed.href;
+        }
+
+        // Pasted links from other hosts still use the independent relay for a
+        // browser-loadable PNG. The removed yoworld.info API is not required.
         const relaySource = parsed.host + parsed.pathname + parsed.search;
         return IMAGE_RELAY + encodeURIComponent(relaySource) + "&output=png";
     } catch (_) {
@@ -52,12 +66,13 @@ function updateRedirectRules(imgUrl, enableRedirect) {
     const enabled = !!enableRedirect;
     const safeImgUrl = (imgUrl || "").trim();
     const targetUrl = buildPaintBoardUrl(safeImgUrl);
+    const validTarget = /^https?:\/\//i.test(targetUrl);
     console.log("Updating rules. enableRedirect =", enabled, "imgUrl =", safeImgUrl);
 
     chrome.declarativeNetRequest.updateDynamicRules(
         {
             removeRuleIds: [1],
-            addRules: (enabled && safeImgUrl && /^https?:\/\//i.test(targetUrl))
+            addRules: (enabled && safeImgUrl && validTarget)
                 ? [
                     {
                         id: 1,
@@ -70,14 +85,21 @@ function updateRedirectRules(imgUrl, enableRedirect) {
                         },
                         condition: {
                             urlFilter: "paint_board",
-                            resourceTypes: ["image", "xmlhttprequest", "sub_frame", "main_frame"]
+                            resourceTypes: ["image", "xmlhttprequest", "sub_frame", "main_frame"],
+                            // Paint Board assets are loaded with GET requests. Limiting
+                            // the redirect to GET keeps YoWorld's save/update POSTs on
+                            // their original endpoint instead of sending them to the
+                            // image relay.
+                            requestMethods: ["get"]
                         }
                     }
                 ]
                 : []
         },
         () => {
-            if (logChromeLastError("Error updating rules")) {
+            const errorMessage = getChromeLastErrorMessage();
+            if (errorMessage) {
+                console.error("Error updating rules:", errorMessage, chrome.runtime.lastError);
                 return;
             } else {
                 console.log("Rules updated successfully.");
@@ -90,15 +112,23 @@ function updateRedirectRules(imgUrl, enableRedirect) {
 }
 
 function loadSettings() {
-    chrome.storage.local.get({ img: ["", false] }, (e) => {
+    chrome.storage.local.get({
+        img: ["", false]
+    }, (e) => {
         if (logChromeLastError("Error loading storage")) {
             return;
         }
-        if (e.img && e.img.length) {
-            updateRedirectRules(e.img[0], e.img[1]);
-        } else {
-            updateRedirectRules("https://i.imgur.com/j146uKh.png", false);
+        const stored = Array.isArray(e.img) ? e.img : [];
+        const url = String(stored[0] || DEFAULT_IMAGE_URL).trim();
+        const enabled = !!stored[1];
+
+        // Persist the visible default instead of only showing it in the UI.
+        // This lets Redirect work on a fresh installation without requiring
+        // the user to click Set New Image first.
+        if (!stored[0]) {
+            chrome.storage.local.set({ img: [url, enabled] });
         }
+        updateRedirectRules(url, enabled);
     });
 }
 

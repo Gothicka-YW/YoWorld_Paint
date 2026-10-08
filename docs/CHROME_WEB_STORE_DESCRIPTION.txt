@@ -3,6 +3,7 @@ YoWorld Paint is a fan-made Chrome extension that helps YoWorld players create b
 Create polished 390×260 boards in minutes with:
 
 Quick Image Uploader (paste, drag/drop, or file select)
+Local save-safe image optimization with improved color quality
 Transform + pre-warp utilities
 Image splitter and board size calculator
 Live preview and easy export flow

@@ -1,11 +1,18 @@
 
 // home.js — donor storage format, live preview
+const DEFAULT_IMAGE_URL = 'https://i.postimg.cc/VLh6mKGY/20250924-1934-Celestial-Cartoon-Background-remix-01k5z13k9cf4jrwgtmak9dqwjr.png';
+
 function getCompatibleImageUrl(url) {
   const value = String(url || '').trim();
   try {
     const parsed = new URL(value);
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
     if (parsed.hostname === 'wsrv.nl') return value;
+    // Preserve the exact game-ready PNG bytes uploaded by the extension.
+    const directImageHosts = new Set(['i.picrd.com', 'i.ibb.co', 'image.ibb.co', 'i.postimg.cc']);
+    if (directImageHosts.has(parsed.hostname) || parsed.hostname.endsWith('.postimg.cc')) {
+      return parsed.href;
+    }
     const relaySource = parsed.host + parsed.pathname + parsed.search;
     return 'https://wsrv.nl/?url=' + encodeURIComponent(relaySource) + '&output=png';
   } catch (_) {}
@@ -40,7 +47,10 @@ function getCompatibleImageUrl(url) {
       const enabled = Array.isArray(o.img) ? !!o.img[1] : false;
       // If no image is set, use the sticky default
       // Default fallback image
-      if (!url) url = "https://i.postimg.cc/VLh6mKGY/20250924-1934-Celestial-Cartoon-Background-remix-01k5z13k9cf4jrwgtmak9dqwjr.png";
+      if (!url) {
+        url = DEFAULT_IMAGE_URL;
+        chrome.storage.local.set({ img: [url, enabled] });
+      }
       if (input)  input.value = url;
       if (toggle) toggle.checked = enabled;
       setPreview(url);
@@ -60,7 +70,8 @@ function getCompatibleImageUrl(url) {
   function saveToggle() {
     const enabled = !!(toggle && toggle.checked);
     chrome.storage.local.get({ img: ["", false] }, (o)=>{
-      const url = Array.isArray(o.img) ? (o.img[0] || "") : "";
+      const storedUrl = Array.isArray(o.img) ? (o.img[0] || "") : "";
+      const url = storedUrl || (input && input.value || '').trim() || DEFAULT_IMAGE_URL;
       chrome.storage.local.set({ img: [url, enabled] });
     });
     showToast(enabled
@@ -76,117 +87,6 @@ function getCompatibleImageUrl(url) {
 
   load();
 })();
-
-(function(){
-  const pick = document.querySelector('#file-pick');
-  if (!pick) return;
-  pick.addEventListener('change', async (e)=>{
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    const png = await resizeExactPngFromFile(f, 390, 260);
-    let url = null;
-    try { url = await uploadPreferred(png); } catch(e){ console.warn('uploadPreferred error', e); }
-    if (!url) return alert('Upload failed. Check Resources settings.');
-    const toggle = document.querySelector('#panel-home #enable-redirect');
-    if (toggle && !toggle.checked){ toggle.checked = true; toggle.dispatchEvent(new Event('change', {bubbles:true})); }
-    const input = document.querySelector('#panel-home #img-url');
-    if (input){ input.value = url; input.dispatchEvent(new Event('input', {bubbles:true})); }
-    const btn = document.querySelector('#panel-home #btn-set');
-    if (btn) btn.click();
-  });
-})();
-
-
-// --- Added: exact resize helper (referenced previously but missing) ---
-async function resizeExactPngFromFile(file, w, h, cleanTransparency = false){
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const fr = new FileReader();
-    fr.onload = e => { img.src = e.target.result; };
-    fr.onerror = reject;
-    img.onload = () => {
-      const exactPng = img.width === w && img.height === h && file.type === 'image/png';
-      const cv = document.createElement('canvas');
-      cv.width = w; cv.height = h;
-      const ctx = cv.getContext('2d');
-      ctx.clearRect(0,0,w,h);
-      // Fit contain inside target, then center (avoid distortion)
-      const scale = Math.min(w / img.width, h / img.height);
-      const dw = Math.max(1, Math.round(img.width * scale));
-      const dh = Math.max(1, Math.round(img.height * scale));
-      const dx = Math.floor((w - dw) / 2);
-      const dy = Math.floor((h - dh) / 2);
-      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, dx, dy, dw, dh);
-
-      // Preserve soft detail by default. For images with unwanted colored haze,
-      // the optional cleanup converts partial alpha to a hard 50% edge.
-      const alphaChanged = cleanTransparency
-        ? cleanYoWorldTransparency(ctx, w, h)
-        : false;
-
-      // Preserve exact-size PNG bytes when they already use YoWorld-safe
-      // transparency. This avoids an unnecessary canvas re-encode.
-      if (exactPng && !alphaChanged) {
-        resolve(file);
-        return;
-      }
-      cv.toBlob(b => {
-        if (!b) return reject(new Error('Canvas toBlob failed'));
-        resolve(b);
-      }, 'image/png');
-    };
-    fr.readAsDataURL(file);
-  });
-}
-
-function cleanYoWorldTransparency(ctx, w, h, threshold = 128){
-  const imageData = ctx.getImageData(0, 0, w, h);
-  const pixels = imageData.data;
-  let changed = false;
-
-  for (let i = 3; i < pixels.length; i += 4){
-    const alpha = pixels[i];
-    if (alpha === 0 || alpha === 255) continue;
-
-    changed = true;
-    if (alpha < threshold){
-      // Clear hidden RGB as well as alpha so later encoders cannot reveal it.
-      pixels[i - 3] = 0;
-      pixels[i - 2] = 0;
-      pixels[i - 1] = 0;
-      pixels[i] = 0;
-    } else {
-      pixels[i] = 255;
-    }
-  }
-
-  if (changed) ctx.putImageData(imageData, 0, 0);
-  return changed;
-}
-
-async function toPngBlobFromFile(file){
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const fr = new FileReader();
-    fr.onload = e => { img.src = e.target.result; };
-    fr.onerror = reject;
-    img.onload = () => {
-      const cv = document.createElement('canvas');
-      cv.width = img.width; cv.height = img.height;
-      const ctx = cv.getContext('2d');
-      ctx.clearRect(0, 0, cv.width, cv.height);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0);
-      cv.toBlob(b => {
-        if (!b) return reject(new Error('Canvas toBlob failed'));
-        resolve(b);
-      }, 'image/png');
-    };
-    fr.readAsDataURL(file);
-  });
-}
 
 
 
@@ -313,18 +213,35 @@ async function toPngBlobFromFile(file){
     btnUpload.disabled = true;
     btnCopy.disabled = true;
     const cleanTransparency = !!cleanAlphaChk?.checked;
-    setStatus(doResize ? 'Preparing 390×260 game image…' : 'Uploading original…');
+    setStatus(doResize ? 'Preparing a save-safe 390×260 image…' : 'Uploading original…');
     setResult('');
     lastUrl='';
     try {
       let uploadFile = file;
       if (doResize){
-        const resized = await resizeExactPngFromFile(file, 390, 260, cleanTransparency);
-        setStatus('Uploading…');
-        uploadFile = new File([resized], file.name || 'image.png', { type:'image/png' });
+        const { prepareYoWorldIndexedPng } = await import('../../src/lib/indexed-png.js');
+        const prepared = await prepareYoWorldIndexedPng(file, {
+          width: 390,
+          height: 260,
+          allowResize: true,
+          cleanTransparency,
+          targetBytes: 34 * 1024
+        });
+        const sourceName = file.name || 'image';
+        const pngName = `${sourceName.replace(/\.[^.]+$/, '') || 'image'}-yoworld.png`;
+        const sizeKb = Math.ceil(prepared.byteLength / 1024);
+        setStatus(prepared.targetMet
+          ? `Uploading save-safe PNG (${sizeKb} KB)…`
+          : `Uploading smallest available PNG (${sizeKb} KB)…`);
+        uploadFile = new File([prepared.blob], pngName, { type:'image/png' });
       }
       const { uploadImage } = await import('../../src/lib/uploader.js');
       const url = await uploadImage(uploadFile, { host });
+      const stored = await chrome.storage.local.get({ img: ['', false] });
+      const enabled = Array.isArray(stored.img) ? !!stored.img[1] : false;
+      const imageUpdate = {};
+      if (autoChk && autoChk.checked) imageUpdate.img = [url, enabled];
+      await chrome.storage.local.set(imageUpdate);
       lastUrl = url; setResult(url);
       try { await navigator.clipboard.writeText(url); setStatus('Uploaded & copied.'); btnCopy.disabled=false; }
       catch { setStatus('Uploaded. Use Copy button.', true); btnCopy.disabled=false; }

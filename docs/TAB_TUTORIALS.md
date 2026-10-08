@@ -1,4 +1,4 @@
-# YoWorld Paint v3.5.13 Tab Tutorials
+# YoWorld Paint v3.5.14 Tab Tutorials
 
 These tutorials cover the current Side Panel and Popup interfaces. Side Panel is the recommended default, but the controls work the same way in both views.
 
@@ -8,7 +8,7 @@ Use Home to upload an image, set its direct link, preview it, and apply it to a 
 
 1. Leave **Picrd** selected for free uploading without an API key, or select **ImgBB** after saving an API key in Resources.
 2. Paste, drop, or select an image.
-3. Leave **Game-ready 390×260** enabled when the image should be fitted to one board without stretching.
+3. Leave **Game-ready 390×260 (save optimized)** enabled. The extension preserves full color when possible and automatically uses perceptual compression only when required for reliable saving.
 4. Leave **Clean faint transparency** off to preserve soft glow and translucent details. Enable it only when faint hidden color becomes a solid haze in YoWorld.
 5. Leave **Auto-set as Current Image** enabled if the uploaded link should immediately become the active image.
 6. Click **Upload**. You can also paste an existing direct image link into the URL field and click **Set New Image**.
@@ -19,7 +19,7 @@ Troubleshooting:
 - If Picrd asks for permission, approve it once and retry the upload.
 - If ImgBB reports a missing key, save and test the key in Resources.
 - If the saved board loses its image, repeat the first save while Redirect remains enabled.
-- Paint Board preview and application use an independent compatibility relay and do not depend on YoWorld Info.
+- Picrd, ImgBB, and Postimages direct links are used without another image relay. Other manually entered hosts may use the compatibility relay. Nothing depends on YoWorld Info.
 
 ## Transform Tab
 
@@ -61,5 +61,6 @@ Resources contains current YoWorld Paint links and saved preferences.
 ## Privacy and Permissions
 
 - Picrd access is requested only when a Picrd upload starts.
+- Game-ready image resizing and compression happen locally inside the extension before the selected host receives the prepared upload.
 - The extension does not inject content scripts or capture the active tab.
 - See the packaged `PRIVACY_POLICY.md` or the Privacy Policy link in Resources for the full policy.

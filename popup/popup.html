@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>YoWorld Paint v3.5.13</title>
+<title>YoWorld Paint v3.5.14</title>
 <link href="popup.css" rel="stylesheet"/>
 <style>
 /* YWP resources tab tweaks */
@@ -46,7 +46,7 @@
 </head>
 <body>
 <div class="app-shell">
-<header class="app-header">YoWorld Paint v3.5.13</header>
+<header class="app-header">YoWorld Paint v3.5.14</header>
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
 <button aria-selected="false" class="tab" data-tab="transform" role="tab">Transform</button>
@@ -74,7 +74,7 @@
 <div id="quick-upload" style="display:flex; flex-direction:column; gap:10px;">
   <div class="qu-head">
     <h3 class="qu-title">Quick Image Uploader</h3>
-  <div class="qu-sub">Paste, drag & drop, or click to select. Picrd is the default free host; ImgBB remains available. Game-ready sizing fits images into 390×260 without stretching.</div>
+  <div class="qu-sub">Paste, drag & drop, or click to select. Picrd is the default free host; ImgBB remains available. Game-ready mode fits and optimizes images for YoWorld saving.</div>
   </div>
   <div style="display:flex; gap:8px; align-items:center;">
     <label style="font-size:12px; font-weight:600; display:flex; flex-direction:column; gap:4px; flex:1;">
@@ -99,7 +99,7 @@
   </div>
   <div style="display:flex; align-items:center; gap:16px; font-size:12px; flex-wrap:wrap;">
     <label style="display:flex; align-items:center; gap:6px;">
-  <input type="checkbox" id="qu-autoresize" aria-label="Prepare game-ready 390 by 260 image" aria-describedby="qu-status qu-warning" /> Game-ready 390×260 (no stretching)
+  <input type="checkbox" id="qu-autoresize" aria-label="Prepare save-safe 390 by 260 image" aria-describedby="qu-status qu-warning" /> Game-ready 390×260 (save optimized)
     </label>
     <label style="display:flex; align-items:center; gap:6px;">
       <input type="checkbox" id="qu-autoset" checked aria-label="Auto-set as current image after upload" aria-describedby="qu-status qu-warning" /> Auto‑set as Current Image
@@ -491,6 +491,7 @@
 </section>
 </main>
 <script src="popup.js"></script>
+<script src="../src/vendor/upng/UPNG.js"></script>
 <script src="tabs/home.js"></script>
 <script src="tabs/tools.js"></script>
 <script src="tabs/transform.js"></script>

@@ -98,7 +98,7 @@
   <main class="wrap">
     <article class="card">
       <h1>YoWorld Paint Privacy Policy</h1>
-      <p class="muted">Last updated: 2026-10-06</p>
+      <p class="muted">Last updated: 2026-10-08</p>
 
       <p>YoWorld Paint is a Chrome extension fan tool for creating and applying Paint Board images. This policy explains what data is processed, why permissions are used, and what is not collected.</p>
 
@@ -125,14 +125,18 @@
         <li><code>chrome.storage.local</code>: Used for local runtime/state values required by extension features</li>
       </ul>
 
+      <h2>Local Image Processing</h2>
+      <p>When Game-ready mode is enabled, resizing, transparency cleanup, lossless PNG encoding, and perceptual color optimization occur locally inside the extension before upload. The encoder is bundled with the extension. Images are not sent to a separate compression or artificial-intelligence service.</p>
+
       <h2>External Services and Network Use</h2>
       <p>Data is sent externally only when necessary for user-initiated features:</p>
       <ul>
-        <li>Picrd API (<code>https://picrd.com/*</code>): Default Quick Upload host; receives only images the user explicitly uploads and returns an unlisted direct link</li>
-        <li>ImgBB API (<code>https://api.imgbb.com/*</code>): Used only when the user selects ImgBB and uploads an image via Quick Upload</li>
-        <li>wsrv.nl image relay (<code>https://wsrv.nl/*</code>): Receives the public image link selected by the user during preview and an enabled Paint Board redirect, then returns a compatible PNG</li>
+        <li>Picrd API (<code>https://picrd.com/*</code>): Default Quick Upload host; receives only the locally prepared image the user explicitly uploads and returns an unlisted direct link</li>
+        <li>ImgBB API (<code>https://api.imgbb.com/*</code>): Receives the locally prepared image only when the user selects ImgBB and starts an upload</li>
+        <li>wsrv.nl image relay (<code>https://wsrv.nl/*</code>): Used only as a compatibility fallback when a manually entered public image link is hosted somewhere other than the supported direct-image hosts; it receives that public image URL and returns a compatible PNG</li>
         <li>YoWorld domains: Used only for the Paint Board apply and redirect workflow</li>
       </ul>
+      <p>Direct Picrd, ImgBB, and Postimages image links are loaded without sending them through the wsrv.nl compatibility relay.</p>
       <p>The extension does not continuously transmit browsing activity.</p>
 
       <h2>Permissions and Why They Are Required</h2>
@@ -143,7 +147,6 @@
         <li><code>declarativeNetRequestWithHostAccess</code>: Allow declarative network rules on approved hosts.</li>
         <li><code>sidePanel</code>: Enable Side Panel mode.</li>
       </ul>
-
       <p>Host permissions:</p>
       <ul>
         <li><code>https://*.facebook.com/*</code></li>
@@ -168,6 +171,7 @@
         <li>You clear extension storage,</li>
         <li>Or you uninstall the extension.</li>
       </ul>
+      <p>Images uploaded to Picrd or ImgBB are retained according to the selected host's policies. YoWorld Paint does not control those services' retention periods.</p>
 
       <h2>Children's Privacy</h2>
       <p>YoWorld Paint is not directed to children under 13 and does not knowingly collect personal information from children.</p>

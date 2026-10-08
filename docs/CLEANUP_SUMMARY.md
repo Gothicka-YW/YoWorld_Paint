@@ -55,7 +55,9 @@
 - Contains active uploader implementation:
   - `src/lib/uploader.js` - Image upload logic
   - `src/lib/settings.js` - Settings management
+  - `src/lib/indexed-png.js` - Local save-safe PNG preparation and adaptive encoding
   - `src/providers/` - Upload providers (ImgBB, etc.)
+  - `src/vendor/upng/` - Locally bundled perceptual PNG encoder and MIT license
 - Removing this folder breaks the Quick Upload functionality on the Home tab
 
 ---

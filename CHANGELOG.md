@@ -1,4 +1,19 @@
 # YoWorld Paint - Changelog
+## v3.5.14 — Reliable Saves and Perceptual Image Quality
+**Updated:** 2026-10-08
+
+Fixes and changes
+- Fixes uploaded Paint Board images disappearing after Redirect is disabled and the board is saved again.
+- Prepares Game-ready uploads locally as compact 390×260 PNGs before uploading.
+- Preserves an exact full-color PNG when it already fits the save target.
+- Uses an adaptive, locally bundled UPNG perceptual encoder only when reduction is necessary, retaining the highest-quality palette that fits the save-safe target.
+- Improves gradients, transparency, and minority-color retention compared with the earlier custom palette reducer.
+- Uses direct Picrd, ImgBB, and Postimages image URLs so the prepared bytes are not re-encoded by another relay.
+- Limits Paint Board redirect rules to GET requests so YoWorld's save/update requests stay on their original endpoint.
+- Retains `wsrv.nl` only as a compatibility fallback for manually entered links from other image hosts.
+- Keeps the extension independent of YoWorld Info and adds no new Chrome permissions, backend, or compression service.
+- Updates the Privacy Policy, tutorials, testing instructions, store description, README, and release notes.
+
 ## v3.5.13 — Paint Board Apply Proxy Fix
 **Updated:** 2026-10-06
 

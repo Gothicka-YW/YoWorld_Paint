@@ -5,6 +5,8 @@ const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 const DEFAULT_WIDTH = 390;
 const DEFAULT_HEIGHT = 260;
 const DEFAULT_MAX_COLORS = 256;
+const DEFAULT_SAVE_TARGET_BYTES = 34 * 1024;
+const DEFAULT_PALETTE_STEPS = Object.freeze([256, 192, 160, 128, 96, 80, 64, 48, 40, 32, 24, 16]);
 
 let crcTable = null;
 
@@ -68,15 +70,48 @@ function concatBytes(parts) {
   return out;
 }
 
+function paethPredictor(left, above, upperLeft) {
+  const prediction = left + above - upperLeft;
+  const leftDistance = Math.abs(prediction - left);
+  const aboveDistance = Math.abs(prediction - above);
+  const upperLeftDistance = Math.abs(prediction - upperLeft);
+  if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance) return left;
+  if (aboveDistance <= upperLeftDistance) return above;
+  return upperLeft;
+}
+
+function filterRgbaRow(row, previousRow, filterType) {
+  const filtered = new Uint8Array(row.length);
+  let score = 0;
+  for (let index = 0; index < row.length; index += 1) {
+    const value = row[index];
+    const left = index >= 4 ? row[index - 4] : 0;
+    const above = previousRow ? previousRow[index] : 0;
+    const upperLeft = previousRow && index >= 4 ? previousRow[index - 4] : 0;
+    let predictor = 0;
+    if (filterType === 1) predictor = left;
+    else if (filterType === 2) predictor = above;
+    else if (filterType === 3) predictor = Math.floor((left + above) / 2);
+    else if (filterType === 4) predictor = paethPredictor(left, above, upperLeft);
+    const encoded = (value - predictor + 256) & 0xff;
+    filtered[index] = encoded;
+    score += Math.min(encoded, 256 - encoded);
+  }
+  return { filtered, score };
+}
+
 async function deflateZlib(bytes) {
   if (typeof CompressionStream !== 'function') {
     throw new Error('This Chrome version does not support PNG compression.');
   }
   const stream = new CompressionStream('deflate');
   const writer = stream.writable.getWriter();
+  // Begin consuming the readable side before awaiting the write. Large board
+  // images can otherwise fill the stream's internal queue and stall forever.
+  const outputPromise = new Response(stream.readable).arrayBuffer();
   await writer.write(bytes);
   await writer.close();
-  return new Uint8Array(await new Response(stream.readable).arrayBuffer());
+  return new Uint8Array(await outputPromise);
 }
 
 function colorKey(r, g, b, a) {
@@ -127,7 +162,11 @@ function makeBox(colors) {
       box.splitChannel = channel;
     }
   }
-  box.score = box.count * Math.max(1, bestRange);
+  // Weight population sub-linearly so a large white/background region does
+  // not consume nearly the entire palette. Colourful board items often cover
+  // fewer pixels, but preserving their hue is much more important than
+  // allocating dozens of almost-identical off-white entries.
+  box.score = Math.sqrt(box.count) * Math.max(1, bestRange);
   return box;
 }
 
@@ -184,6 +223,36 @@ function paletteColorForBox(box) {
   };
 }
 
+function buildHueAnchors(colors, limit, bucketCount = 24) {
+  if (!limit || !colors.length) return [];
+  const buckets = Array.from({ length: bucketCount }, () => ({ colors: [], count: 0 }));
+
+  for (const color of colors) {
+    if (color.a < 32) continue;
+    const max = Math.max(color.r, color.g, color.b);
+    const min = Math.min(color.r, color.g, color.b);
+    const delta = max - min;
+    // Neutral shades are handled well by median-cut. Reserve these anchors
+    // for chromatic colours that are easier to lose on mostly-white boards.
+    if (delta < 28) continue;
+
+    let hue;
+    if (max === color.r) hue = 60 * (((color.g - color.b) / delta) % 6);
+    else if (max === color.g) hue = 60 * (((color.b - color.r) / delta) + 2);
+    else hue = 60 * (((color.r - color.g) / delta) + 4);
+    if (hue < 0) hue += 360;
+    const index = Math.min(bucketCount - 1, Math.floor((hue / 360) * bucketCount));
+    buckets[index].colors.push(color);
+    buckets[index].count += color.count;
+  }
+
+  return buckets
+    .filter(bucket => bucket.colors.length)
+    .sort((left, right) => right.count - left.count)
+    .slice(0, limit)
+    .map(bucket => paletteColorForBox(bucket));
+}
+
 function colorDistance(left, right) {
   const la = left.a / 255;
   const ra = right.a / 255;
@@ -223,6 +292,8 @@ function buildPaletteAndIndices(rgba, maxColors) {
   }
 
   const palette = hasTransparent ? [{ r: 0, g: 0, b: 0, a: 0 }] : [];
+  const hueAnchorLimit = Math.min(24, Math.floor((maxColors - palette.length) * 0.25));
+  palette.push(...buildHueAnchors(exactColors, hueAnchorLimit));
   const available = Math.max(1, maxColors - palette.length);
 
   if (exactColors.length <= available) {
@@ -336,6 +407,85 @@ export async function encodeIndexedPngFromRgba(rgba, width, height, maxColors = 
   };
 }
 
+export async function encodeTruecolorPngFromRgba(rgba, width, height) {
+  if (!(rgba instanceof Uint8Array || rgba instanceof Uint8ClampedArray)) {
+    throw new TypeError('RGBA pixel data must be a Uint8Array.');
+  }
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
+    throw new TypeError('PNG dimensions must be positive integers.');
+  }
+  if (rgba.length !== width * height * 4) {
+    throw new Error('RGBA pixel data does not match the requested dimensions.');
+  }
+
+  const rowLength = width * 4;
+  const scanlines = new Uint8Array(height * (rowLength + 1));
+  let previousRow = null;
+  for (let y = 0; y < height; y += 1) {
+    const row = rgba.subarray(y * rowLength, (y + 1) * rowLength);
+    let best = null;
+    let bestType = 0;
+    for (let filterType = 0; filterType <= 4; filterType += 1) {
+      const candidate = filterRgbaRow(row, previousRow, filterType);
+      if (!best || candidate.score < best.score) {
+        best = candidate;
+        bestType = filterType;
+      }
+    }
+    const outputOffset = y * (rowLength + 1);
+    scanlines[outputOffset] = bestType;
+    scanlines.set(best.filtered, outputOffset + 1);
+    previousRow = row;
+  }
+
+  const ihdr = new Uint8Array(13);
+  writeUint32(ihdr, 0, width);
+  writeUint32(ihdr, 4, height);
+  ihdr[8] = 8;
+  ihdr[9] = 6; // true-colour RGBA
+  ihdr[10] = 0;
+  ihdr[11] = 0;
+  ihdr[12] = 0;
+
+  const compressed = await deflateZlib(scanlines);
+  const bytes = concatBytes([
+    PNG_SIGNATURE,
+    makeChunk('IHDR', ihdr),
+    makeChunk('IDAT', compressed),
+    makeChunk('IEND', new Uint8Array(0))
+  ]);
+
+  return {
+    blob: new Blob([bytes], { type: 'image/png' }),
+    paletteSize: null,
+    alphaLevels: null,
+    byteLength: bytes.length,
+    format: 'rgba'
+  };
+}
+
+async function encodePerceptualPngFromRgba(rgba, width, height, maxColors) {
+  const upng = globalThis.UPNG;
+  if (!upng || typeof upng.encode !== 'function') {
+    const fallback = await encodeIndexedPngFromRgba(rgba, width, height, maxColors);
+    return { ...fallback, format: 'indexed-fallback' };
+  }
+
+  // UPNG's K-d-tree quantizer preserves perceptually important colours far
+  // better than the small built-in fallback, especially on gradients and
+  // mostly-white sales boards. It is bundled locally with the extension.
+  const pixels = new Uint8Array(rgba);
+  const encodedBuffer = upng.encode([pixels.buffer], width, height, maxColors);
+  const bytes = new Uint8Array(encodedBuffer);
+  return {
+    blob: new Blob([bytes], { type: 'image/png' }),
+    paletteSize: maxColors,
+    alphaLevels: null,
+    byteLength: bytes.length,
+    format: 'perceptual-indexed'
+  };
+}
+
 async function loadImageBitmap(file) {
   if (typeof createImageBitmap === 'function') return createImageBitmap(file);
 
@@ -394,14 +544,99 @@ export async function prepareYoWorldIndexedPng(file, options = {}) {
     }
 
     const imageData = context.getImageData(0, 0, width, height);
-    const encoded = await encodeIndexedPngFromRgba(imageData.data, width, height, options.maxColors || DEFAULT_MAX_COLORS);
+
+    if (options.cleanTransparency === true) {
+      const threshold = Number.isFinite(options.alphaThreshold)
+        ? Math.max(0, Math.min(255, Math.round(options.alphaThreshold)))
+        : 128;
+      for (let offset = 0; offset < imageData.data.length; offset += 4) {
+        const alpha = imageData.data[offset + 3];
+        if (alpha === 0 || alpha === 255) continue;
+        if (alpha < threshold) {
+          imageData.data[offset] = 0;
+          imageData.data[offset + 1] = 0;
+          imageData.data[offset + 2] = 0;
+          imageData.data[offset + 3] = 0;
+        } else {
+          imageData.data[offset + 3] = 255;
+        }
+      }
+    }
+
+    const maximumColors = Math.max(2, Math.min(256, Math.round(options.maxColors || DEFAULT_MAX_COLORS)));
+    const targetBytes = options.targetBytes === false
+      ? 0
+      : Math.max(1, Math.round(options.targetBytes || DEFAULT_SAVE_TARGET_BYTES));
+    const attempts = [];
+
+    // Keep an already-small, exact-size PNG completely untouched. Otherwise,
+    // try a lossless filtered RGBA PNG before reducing the palette. Simple
+    // boards often fit the save ceiling losslessly, preserving every colour.
+    if (targetBytes && !needsResize && options.cleanTransparency !== true &&
+        file.type === 'image/png' && file.size <= targetBytes) {
+      return {
+        blob: file,
+        paletteSize: null,
+        alphaLevels: null,
+        byteLength: file.size,
+        format: 'original-png',
+        width,
+        height,
+        sourceWidth,
+        sourceHeight,
+        resized: false,
+        targetBytes,
+        targetMet: true,
+        attempts: [{ format: 'original-png', byteLength: file.size }]
+      };
+    }
+
+    if (targetBytes) {
+      const lossless = await encodeTruecolorPngFromRgba(imageData.data, width, height);
+      attempts.push({ format: lossless.format, byteLength: lossless.byteLength });
+      if (lossless.byteLength <= targetBytes) {
+        return {
+          ...lossless,
+          width,
+          height,
+          sourceWidth,
+          sourceHeight,
+          resized: needsResize,
+          targetBytes,
+          targetMet: true,
+          attempts
+        };
+      }
+    }
+
+    const requestedSteps = Array.isArray(options.paletteSteps) && options.paletteSteps.length
+      ? options.paletteSteps
+      : DEFAULT_PALETTE_STEPS;
+    const paletteSteps = [...new Set(requestedSteps
+      .map(value => Math.max(2, Math.min(maximumColors, Math.round(Number(value) || 0))))
+      .filter(value => value <= maximumColors))]
+      .sort((left, right) => right - left);
+    if (!paletteSteps.includes(maximumColors)) paletteSteps.unshift(maximumColors);
+    if (!targetBytes) paletteSteps.length = 1;
+
+    let encoded = null;
+    for (const paletteLimit of paletteSteps) {
+      encoded = await encodePerceptualPngFromRgba(imageData.data, width, height, paletteLimit);
+      attempts.push({ format: encoded.format, paletteLimit, byteLength: encoded.byteLength });
+      if (!targetBytes || encoded.byteLength <= targetBytes) break;
+    }
+
     return {
       ...encoded,
       width,
       height,
       sourceWidth,
       sourceHeight,
-      resized: needsResize
+      resized: needsResize,
+      targetBytes,
+      targetMet: !targetBytes || encoded.byteLength <= targetBytes,
+      attempts,
+      format: encoded.format
     };
   } finally {
     if (image && typeof image.close === 'function') image.close();

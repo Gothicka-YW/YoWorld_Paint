@@ -1,4 +1,4 @@
-YoWorld Paint v3.5.13
+YoWorld Paint v3.5.14
 
 IMPORTANT: Chrome extensions are installed separately in each Chrome profile.
 This test must be loaded in the same profile where you use YoWorld.
@@ -9,7 +9,7 @@ Installation:
 2. Open the normal Chrome profile where you use YoWorld.
 3. Go to chrome://extensions and turn on Developer mode.
 4. Temporarily disable every older YoWorld Paint copy in that profile so there is only one active test copy.
-5. Choose Load unpacked and select the extracted v3.5.13 folder.
+5. Choose Load unpacked and select the extracted v3.5.14 folder.
 6. Pin "YoWorld Paint" from Chrome's Extensions menu.
 7. Close any YoWorld Paint side panel that is already open.
 8. Click the test extension's toolbar icon once.
@@ -25,14 +25,14 @@ Expected result:
 
 The current Paint Board tools load normally and the removed Sales Boards feature does not request scripting, active-tab, or all-sites access.
 
-Picrd quality and save test:
+Picrd quality and persistence test:
 
-1. In Quick Image Uploader, leave "Game-ready 390×260 (no stretching)" checked.
+1. In Quick Image Uploader, leave "Game-ready 390×260 (save optimized)" checked.
 2. Confirm Host is "Picrd (free, no API key)."
 3. Leave "Clean faint transparency" OFF for an image with glow, translucent art, or soft edges.
 4. Upload the transparent PNG and keep Auto-set as Current Image checked.
 5. Approve Picrd upload access if Chrome asks the first time.
-6. Confirm the extension preview retains the artwork's soft details.
+6. Confirm the extension preview retains the artwork's colors, gradients, and soft details without severe grain or color shifts.
 7. Enable Redirect.
 8. Keep Redirect ON while you open the Paint Board and press Save/OK the first time.
 9. Wait for the save to finish, then turn Redirect OFF.
@@ -40,7 +40,18 @@ Picrd quality and save test:
 
 Expected result:
 
-The preview and Paint Board should load through the independent image relay without contacting YoWorld Info. Soft details should be preserved when the cleanup checkbox is off. For a separate image with unwanted faint background color, enable Clean faint transparency and confirm the haze is removed. The image should remain after Redirect is turned off following the first completed save. ImgBB should still remain selectable in the Host menu.
+The prepared Picrd image should be used directly without contacting YoWorld Info or another image relay. Soft details should be preserved when the cleanup checkbox is off. For a separate image with unwanted faint background color, enable Clean faint transparency and confirm the haze is removed. The image should remain after Redirect is turned off following the first completed save. ImgBB should still remain selectable in the Host menu.
+
+Adaptive quality test:
+
+1. Upload a simple graphic or Sales Board with Game-ready mode enabled.
+2. Confirm its important colors remain close to the original.
+3. Upload a detailed photograph or room image.
+4. Confirm the result remains recognizable and reasonably smooth, then complete the Redirect ON/OFF save workflow.
+
+Expected result:
+
+The extension should preserve exact full-color PNG data when it fits the save target and use the highest-quality perceptual palette that fits when compression is required. Both examples should remain saved after Redirect is turned off.
 
 Default-view test:
 

@@ -1,5 +1,5 @@
 YoWorld Paint Privacy Policy
-Last updated: 2026-10-06
+Last updated: 2026-10-08
 
 YoWorld Paint is a Chrome extension fan tool for creating and applying Paint Board images. This policy explains what data is processed, why permissions are used, and what is not collected.
 
@@ -22,16 +22,21 @@ Where Data Is Stored
 - chrome.storage.local
 	- Used for local runtime/state values required by extension features
 
+Local Image Processing
+When Game-ready mode is enabled, resizing, transparency cleanup, lossless PNG encoding, and perceptual color optimization occur locally inside the extension before upload. The encoder is bundled with the extension. Images are not sent to a separate compression or artificial-intelligence service.
+
 External Services and Network Use
 Data is sent externally only when necessary for user-initiated features:
 - Picrd API (https://picrd.com/*)
-	- Default Quick Upload host; receives only images the user explicitly uploads and returns an unlisted direct link
+	- Default Quick Upload host; receives only the locally prepared image the user explicitly uploads and returns an unlisted direct link
 - ImgBB API (https://api.imgbb.com/*)
-	- Used only when the user selects ImgBB and uploads an image via Quick Upload
+	- Receives the locally prepared image only when the user selects ImgBB and starts an upload
 - wsrv.nl image relay (https://wsrv.nl/*)
-  - Receives the public image link selected by the user during preview and an enabled Paint Board redirect, then returns a compatible PNG
+  - Used only as a compatibility fallback when a manually entered public image link is hosted somewhere other than the supported direct-image hosts; it receives that public image URL and returns a compatible PNG
 - YoWorld domains
 	- Used only for the Paint Board apply and redirect workflow
+
+Direct Picrd, ImgBB, and Postimages image links are loaded without sending them through the wsrv.nl compatibility relay.
 
 The extension does not continuously transmit browsing activity.
 
@@ -64,6 +69,8 @@ Data remains in Chrome extension storage until:
 - You change/remove values in the extension UI,
 - You clear extension storage,
 - Or you uninstall the extension.
+
+Images uploaded to Picrd or ImgBB are retained according to the selected host's policies. YoWorld Paint does not control those services' retention periods.
 
 Children's Privacy
 YoWorld Paint is not directed to children under 13 and does not knowingly collect personal information from children.
