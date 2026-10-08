@@ -1,3 +1,5 @@
+importScripts("src/lib/browser-compat.js");
+
 console.log("YoWorld Art MV3 worker running (storage-connected).");
 
 const SIDE_PANEL_PAGE = "popup/sidepanel.html";
@@ -63,6 +65,11 @@ function buildPaintBoardUrl(imgUrl) {
 }
 
 function updateRedirectRules(imgUrl, enableRedirect) {
+    if (!YWPCompat.hasRedirectRules()) {
+        console.error("This browser does not provide the redirect API required by YoWorld Paint.");
+        return;
+    }
+
     const enabled = !!enableRedirect;
     const safeImgUrl = (imgUrl || "").trim();
     const targetUrl = buildPaintBoardUrl(safeImgUrl);
@@ -138,18 +145,25 @@ function normalizeViewMode(mode) {
 
 async function applyViewMode(mode) {
     const normalized = normalizeViewMode(mode);
+    const sidePanelSupported = YWPCompat.hasSidePanel();
+    const effectiveMode = normalized === "sidepanel" && sidePanelSupported
+        ? "sidepanel"
+        : "popup";
+
     try {
-        if (chrome.sidePanel) {
+        if (sidePanelSupported) {
             await chrome.sidePanel.setOptions({
                 path: DEFAULT_SIDE_PANEL,
                 enabled: true
             });
         }
 
-        if (normalized === "popup") {
+        if (effectiveMode === "popup") {
             // Disable Chrome's panel action before assigning the popup so the
             // toolbar never has two competing default behaviors.
-            await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+            if (sidePanelSupported) {
+                await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+            }
             await chrome.action.setPopup({ popup: DEFAULT_POPUP });
             await chrome.action.setTitle({ title: "Open YoWorld Paint popup" });
         } else {
@@ -161,27 +175,32 @@ async function applyViewMode(mode) {
         }
 
         await chrome.action.enable();
-        console.log("Default view applied:", normalized);
+        console.log("Default view applied:", effectiveMode);
     } catch (error) {
         console.error("Unable to apply default view:", error);
-        // Restore the product default if a partially applied preference fails.
+        // A popup is supported across Chromium browsers and is the safest
+        // recovery path when a browser's side-panel implementation differs.
         try {
-            await chrome.action.setPopup({ popup: "" });
-            await chrome.sidePanel.setOptions({ path: DEFAULT_SIDE_PANEL, enabled: true });
-            await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-            await chrome.action.setTitle({ title: "Open YoWorld Paint side panel" });
+            if (sidePanelSupported) {
+                await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+            }
+            await chrome.action.setPopup({ popup: DEFAULT_POPUP });
+            await chrome.action.setTitle({ title: "Open YoWorld Paint popup" });
             await chrome.action.enable();
         } catch (fallbackError) {
-            console.error("Unable to restore side-panel fallback:", fallbackError);
+            console.error("Unable to restore popup fallback:", fallbackError);
         }
     }
 }
 
-function loadViewMode() {
-    chrome.storage.sync.get({ viewMode: DEFAULT_VIEW_MODE }, (settings) => {
-        if (logChromeLastError("Error loading default view")) return;
-        applyViewMode(settings.viewMode);
-    });
+async function loadViewMode() {
+    try {
+        const settings = await YWPCompat.settingsGet({ viewMode: DEFAULT_VIEW_MODE });
+        await applyViewMode(settings.viewMode);
+    } catch (error) {
+        console.error("Error loading default view:", error);
+        await applyViewMode("popup");
+    }
 }
 
 // Run at startup
@@ -197,7 +216,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === "local" && changes.img) {
         loadSettings();
     }
-    if (areaName === "sync" && changes.viewMode) {
+    if ((areaName === "sync" || areaName === "local") && changes.viewMode) {
         applyViewMode(changes.viewMode.newValue);
     }
 });

@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-08
 
-YoWorld Paint is a Chrome extension fan tool for creating and applying Paint Board images. This policy explains what data is processed, why permissions are used, and what is not collected.
+YoWorld Paint is a Chromium-based browser extension fan tool for creating and applying Paint Board images. This policy explains what data is processed, why permissions are used, and what is not collected.
 
 ## Summary
 
@@ -75,11 +75,11 @@ Optional host permissions, requested only when the related feature is used:
 
 ## Content Script Scope
 
-The extension does not inject content scripts or inspect browsing activity. Chrome may ask once for access to picrd.com when you start a Picrd upload.
+The extension does not inject content scripts or inspect browsing activity. Your browser may ask once for access to picrd.com when you start a Picrd upload.
 
 ## Data Retention
 
-Data remains in Chrome extension storage until:
+Data remains in browser extension storage until:
 
 - You change/remove values in the extension UI,
 - You clear extension storage,

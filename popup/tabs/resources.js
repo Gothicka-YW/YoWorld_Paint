@@ -1,5 +1,6 @@
 // resources.js - handles uploader settings UI
 (function(){
+  const compat = globalThis.YWPCompat;
   const keyInput = document.getElementById('res-imgbb-key');
   const saveBtn = document.getElementById('btn-save-imgbb');
   const testBtn = document.getElementById('btn-test-imgbb');
@@ -10,18 +11,23 @@
     if (!statusEl) return; statusEl.textContent = msg || ''; statusEl.style.color = good ? '#067647' : '#7e1212';
   }
 
-  function load(){
-    chrome.storage.sync.get(['imgbbKey'], data => {
+  async function load(){
+    try {
+      const data = await compat.settingsGet({ imgbbKey: '' });
       if (data && typeof data.imgbbKey === 'string') keyInput.value = data.imgbbKey;
-    });
+    } catch (error) {
+      setStatus('Could not load settings: ' + error.message, false);
+    }
   }
 
-  saveBtn.addEventListener('click', () => {
+  saveBtn.addEventListener('click', async () => {
     const val = (keyInput.value || '').trim();
-    chrome.storage.sync.set({ imgbbKey: val }, () => {
-      const err = chrome.runtime.lastError; if (err) { setStatus('Save failed: ' + err.message, false); return; }
+    try {
+      await compat.settingsSet({ imgbbKey: val });
       setStatus('Saved', true); setTimeout(()=> setStatus('', true), 1600);
-    });
+    } catch (error) {
+      setStatus('Save failed: ' + error.message, false);
+    }
   });
 
   if (testBtn) {

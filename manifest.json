@@ -2,8 +2,8 @@
   "update_url": "https://clients2.google.com/service/update2/crx",
   "name": "YoWorld Paint",
   "description": "Fan-made YoWorld tool to create, preview, transform, split, upload, and export custom Paint Boards.",
-  "version": "3.5.14",
-  "version_name": "v3.5.14",
+  "version": "3.5.15",
+  "version_name": "v3.5.15",
   "manifest_version": 3,
   "minimum_chrome_version": "116",
   "icons": {
@@ -11,7 +11,8 @@
     "128": "icons/icon_128.png"
   },
   "action": {
-    "default_title": "Open YoWorld Paint side panel"
+    "default_title": "Open YoWorld Paint",
+    "default_popup": "popup/popup.html"
   },
   "side_panel": {
     "default_path": "popup/sidepanel.html"

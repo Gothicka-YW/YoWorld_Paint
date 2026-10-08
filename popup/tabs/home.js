@@ -20,10 +20,19 @@ function getCompatibleImageUrl(url) {
 }
 
 (function(){
+  const compat = globalThis.YWPCompat;
   const input   = document.getElementById('img-url');
   const btn     = document.getElementById('btn-set');
   const toggle  = document.getElementById('enable-redirect');
   const preview = document.querySelector('.preview');
+
+  if (toggle && !compat.hasRedirectRules()) {
+    toggle.disabled = true;
+    const warning = document.createElement('p');
+    warning.className = 'note';
+    warning.textContent = 'This browser does not support the redirect feature required by YoWorld Paint.';
+    toggle.closest('.row')?.after(warning);
+  }
 
   function setPreview(url) {
     if (!preview) return;
@@ -92,6 +101,7 @@ function getCompatibleImageUrl(url) {
 
 // --- Quick Upload Integration ---
 (function(){
+  const compat = globalThis.YWPCompat;
   const hostSel = document.getElementById('qu-host');
   const fileEl = document.getElementById('qu-file');
   const dropZone = document.getElementById('qu-drop');
@@ -115,27 +125,35 @@ function getCompatibleImageUrl(url) {
 
   // Game-ready sizing is ON by default. Users can explicitly disable it when
   // they truly need to upload an untouched original.
-  chrome.storage.sync.get(['quickUploadHost','imgbbKey','quickUploadAutoResize','quickUploadCleanTransparency'], data => {
+  compat.settingsGet({
+    quickUploadHost: 'picrd',
+    imgbbKey: '',
+    quickUploadAutoResize: true,
+    quickUploadCleanTransparency: false
+  }).then(data => {
     if (hostSel) hostSel.value = data.quickUploadHost === 'imgbb' ? 'imgbb' : 'picrd';
     if (resizeChk) resizeChk.checked = (data.quickUploadAutoResize !== false);
     if (cleanAlphaChk) cleanAlphaChk.checked = data.quickUploadCleanTransparency === true;
     toggleKeyWarning();
+  }).catch(error => {
+    console.error('Unable to load uploader settings:', error);
+    toggleKeyWarning();
   });
 
   hostSel.addEventListener('change', () => {
-    chrome.storage.sync.set({ quickUploadHost: hostSel.value });
+    compat.settingsSet({ quickUploadHost: hostSel.value }).catch(console.error);
     toggleKeyWarning();
   });
 
   if (resizeChk){
     resizeChk.addEventListener('change', () => {
-      chrome.storage.sync.set({ quickUploadAutoResize: !!resizeChk.checked });
+      compat.settingsSet({ quickUploadAutoResize: !!resizeChk.checked }).catch(console.error);
     });
   }
 
   if (cleanAlphaChk){
     cleanAlphaChk.addEventListener('change', () => {
-      chrome.storage.sync.set({ quickUploadCleanTransparency: !!cleanAlphaChk.checked });
+      compat.settingsSet({ quickUploadCleanTransparency: !!cleanAlphaChk.checked }).catch(console.error);
     });
   }
 
@@ -206,7 +224,7 @@ function getCompatibleImageUrl(url) {
       }
     }
     if (host === 'imgbb'){
-      const { imgbbKey } = await chrome.storage.sync.get(['imgbbKey']);
+      const { imgbbKey } = await compat.settingsGet({ imgbbKey: '' });
       if (!imgbbKey){ setStatus('ImgBB key missing.', true); toggleKeyWarning(true); return; }
     }
     const doResize = !resizeChk || resizeChk.checked;
@@ -264,10 +282,12 @@ function getCompatibleImageUrl(url) {
   });
 
   function toggleKeyWarning(force){
-    chrome.storage.sync.get(['imgbbKey'], d => {
-      const missing = !d.imgbbKey && hostSel.value === 'imgbb';
-      if (warnEl) warnEl.style.display = (missing || force) ? 'block' : 'none';
-    });
+    compat.settingsGet({ imgbbKey: '' })
+      .then(d => {
+        const missing = !d.imgbbKey && hostSel.value === 'imgbb';
+        if (warnEl) warnEl.style.display = (missing || force) ? 'block' : 'none';
+      })
+      .catch(error => console.error('Unable to load ImgBB settings:', error));
   }
 
 })();

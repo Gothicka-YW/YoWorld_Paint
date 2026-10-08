@@ -1,8 +1,16 @@
-# YoWorld Paint v3.5.14 🎨
+# YoWorld Paint v3.5.15 🎨
 
-YoWorld Paint is a Chrome Extension fan tool for YoWorld players. It helps you create, preview, transform, split, upload, and share custom Paint Boards—faster and cleaner than doing it by hand.
+YoWorld Paint is a Chromium-based browser extension fan tool for YoWorld players. It helps you create, preview, transform, split, upload, and share custom Paint Boards—faster and cleaner than doing it by hand.
 
 > ⚠️ Community fan tool. Not affiliated with YoWorld or Big Viking Games (BVG).
+
+## 🚀 What's new in 3.5.15
+
+- Adds a popup fallback for Chromium browsers without Chrome's Side Panel API.
+- Keeps the Side Panel experience on compatible Chrome and Microsoft Edge versions.
+- Falls back to local extension storage when synchronized storage is unavailable.
+- Prevents unsupported browser APIs from leaving the toolbar button unresponsive.
+- Improves Opera, Opera GX, Brave, Vivaldi, and general Chromium compatibility without adding permissions.
 
 ## 🚀 What's new in 3.5.14
 
@@ -166,7 +174,7 @@ Minimal and explicit:
   - ImgBB API (only when you select ImgBB and upload an image)
   - YoWorld services (only while using the Paint Board apply/redirect workflow)
   - wsrv.nl image relay (only when a manually entered public image link uses an unsupported direct-image host)
-- Settings/state are stored in Chrome extension storage:
+- Settings/state are stored in browser extension storage:
   - `chrome.storage.sync` (preferences such as theme, view mode, API key)
   - `chrome.storage.local` (runtime/state values needed for extension behavior)
 - [Live Privacy Policy](https://gothicka-yw.github.io/YoWorld_Paint/privacy-policy.html)

@@ -1,6 +1,6 @@
 export async function getSettings() {
   try {
-    const data = await chrome.storage.sync.get({
+    const data = await globalThis.YWPCompat.settingsGet({
       uploadcarePublicKey: "",
       uploadTimeoutMs: 25000,
       prefer: "uploadcare",
@@ -55,6 +55,6 @@ export async function getSettings() {
 export async function setSettings(patch) {
   const curr = await getSettings();
   const next = { ...curr, ...patch };
-  await chrome.storage.sync.set(next);
+  await globalThis.YWPCompat.settingsSet(next);
   return next;
 }

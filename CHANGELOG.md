@@ -1,4 +1,16 @@
 # YoWorld Paint - Changelog
+## v3.5.15 — Chromium Browser Compatibility
+**Updated:** 2026-10-08
+
+Fixes and changes
+- Adds a universal popup fallback for Chromium browsers that do not implement Chrome's Side Panel API.
+- Keeps Side Panel as the default on compatible Chrome and Microsoft Edge versions.
+- Prevents unsupported side-panel calls from leaving the toolbar icon with nothing to open.
+- Falls back to local extension storage when browser-synchronized storage is unavailable.
+- Disables the Side Panel preference when the current browser cannot provide it.
+- Adds explicit runtime checks for the redirect API and displays a clear message if it is unavailable.
+- Improves compatibility with Opera, Opera GX, Brave, Vivaldi, and other current Chromium-based desktop browsers without adding permissions.
+
 ## v3.5.14 — Reliable Saves and Perceptual Image Quality
 **Updated:** 2026-10-08
 

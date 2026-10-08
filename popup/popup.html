@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>YoWorld Paint v3.5.14</title>
+<title>YoWorld Paint v3.5.15</title>
 <link href="popup.css" rel="stylesheet"/>
 <style>
 /* YWP resources tab tweaks */
@@ -46,7 +46,7 @@
 </head>
 <body>
 <div class="app-shell">
-<header class="app-header">YoWorld Paint v3.5.14</header>
+<header class="app-header">YoWorld Paint v3.5.15</header>
 <nav aria-label="Main" class="tabs" role="tablist">
 <button aria-selected="true" class="tab is-active" data-tab="home" role="tab">Home</button>
 <button aria-selected="false" class="tab" data-tab="transform" role="tab">Transform</button>
@@ -432,9 +432,9 @@
 </ul>
 <div class="uploader-settings" style="margin-top:18px; border-top:1px solid #e5e7eb; padding-top:14px;">
   <h3 style="margin:0 0 8px; font-size:15px;">Uploader Settings</h3>
-  <p style="font-size:12px; opacity:.75; margin:0 0 10px;"><strong>Picrd</strong> is the default and needs no API key. Chrome asks once for upload access the first time you use it. <a href="https://picrd.com/docs" target="_blank" rel="noopener">Picrd API details</a>.</p>
+  <p style="font-size:12px; opacity:.75; margin:0 0 10px;"><strong>Picrd</strong> is the default and needs no API key. Your browser asks once for upload access the first time you use it. <a href="https://picrd.com/docs" target="_blank" rel="noopener">Picrd API details</a>.</p>
   <h4 style="margin:12px 0 8px; font-size:13px;">Optional ImgBB</h4>
-  <p style="font-size:12px; opacity:.75; margin:0 0 10px;">ImgBB remains available in the Host menu. Its API key is saved in Chrome sync storage.</p>
+  <p style="font-size:12px; opacity:.75; margin:0 0 10px;">ImgBB remains available in the Host menu. Its API key is saved in browser extension storage.</p>
   <div class="form-row" style="margin-bottom:10px;">
     <label for="res-imgbb-key">ImgBB API Key</label>
     <input id="res-imgbb-key" type="text" class="input" placeholder="Paste key..." />
@@ -456,7 +456,7 @@
         <option value="popup">Popup</option>
       </select>
     </div>
-    <p class="note" style="margin:0;">Side Panel is the default for new users. Your choice is saved and synced by Chrome.</p>
+    <p class="note" style="margin:0;">Side Panel is used when supported; other Chromium browsers automatically use Popup. Your choice is saved in browser extension storage.</p>
   </div>
 
   <div class="theme-settings" style="margin-top:18px; border-top:1px solid #e5e7eb; padding-top:14px;">
@@ -476,7 +476,7 @@
         <option value="violet-contrast">Violet Contrast</option>
       </select>
     </div>
-    <p class="note" style="margin:0;">Theme saves to Chrome sync and applies across all tabs.</p>
+    <p class="note" style="margin:0;">Theme saves in browser extension storage and applies across all tabs.</p>
   </div>
 
   <!-- Footer content scoped to Resources only -->
@@ -490,6 +490,7 @@
   </div></div></footer>
 </section>
 </main>
+<script src="../src/lib/browser-compat.js"></script>
 <script src="popup.js"></script>
 <script src="../src/vendor/upng/UPNG.js"></script>
 <script src="tabs/home.js"></script>

@@ -1,9 +1,13 @@
 ***** HOW TO INSTALL THE EXTENSION *****
 
-1. Unpack the YoWorld Paint v3.5.14 ZIP and remember the extracted folder location.
+1. Unpack the YoWorld Paint v3.5.15 ZIP and remember the extracted folder location.
 
 2. Open extension page
-Open chrome://extensions
+Open the Extensions page for your browser:
+- Chrome or Brave: chrome://extensions
+- Microsoft Edge: edge://extensions
+- Opera or Opera GX: opera://extensions
+- Vivaldi: vivaldi://extensions
 or
 Use the menu: ⋮ > More tools > Extensions
 
@@ -11,7 +15,7 @@ Use the menu: ⋮ > More tools > Extensions
 
 4. Select "Load unpacked" option
 
-5. Select the unpacked "YoWorld Paint v3.5.14" folder.
+5. Select the unpacked "YoWorld Paint v3.5.15" folder.
 
 6. Open the folder
 

@@ -1,5 +1,7 @@
 
 (function(){
+  const compat = globalThis.YWPCompat;
+
   // The published v3.4 markup contains a second, obsolete Tools panel with the
   // same id and no backing JavaScript. Remove it before wiring the live UI.
   document.querySelectorAll('#panel-tools').forEach((panel, index) => {
@@ -66,22 +68,24 @@
     }
     return normalized;
   }
-  // load theme
-  try {
-    chrome.storage.sync.get(['theme'], st => {
+  // Load settings from sync storage when supported, otherwise local storage.
+  (async () => {
+    try {
+      const st = await compat.settingsGet({ theme: DEFAULT_THEME });
       const raw = st && st.theme ? String(st.theme) : localStorage.getItem(THEME_KEY);
       const saved = applyThemeName(raw || DEFAULT_THEME);
       if (themeSel) themeSel.value = saved;
-    });
-  } catch(_) {
-    const saved = applyThemeName(localStorage.getItem(THEME_KEY) || DEFAULT_THEME);
-    if (themeSel) themeSel.value = saved;
-  }
+    } catch (_) {
+      const saved = applyThemeName(localStorage.getItem(THEME_KEY) || DEFAULT_THEME);
+      if (themeSel) themeSel.value = saved;
+    }
+  })();
+
   if (themeSel){
     themeSel.addEventListener('change', () => {
       const val = applyThemeName(themeSel.value || DEFAULT_THEME);
       themeSel.value = val;
-      try{ chrome.storage.sync.set({ theme: val }); }catch(_){ localStorage.setItem(THEME_KEY, val); }
+      compat.settingsSet({ theme: val }).catch(() => localStorage.setItem(THEME_KEY, val));
     });
   }
 
@@ -89,19 +93,39 @@
   // the background worker with mutually exclusive toolbar behaviors.
   const viewModeSel = document.getElementById('res-view-mode');
   if (viewModeSel){
-    chrome.storage.sync.get({ viewMode: 'sidepanel' }, (settings) => {
-      viewModeSel.value = settings.viewMode === 'popup' ? 'popup' : 'sidepanel';
-    });
+    const supportsSidePanel = compat.hasSidePanel();
+    const sidePanelOption = viewModeSel.querySelector('option[value="sidepanel"]');
+    if (!supportsSidePanel && sidePanelOption) {
+      sidePanelOption.disabled = true;
+      sidePanelOption.textContent = 'Side Panel (not supported in this browser)';
+    }
+
+    compat.settingsGet({ viewMode: 'sidepanel' })
+      .then((settings) => {
+        const savedMode = settings.viewMode === 'popup' ? 'popup' : 'sidepanel';
+        viewModeSel.value = supportsSidePanel ? savedMode : 'popup';
+        viewModeSel.dataset.savedMode = viewModeSel.value;
+      })
+      .catch((error) => {
+        console.error('Unable to load default view:', error);
+        viewModeSel.value = 'popup';
+        viewModeSel.dataset.savedMode = 'popup';
+      });
 
     viewModeSel.addEventListener('change', async () => {
-      const mode = (viewModeSel.value === 'sidepanel') ? 'sidepanel' : 'popup';
-      const previous = mode === 'sidepanel' ? 'popup' : 'sidepanel';
+      const mode = supportsSidePanel && viewModeSel.value === 'sidepanel' ? 'sidepanel' : 'popup';
+      const previous = viewModeSel.dataset.savedMode || 'popup';
       const isSidePanelPage = document.body.classList.contains('sidepanel-ui');
 
       // Start opening immediately within the change gesture. Awaiting storage
       // first can cause Chrome to reject sidePanel.open as no longer user-driven.
       let openPanel = null;
-      if (mode === 'sidepanel' && !isSidePanelPage && chrome.sidePanel && chrome.windows) {
+      if (
+        mode === 'sidepanel' &&
+        !isSidePanelPage &&
+        typeof chrome.sidePanel?.open === 'function' &&
+        chrome.windows
+      ) {
         openPanel = chrome.sidePanel
           .open({ windowId: chrome.windows.WINDOW_ID_CURRENT })
           .then(() => true)
@@ -112,7 +136,8 @@
       }
 
       try {
-        await chrome.storage.sync.set({ viewMode: mode });
+        await compat.settingsSet({ viewMode: mode });
+        viewModeSel.dataset.savedMode = mode;
         if (typeof showToast === 'function') {
           showToast(mode === 'popup' ? 'Popup is now the default' : 'Side Panel is now the default');
         }

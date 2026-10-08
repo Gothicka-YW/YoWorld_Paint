@@ -1,6 +1,6 @@
-# YoWorld Paint v3.5.14 Tab Tutorials
+# YoWorld Paint v3.5.15 Tab Tutorials
 
-These tutorials cover the current Side Panel and Popup interfaces. Side Panel is the recommended default, but the controls work the same way in both views.
+These tutorials cover the current Side Panel and Popup interfaces. Side Panel is the recommended default when the browser supports it. Opera, Opera GX, Brave, Vivaldi, and other Chromium browsers automatically use the Popup when Side Panel is unavailable; the controls work the same way in both views.
 
 ## Home Tab
 
@@ -56,7 +56,7 @@ Resources contains current YoWorld Paint links and saved preferences.
 - **Useful Links:** Open the Chrome Web Store listing, Privacy Policy, image generators, editors, and hosts.
 - **Uploader Settings:** Save and test an optional ImgBB API key. Picrd remains the default and needs no API key.
 - **Default View:** Choose Side Panel or Popup for future toolbar clicks.
-- **Theme:** Choose the interface color theme; Chrome sync stores the selection.
+- **Theme:** Choose the interface color theme; browser extension storage saves the selection.
 
 ## Privacy and Permissions
 
